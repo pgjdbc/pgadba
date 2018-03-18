@@ -4,10 +4,10 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import java.sql2.Connection;
-import java.sql2.DataSource;
-import java.sql2.DataSourceFactory;
-import java.sql2.JdbcConnectionProperty;
+import java2.sql2.Connection;
+import java2.sql2.DataSource;
+import java2.sql2.DataSourceFactory;
+import java2.sql2.JdbcConnectionProperty;
 
 public class PGDataSourceTest {
 

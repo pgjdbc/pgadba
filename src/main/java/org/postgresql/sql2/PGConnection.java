@@ -4,30 +4,36 @@
  */
 package org.postgresql.sql2;
 
-import java.sql2.BatchCountOperation;
-import java.sql2.Connection;
-import java.sql2.ConnectionProperty;
-import java.sql2.DynamicMultiOperation;
-import java.sql2.LocalOperation;
-import java.sql2.Operation;
-import java.sql2.OperationGroup;
-import java.sql2.OutOperation;
-import java.sql2.ParameterizedCountOperation;
-import java.sql2.ParameterizedRowOperation;
-import java.sql2.PublisherOperation;
-import java.sql2.StaticMultiOperation;
-import java.sql2.Submission;
-import java.sql2.Transaction;
-import java.sql2.TransactionOutcome;
+
+import java2.sql2.ArrayCountOperation;
+import java2.sql2.Connection;
+import java2.sql2.ConnectionProperty;
+import java2.sql2.CountOperation;
+import java2.sql2.DataSource;
+import java2.sql2.DynamicMultiOperation;
+import java2.sql2.LocalOperation;
+import java2.sql2.Operation;
+import java2.sql2.OperationGroup;
+import java2.sql2.OutOperation;
+import java2.sql2.ParameterizedCountOperation;
+import java2.sql2.ParameterizedRowOperation;
+import java2.sql2.Result;
+import java2.sql2.RowOperation;
+import java2.sql2.ShardingKey;
+import java2.sql2.SqlException;
+import java2.sql2.SqlSkippedException;
+import java2.sql2.StaticMultiOperation;
+import java2.sql2.Submission;
+import java2.sql2.Transaction;
+import java2.sql2.TransactionOutcome;
+
+import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.MemoryHandler;
+import java.util.stream.Collector;
 
 public class PGConnection implements Connection {
   /**
@@ -41,22 +47,22 @@ public class PGConnection implements Connection {
    * Otherwise the {@link Operation} will complete exceptionally with
    * {@link SqlException}.
    *
-   * Note: It is highly recommended to use the {@link connect()} convenience
+   * Note: It is highly recommended to use the {@link Connection#connect()} convenience
    * method or to use {@link DataSource#getConnection} which itself calls
-   * {@link connect()}. Unless there is a specific need, do not call this method
+   * {@link Connection#connect()}. Unless there is a specific need, do not call this method
    * directly.
    *
    * This method exists partially to clearly explain that while creating a
    * {@link Connection} is non-blocking, the act of connecting to the server may
    * block and so is executed asynchronously. We could write a bunch of text
    * saying this but defining this method is more explicit. Given the
-   * {@link connect()} convenience methods there's probably not much reason to
+   * {@link Connection#connect()} convenience methods there's probably not much reason to
    * use this method, but on the other hand, who knows, so here it is.
    *
    * @return an {@link Operation} that connects this {@link Connection} to a
    * server.
    * @throws IllegalStateException if this {@link Connection} is in a lifecycle
-   *                               state other than {@link Lifecycle#NEW}.
+   * state other than {@link Lifecycle#NEW}.
    */
   @Override
   public Operation<Void> connectOperation() {
@@ -72,12 +78,12 @@ public class PGConnection implements Connection {
    * completion.
    *
    * @param depth how completely to check that resources are available and
-   *              operational. Not {@code null}.
+   * operational. Not {@code null}.
    * @return an {@link Operation} that will validate this {@link Connection}
    * @throws IllegalStateException if this Connection is not active
    */
   @Override
-  public Operation<Void> validationOperation(Validation depth) {
+  public Operation<Void> validationOperation(Connection.Validation depth) {
     return null;
   }
 
@@ -96,7 +102,7 @@ public class PGConnection implements Connection {
    * {@link Connection} is held; for more {@link Operation}s.
    *
    * Note: It is highly recommended to use try with resources or the
-   * {@link close()} convenience method. Unless there is a specific need, do not
+   * {@link Connection#close()} convenience method. Unless there is a specific need, do not
    * call this method directly.
    *
    * @return an {@link Operation} that will close this {@link Connection}.
@@ -110,6 +116,10 @@ public class PGConnection implements Connection {
   /**
    * Create a new {@link OperationGroup} for this {@link Connection}.
    *
+   * @param <S> the result type of the member {@link Operation}s of the returned
+   * {@link OperationGroup}
+   * @param <T> the result type of the collected results of the member
+   * {@link Operation}s
    * @return a new {@link OperationGroup}.
    * @throws IllegalStateException if this Connection is not active
    */
@@ -119,26 +129,19 @@ public class PGConnection implements Connection {
   }
 
   /**
-   * Returns the current {@link Transaction} relative to the execution of
-   * submitted {@link Operation}s. At the moment this method is called any
-   * transaction currently in flight on the Connection may be unrelated to the
-   * {@link Operation}s submitted immediately before or after the call. The
-   * returned {@link Transaction} represents the transaction in flight while the
-   * next submitted commit Operation is executed.
+   * Returns a new {@link Transaction} that can be used as an argument to a
+   * commit Operation.
    *
    * It is most likely an error to call this within an error handler, or any
    * handler as it is very likely that when the handler is executed the next
-   * submitted commit {@link Operation} will not be the one the programmer
-   * intends. Even if it is this code would be fragile and difficult to
-   * maintain. Instead call {@link getTransaction} before submitting an
-   * {@link Operation} and use that {@link Transaction} in any handlers for that
-   * {@link Operation}.
+   * submitted endTransaction {@link Operation} will have been created with a different
+   * Transaction.
    *
-   * @return the current {@link Transaction}
+   * @return a new {@link Transaction}. Not retained.
    * @throws IllegalStateException if this Connection is not active
    */
   @Override
-  public Transaction getTransaction() {
+  public Transaction transaction() {
     return null;
   }
 
@@ -146,11 +149,23 @@ public class PGConnection implements Connection {
    * Register a listener that will be called whenever there is a change in the
    * lifecycle of this {@link Connection}.
    *
-   * @param listener@throws IllegalStateException if this Connection is not active
+   * @param listener Can be {@code null}.
+   * @throws IllegalStateException if this Connection is not active
    */
   @Override
-  public void registerLifecycleListener(ConnectionLifecycleListener listener) {
+  public void registerLifecycleListener(Connection.ConnectionLifecycleListener listener) {
+  }
 
+  /**
+   * Removes a listener that was registered by calling registerLifecycleListener.
+   * Sometime after this method returns the listener will stop receiving lifecycle
+   * events. If the listener is not registered, this is a noop.
+   *
+   * @param listener
+   * @throws IllegalStateException if this Connection is not active
+   */
+  @Override
+  public void removeLifecycleListener(Connection.ConnectionLifecycleListener listener) {
   }
 
   /**
@@ -175,7 +190,7 @@ public class PGConnection implements Connection {
    * @return the current lifecycle of this {@link Connection}.
    */
   @Override
-  public Lifecycle getLifecycle() {
+  public Connection.Lifecycle getLifecycle() {
     return null;
   }
 
@@ -197,39 +212,12 @@ public class PGConnection implements Connection {
   }
 
   /**
-   * Enables the {@link Connection} to provide backpressure on the rate at which
-   * {@link Operation}s are submitted. Use of this method is optional.
    *
-   * If an application may submit a large number of {@link Operation}s it may be
-   * that it submits those {@link Operation}s faster than the {@link Connection}
-   * can process them. Since {@link Operation}s consume resources submitting a
-   * large number of {@link Operation}s may bog down the system. Providing a
-   * {@link Flow.Subscription} to the {@link Connection}
-   * enables the {@link Connection} to request additional {@link Operation}s as
-   * appropriate. Applications are not required to adhere to the number of
-   * {@link Operation}s requested by the {@link Connection}. If an application
-   * provides a
-   * {@link Flow.Subscription}, {@link Connection}s are
-   * guaranteed to call {@link Flow.Subscription#request}
-   * whenever the number of queued {@link Operation}s drops to zero and the
-   * {@link Connection} can accept more {@link Operation}s.
-   *
-   * Note: {@link Connection} does not use
-   * {@link Flow.Publisher} and
-   * {@link Flow.Subscriber} as the methods defined by
-   * those interfaces do not make an sense. Those methods provide a channel for
-   * the {@link Flow.Publisher} to pass objects to the
-   * {@link Flow.Subscriber}. Connection has no need for
-   * that channel as {@link Operation}s are known to a {@link Connection}
-   * because they are constructed by that {@link Connection}.
-   *
-   * @param subscription not {@code null}.
-   * @throws IllegalArgumentException if {@code subscription} is {@code null}
-   * @throws IllegalStateException    if this Connection is not active
+   * @return a {@link ShardingKey.Builder} for this {@link Connection}
    */
   @Override
-  public void onSubscribe(Flow.Subscription subscription) {
-
+  public ShardingKey.Builder shardingKeyBuilder() {
+    return null;
   }
 
   /**
@@ -254,10 +242,10 @@ public class PGConnection implements Connection {
    * lifecycle is {@link Lifecycle#OPEN} -&gt; {@link Lifecycle#INACTIVE}. If
    * the lifecycle is {@link Lifecycle#INACTIVE} or
    * {@link Lifecycle#NEW_INACTIVE} this method is a no-op. After calling this
-   * method calling any method other than {@link deactivate}, {@link activate},
-   * {@link abort}, or {@link getLifecycle} or submitting any member
+   * method calling any method other than {@link Connection#deactivate}, {@link Connection#activate},
+   * {@link Connection#abort}, or {@link Connection#getLifecycle} or submitting any member
    * {@link Operation} will throw {@link IllegalStateException}. Local
-   * {@link Connection} state not created by {@link Builder} may not
+   * {@link Connection} state not created by {@link Connection.Builder} may not
    * be preserved.
    *
    * Any implementation of a {@link Connection} pool is by default required to
@@ -290,7 +278,7 @@ public class PGConnection implements Connection {
    *
    * @return this {@link OperationGroup}
    * @throws IllegalStateException if this method has been submitted or any
-   *                               member {@link Operation}s have been created.
+   * member {@link Operation}s have been created.
    */
   @Override
   public OperationGroup<Object, Object> parallel() {
@@ -312,7 +300,7 @@ public class PGConnection implements Connection {
    *
    * @return this {@link OperationGroup}
    * @throws IllegalStateException if this {@link OperationGroup} has been
-   *                               submitted or any member {@link Operation}s have been created
+   * submitted or any member {@link Operation}s have been created
    */
   @Override
   public OperationGroup<Object, Object> independent() {
@@ -335,14 +323,14 @@ public class PGConnection implements Connection {
    * ISSUE: Should the member Operations be skipped or otherwise completed
    * exceptionally?
    *
-   * @param condition a {@link CompletableFuture} the value of which determines whether
-   *                  this {@link OperationGroup} is executed or not
+   * @param condition a {@link CompletionStage} the value of which determines whether
+   * this {@link OperationGroup} is executed or not
    * @return this OperationGroup
    * @throws IllegalStateException if this {@link OperationGroup} has been
-   *                               submitted or any member {@link Operation}s have been created
+   * submitted or any member {@link Operation}s have been created
    */
   @Override
-  public OperationGroup<Object, Object> conditional(CompletableFuture<Boolean> condition) {
+  public OperationGroup<Object, Object> conditional(CompletionStage<Boolean> condition) {
     return null;
   }
 
@@ -361,7 +349,7 @@ public class PGConnection implements Connection {
    *
    * @return this OperationGroup
    * @throws IllegalStateException if this {@link OperationGroup} has been
-   *                               submitted
+   * submitted
    */
   @Override
   public OperationGroup<Object, Object> holdForMoreMembers() {
@@ -385,7 +373,7 @@ public class PGConnection implements Connection {
    *
    * @return this OperationGroup
    * @throws IllegalStateException if this {@link OperationGroup} has been
-   *                               completed
+   * completed
    */
   @Override
   public OperationGroup<Object, Object> releaseProhibitingMoreMembers() {
@@ -393,61 +381,62 @@ public class PGConnection implements Connection {
   }
 
   /**
-   * Supplier of the initial value provided to {@link memberAggregator}. The
-   * default value is {@code () -&gt; null}.
+   * Provides a {@link Collector} to reduce the results of the member
+   * {@link Operation}s.The result of this {@link OperationGroup} is the result
+   * of calling finisher on the final accumulated result. If the
+   * {@link Collector} is {@link Collector.Characteristics#UNORDERED} the member
+   * {@link Operation} results may be accumulated out of order. If the
+   * {@link Collector} is {@link Collector.Characteristics#CONCURRENT} then the
+   * member {@link Operation} results may be split into subsets that are reduced
+   * separately and then combined. If this {@link OperationGroup} is sequential,
+   * the characteristics of the {@link Collector} only affect how the results of
+   * the member {@link Operation}s are collected; the member {@link Operation}s
+   * are executed sequentially regardless. If this {@link OperationGroup} is
+   * parallel the characteristics of the {@link Collector} may influence the
+   * execution order of the member {@link Operation}s.
    *
-   * @param supplier provides the initial value for the {@link memberAggregator}
-   * @return this {@link OperationGroup}
+   * @param <A> the type of the accumulator
+   * @param <S> the type of the final result
+   * @param c the Collector. Not null.
+   * @return This OperationGroup
    * @throws IllegalStateException if called more than once or if this
-   *                               {@link OperationGroup} has been submitted
+   * {@link OperationGroup} has been submitted
    */
   @Override
-  public OperationGroup<Object, Object> initialValue(Supplier<Object> supplier) {
+  public <A, S> RowOperation<Object> collect(Collector<? super Result.Row, A, S> c) {
     return null;
   }
 
   /**
-   * Function that aggregates the results of the member {@link Operation}s.
-   * Called once for each member {@link Operation} that completes normally. The
-   * first argument of the first call is the value supplied by
-   * {@link initialValue} {@code supplier}. For; subsequent calls it is the
-   * value returned by the previous call. If this {@link OperationGroup} is
-   * sequential the values are passed to the function in the order the member
-   * {@link Operation}s complete. If this {@link OperationGroup} is parallel,
-   * values may be passed to the function in any order though an approximation
-   * of the order in which they complete is recommended. The default value is
-   * {@code (a, b) -&gt; null}.
+   * Return a new {@link ArrayCountOperation}.
+   * <p>
+   * Usage Note: Frequently use of this method will require a type witness
+   * to enable correct type inferencing.
+   * <pre><code>
+   *   conn.<b>&lt;List&lt;Integer&gt;&gt;</b>arrayCountOperation(sql)
+   *     .set ...
+   *     .collect ...
+   *     .submit ...
+   * </code></pre>
    *
-   * @param aggregator a {@link BiFunction} that aggregates the results of the
-   *                   member {@link Operation}s
-   * @return this {@link OperationGroup}
-   * @throws IllegalStateException if called more than once or if this
-   *                               {@link OperationGroup} has been submitted
-   */
-  @Override
-  public OperationGroup<Object, Object> memberAggregator(
-      BiFunction<Object, Object, Object> aggregator) {
-    return null;
-  }
-
-  /**
-   * Return a new {@link BatchCountOperation}.
-   *
+   * @param <R> the result type of the returned {@link ArrayCountOperation}
    * @param sql SQL to be executed. Must return an update count.
-   * @return a new {@link BatchCountOperation} that is a member of this
+   * @return a new {@link ArrayCountOperation} that is a member of this
    * {@link OperationGroup}
    */
   @Override
-  public <R> BatchCountOperation<R> batchCountOperation(String sql) {
+  public <R> ArrayCountOperation<R> arrayCountOperation(String sql) {
     return null;
   }
 
   /**
    * Return a new {@link CountOperation}.
    *
+   * @param <R> the result type of the returned {@link CountOperation}
    * @param sql SQL to be executed. Must return an update count.
    * @return an new {@link CountOperation} that is a member of this
    * {@link OperationGroup}
+   *
    */
   @Override
   public <R> ParameterizedCountOperation<R> countOperation(String sql) {
@@ -471,8 +460,9 @@ public class PGConnection implements Connection {
    * Return a new {@link OutOperation}. The SQL must return a set of zero or
    * more out parameters or function results.
    *
+   * @param <R> the result type of the returned {@link OutOperation}
    * @param sql SQL for the {@link Operation}. Must return zero or more out
-   *            parameters or function results.
+   * parameters or function results.
    * @return a new {@link OutOperation} that is a member of this
    * {@link OperationGroup}
    */
@@ -484,6 +474,7 @@ public class PGConnection implements Connection {
   /**
    * Return a {@link ParameterizedRowOperation}.
    *
+   * @param <R> the type of the result of the returned {@link ParameterizedRowOperation}
    * @param sql SQL for the {@link Operation}. Must return a row sequence.
    * @return a new {@link ParameterizedRowOperation} that is a member of this
    * {@link OperationGroup}
@@ -496,6 +487,8 @@ public class PGConnection implements Connection {
   /**
    * Return a {@link StaticMultiOperation}.
    *
+   * @param <R> the type of the result of the returned
+   * {@link StaticMultiOperation}
    * @param sql SQL for the {@link Operation}
    * @return a new {@link StaticMultiOperation} that is a member of this
    * {@link OperationGroup}
@@ -505,15 +498,12 @@ public class PGConnection implements Connection {
     return null;
   }
 
-  @Override
-  public <R> PublisherOperation<R> publisherOperation(String sql) {
-    return null;
-  }
-
   /**
    * Return a {@link DynamicMultiOperation}. Use this when the number and type
    * of the results is not knowable.
    *
+   * @param <R> the type of the result of the returned
+   * {@link DynamicMultiOperation}
    * @param sql SQL for the {@link Operation}
    * @return a new {@link DynamicMultiOperation} that is a member of this
    * {@link OperationGroup}
@@ -524,50 +514,31 @@ public class PGConnection implements Connection {
   }
 
   /**
-   * Return an {@link Operation} that ends the current database transaction.
-   * After submitting this {@link Operation} there is no current
-   * {@link Transaction}. The transaction is ended with a commit unless the
-   * {@link Transaction} has been {@link Transaction#setRollbackOnly} in which
+   * Return an {@link Operation} that ends the database transaction.
+   * The transaction is ended with a commit unless the {@link Transaction} has
+   * been {@link Transaction#setRollbackOnly} in which
    * case the transaction is ended with a rollback.
    *
-   * If an {@link OperationGroup} has this as a member, the type argument
-   * {@link S} of that {@link OperationGroup} must be a supertype of
-   * {@link TransactionOutcome}.
+   * The type argument of the containing {@link OperationGroup} must be
+   * a supertype of {@link TransactionOutcome}.
    *
-   * @return an Operation that will end the current transaction. This Operation
-   * will end the transaction as specified by the {@link Transaction} that was
-   * current when this Operation was submitted.
-   * @throws IllegalStateException if this {@link OperationGroup} is parallel.
+   * @param trans the Transaction that determines whether the Operation does a
+   * database commit or a database rollback.
+   * @return an {@link Operation} that will end the database transaction.
+   * @throws IllegalStateException if this {@link OperationGroup} has been submitted and
+   * is not held or is parallel.
    */
   @Override
-  public Operation<TransactionOutcome> commitOperation() {
+  public Operation<TransactionOutcome> endTransactionOperation(Transaction trans) {
     return null;
   }
 
   /**
-   * Return an {@link Operation} that rollsback the current database
-   * transaction. After submitting this Operation there is no current
-   * {@link Transaction}. The transaction is ended with a rollback.
-   *
-   * If an {@link OperationGroup} has this as a member, the type argument
-   * {@link S} of that {@link OperationGroup} must be a supertype of
-   * {@link TransactionOutcome}.
-   *
-   * @return the {@link Submission} for an {@link Operation} that will always
-   * rollback the current database transaction.
-   * @throws IllegalStateException if this {@link OperationGroup} is parallel.
-   */
-  @Override
-  public Operation<TransactionOutcome> rollbackOperation() {
-    return null;
-  }
-
-  /**
-   * Return a Runnable Operation
+   * Return a {@link LocalOperation}.
    *
    * @return a LocalOperation
    * @throws IllegalStateException if this OperationGroup has been submitted and
-   *                               is not held
+   * is not held
    */
   @Override
   public LocalOperation<Object> localOperation() {
@@ -575,29 +546,40 @@ public class PGConnection implements Connection {
   }
 
   /**
-   * Provide a {@link Flow.Publisher} that will stream {@link Operation}s to this
-   * {@link OperationGroup}. Use of this method is optional. Any
-   * {@link Operation} passed to {@link Flow.Subscriber#onNext} must be created by
-   * this {@link OperationGroup}. If it is not {@link Flow.Subscriber#onNext} throws
-   * {@link IllegalArgumentException}. {@link Flow.Subscriber#onNext} submits the
-   * {@link Operation} argument, but calling {@link Flow.Subscriber#onNext} is optional. As an
-   * alternative the {@link Flow.Publisher} can call {@link Operation#submit}. Since
-   * {@link Flow.Subscriber#onNext} submits the {@link Operation} only one of the two can be
-   * called otherwise the {@link Operation} is submitted twice. Calling
-   * {@link Operation#submit} decrements the request count so far as the
-   * {@link Flow.Subscriber} is concerned.
+   * Returns a Flow.Processor that subscribes to a sequence of Operations and
+   * produces a sequence of corresponding Submissions. The Operations must be
+   * members of this OperationGroup. Calling Subscription.onNext with any
+   * Operation that is not a member of this OperationGroup, that is was not
+   * created by calling one of the Operation factory methods on this
+   * OperationGroup, will cause the Subscription to be canceled and call
+   * Subscriber.onError with IllegalArgumentException. The method
+   * Subscription.onNext will call submit on each Operation it is passed and
+   * publish the resulting Submission. Since an Operation can only be submitted
+   * once, submitting an Operation and calling onNext with that submitted
+   * Operation will cause the Subscription to be canceled and Subscriber.onError
+   * to be called with IllegalStateException. The Processor does not retain
+   * Submissions to produce to a subsequently attached Subscriber.
    *
-   * ISSUE: This is a hack. The {@code submit} or {@code onNext} alternative is
-   * weird but necessary. Other choices include calling only {@code submit} or
-   * requiring the {@link Flow.Publisher} to call both, {@code onNext} first then
-   * {@code submit}. Neither of those seems better. Calling only {@code onNext}
-   * isn't acceptable as then there is no way to get access to the
-   * {@link Submission} or the {@link CompletableFuture}.
+   * If there is no Subscriber to the Processor, the Processor will request
+   * Operations as appropriate. If there is a Subscriber to the Processor, the
+   * Processor will request Operations no faster than the Subscriber requests
+   * Submissions.
    *
-   * @return this OperationGroup
+   * Each call to this method returns a new Flow.processor. The Submissions
+   * published to each Processor are exactly those generated by calling submit
+   * on the Operations passed as arguments to onNext on the same Processor.
+   * Calling this method while there is an active Processor will throw
+   * IllegalStateException.
+   *
+   * Note: If any Operation is submitted directly, that is by calling submit
+   * rather than passing it to onNext, the Submission returned by the submit
+   * call will not be published.
+   *
+   * @return a Flow.Processor that accepts Operations and generates Submissions
+   * @throws IllegalStateException if there is an active Processor
    */
   @Override
-  public OperationGroup<Object, Object> operationPublisher(Flow.Publisher<Operation> publisher) {
+  public Flow.Processor<Operation<Object>, Submission<Object>> operationProcessor() {
     return null;
   }
 
@@ -611,23 +593,23 @@ public class PGConnection implements Connection {
    * {@link Logger} uses that {@link Logger}.
    *
    * Supplying a {@link Logger} configured with a
-   * {@link MemoryHandler} with the
-   * {@link MemoryHandler#pushLevel} set to
-   * {@link Level#WARNING} will result in no log output in
+   * {@link java.util.logging.MemoryHandler} with the
+   * {@link java.util.logging.MemoryHandler#pushLevel} set to
+   * {@link java.util.logging.Level#WARNING} will result in no log output in
    * normal operation. In the event of an error the actions leading up to the
    * error will be logged.
    *
    * Implementation Note: Implementations are encouraged to log the creation of
-   * this {@link OperationGroup} set to {@link Level#INFO}, the
+   * this {@link OperationGroup} set to {@link java.util.logging.Level#INFO}, the
    * creation of member {@link Operation}s at the
-   * {@link Level#CONFIG} level, and execution of member
-   * {@link Operation}s at the {@link Level#FINE} level.
+   * {@link java.util.logging.Level#CONFIG} level, and execution of member
+   * {@link Operation}s at the {@link java.util.logging.Level#FINE} level.
    * Detailed information about the execution of member {@link Operation}s may
-   * be logged at the {@link Level#FINER} and
-   * {@link Level#FINEST} levels. Errors in the execution of
-   * user code should be logged at the {@link Level#WARNING}
+   * be logged at the {@link java.util.logging.Level#FINER} and
+   * {@link java.util.logging.Level#FINEST} levels. Errors in the execution of
+   * user code should be logged at the {@link java.util.logging.Level#WARNING}
    * Level. Errors in the implementation code should be logged at the
-   * {@link Level#SEVERE} Level.
+   * {@link java.util.logging.Level#SEVERE} Level.
    *
    * @param logger used by the implementation to log significant events
    * @return this {@link OperationGroup}
@@ -642,6 +624,7 @@ public class PGConnection implements Connection {
    * {@link Operation} results in an error, before the Operation is completed,
    * the handler is called with the {@link Throwable} as the argument.
    *
+   * @param handler
    * @return this {@link Operation}
    */
   @Override
@@ -649,8 +632,24 @@ public class PGConnection implements Connection {
     return null;
   }
 
+  /**
+   * The minimum time before this {@link Operation} might be canceled
+   * automatically. The default value is forever. The time is
+   * counted from the beginning of Operation execution. The Operation will not
+   * be canceled before {@code minTime} after the beginning of execution.
+   * Some time at least {@code minTime} after the beginning of execution,
+   * an attempt will be made to cancel the {@link Operation} if it has not yet
+   * completed. Implementations are encouraged to attempt to cancel within a
+   * reasonable time, though what is reasonable is implementation dependent.
+   *
+   * @param minTime minimum time to wait before attempting to cancel
+   * @return this Operation
+   * @throws IllegalArgumentException if minTime &lt;= 0 seconds
+   * @throws IllegalStateException if this method is called more than once on
+   * this operation
+   */
   @Override
-  public OperationGroup<Object, Object> timeout(long milliseconds) {
+  public OperationGroup<Object, Object> timeout(Duration minTime) {
     return null;
   }
 
@@ -663,7 +662,7 @@ public class PGConnection implements Connection {
    *
    * @return a {@link Submission} for this {@link Operation}
    * @throws IllegalStateException if this method is called more than once on
-   *                               this operation
+   * this operation
    */
   @Override
   public Submission<Object> submit() {
