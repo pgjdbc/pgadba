@@ -5,8 +5,8 @@
 
 package org.postgresql.sql2;
 
-import java.sql2.Connection;
-import java.sql2.DataSource;
+import java2.sql2.Connection;
+import java2.sql2.DataSource;
 
 public class PGDataSource implements DataSource {
   /**
