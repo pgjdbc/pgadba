@@ -6,6 +6,7 @@
 package org.postgresql.sql2;
 
 import java2.sql2.Connection;
+import java2.sql2.ConnectionProperty;
 import java2.sql2.DataSource;
 
 public class PGDataSource implements DataSource {

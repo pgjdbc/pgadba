@@ -12,7 +12,8 @@ import java2.sql2.JdbcConnectionProperty;
 public class PGDataSourceTest {
 
   @Test
-  public void builder() {
+  public void builder() throws Exception {
+    Class.forName("org.postgresql.sql2.PGDataSourceFactory", true, ClassLoader.getSystemClassLoader());
     DataSource ds = DataSourceFactory.forName("Postgres Database")
         .builder()
         .url("postgresql:database:@//localhost:5432/test")

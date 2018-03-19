@@ -24,6 +24,8 @@
  */
 package java2.sql2;
 
+import sun.reflect.Reflection;
+
 import java.security.AccessController;
 import java.security.Permission;
 import java.security.PrivilegedAction;
@@ -65,7 +67,7 @@ class DataSourceFactoryManager {
 
         println("DataSourceFactoryManager.getDataSourceFactory(\"" + name + "\")");
 
-        Class<?> callerClass = null; //TODO Reflection.getCallerClass();
+        Class<?> callerClass = Reflection.getCallerClass(1); //TODO Reflection.getCallerClass();
 
         // Walk through the loaded registeredDataSourceFactories attempting to locate
         // one with the given name
