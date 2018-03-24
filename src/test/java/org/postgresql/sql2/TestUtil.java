@@ -1,20 +1,18 @@
 package org.postgresql.sql2;
 
-import static org.junit.Assert.*;
-
-import org.junit.Test;
-
-import java2.sql2.Connection;
 import java2.sql2.DataSource;
 import java2.sql2.DataSourceFactory;
 import java2.sql2.JdbcConnectionProperty;
 
-public class PGDataSourceTest {
+public class TestUtil {
+  public static DataSource openDB() {
+    try {
+      Class.forName("org.postgresql.sql2.PGDataSourceFactory", true, ClassLoader.getSystemClassLoader());
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
+    }
 
-  @Test
-  public void builder() throws Exception {
-    Class.forName("org.postgresql.sql2.PGDataSourceFactory", true, ClassLoader.getSystemClassLoader());
-    DataSource ds = DataSourceFactory.forName("Postgres Database")
+    return DataSourceFactory.forName("Postgres Database")
         .builder()
         .url("postgresql:database:@//localhost:5432/test")
         .username("test")
@@ -22,11 +20,10 @@ public class PGDataSourceTest {
         .connectionProperty(JdbcConnectionProperty.TRANSACTION_ISOLATION,
             JdbcConnectionProperty.TransactionIsolation.REPEATABLE_READ)
         .build();
-    Connection con = ds.getConnection();
-    //con.connect();
+
   }
 
-  @Test
-  public void close() {
+  public static void createTable(DataSource ds, String tab, String id_int, String s, String answer_int) {
+
   }
 }
