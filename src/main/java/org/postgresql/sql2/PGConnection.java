@@ -26,16 +26,40 @@ import java2.sql2.StaticMultiOperation;
 import java2.sql2.Submission;
 import java2.sql2.Transaction;
 import java2.sql2.TransactionOutcome;
+import org.postgresql.sql2.communication.ProtocolV3StateMachine;
+import org.postgresql.sql2.operations.ConnectOperation;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Flow;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collector;
 
 public class PGConnection implements Connection {
+  private Executor executor;
+  private Map<ConnectionProperty, Object> properties;
+
+  private SocketChannel socketChannel;
+  private boolean heldForMoreMember;
+  private ProtocolV3StateMachine protocol = new ProtocolV3StateMachine();
+
+  public PGConnection(Executor executor, Map<ConnectionProperty, Object> properties) {
+    this.executor = executor;
+    this.properties = properties;
+    try {
+      this.socketChannel = SocketChannel.open();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
   /**
    * Returns an {@link Operation} that connects this {@link Connection} to a
    * server. If the Operation completes successfully and the lifecycle is
@@ -66,7 +90,8 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Void> connectOperation() {
-    return null;
+    return new ConnectOperation(socketChannel, (String) properties.get(PGConnectionProperties.HOST),
+        (Integer) properties.get(PGConnectionProperties.PORT));
   }
 
   /**
@@ -353,7 +378,8 @@ public class PGConnection implements Connection {
    */
   @Override
   public OperationGroup<Object, Object> holdForMoreMembers() {
-    return null;
+    this.heldForMoreMember = true;
+    return this;
   }
 
   /**
@@ -667,5 +693,17 @@ public class PGConnection implements Connection {
   @Override
   public Submission<Object> submit() {
     return null;
+  }
+
+  public void visit() {
+    ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+    try {
+      int bytesRead = socketChannel.read(readBuffer);
+      protocol.updateState(readBuffer, bytesRead);
+      while(protocol.hasMoreToWrite())
+        protocol.write(socketChannel);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 }

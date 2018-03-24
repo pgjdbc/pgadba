@@ -49,33 +49,33 @@ public interface Connection extends AutoCloseable, OperationGroup<Object, Object
   public enum Lifecycle {
     /**
      * unconnected. When a connect {@link Operation} is completed successfully
-     * -&gt; {@link OPEN}. If {@link deactivate} is called -&gt;
-     * {@link NEW_INACTIVE}. If {@link abort} is called -&gt; {@link ABORTING}.
+     * -&gt; {@link Lifecycle#OPEN}. If {@link Connection#deactivate} is called -&gt;
+     * {@link Lifecycle#NEW_INACTIVE}. If {@link Connection#abort} is called -&gt; {@link Lifecycle#ABORTING}.
      * No {@link Operation}s other than connect and close will be performed. A
      * Connection in this state is both 'open' and 'active'.
      */
     NEW,
     /**
      * Unconnected and inactive. Any queued connect or close {@link Operation}
-     * is performed. No work can be submitted. If the {@link activate} method is
-     * called -&gt; {@link NEW}. If a connect {@link Operation} completes -&gt;
-     * {@link INACTIVE}. If a close {@link Operation} is executed -&gt;
-     * {@link CLOSING}. If {@link abort} is called -&gt; {@link ABORTING}. A
+     * is performed. No work can be submitted. If the {@link Connection#activate} method is
+     * called -&gt; {@link Lifecycle#NEW}. If a connect {@link Operation} completes -&gt;
+     * {@link Lifecycle#INACTIVE}. If a close {@link Operation} is executed -&gt;
+     * {@link Lifecycle#CLOSING}. If {@link Connection#abort} is called -&gt; {@link Lifecycle#ABORTING}. A
      * Connection in this state is 'open'.
      */
     NEW_INACTIVE,
     /**
-     * fully operational. Work is queued and performed. If {@link deactivate} is
-     * called -&gt; {@link INACTIVE}. If a close {@link Operation} is executed
-     * -&gt; {@link CLOSING}. If {@link abort} is called -&gt; {@link ABORTING}.
+     * fully operational. Work is queued and performed. If {@link Connection#deactivate} is
+     * called -&gt; {@link Lifecycle#INACTIVE}. If a close {@link Operation} is executed
+     * -&gt; {@link Lifecycle#CLOSING}. If {@link Connection#abort} is called -&gt; {@link Lifecycle#ABORTING}.
      * A Connection in this state is both 'open' and 'active'.
      */
     OPEN,
     /**
      * Not available for new work. Queued work is performed. No work can be
-     * submitted. If the {@link activate} method is called -&gt; {@link OPEN}.
-     * If a close {@link Operation} is executed -&gt; {@link CLOSING}. If
-     * {@link abort} is called -&gt; {@link ABORTING}. A {@link Connection} in
+     * submitted. If the {@link Connection#activate} method is called -&gt; {@link Lifecycle#OPEN}.
+     * If a close {@link Operation} is executed -&gt; {@link Lifecycle#CLOSING}. If
+     * {@link Connection#abort} is called -&gt; {@link Lifecycle#ABORTING}. A {@link Connection} in
      * this state is 'open'.
      */
     INACTIVE,
@@ -83,7 +83,7 @@ public interface Connection extends AutoCloseable, OperationGroup<Object, Object
      * Work in progress is completed but no additional work is started or
      * queued. Attempting to queue work throws {@link IllegalStateException}.
      * When the currently executing {@link Operation}s are completed -&gt;
-     * {@link CLOSED}. All other queued Operations are completed exceptionally
+     * {@link Lifecycle#CLOSED}. All other queued Operations are completed exceptionally
      * with SqlSkippedException. A Connection in this state is 'closed'.
      */
     CLOSING,
@@ -93,7 +93,7 @@ public interface Connection extends AutoCloseable, OperationGroup<Object, Object
      * Any queued {@link Operation}s are terminated exceptionally with
      * {@link SqlSkippedException}. Attempting to queue work throws
      * {@link IllegalStateException}. When the queue is empty -&lt;
-     * {@link CLOSED}. A Connection in this state is 'closed'.
+     * {@link Lifecycle#CLOSED}. A Connection in this state is 'closed'.
      */
     ABORTING,
     /**
@@ -118,23 +118,23 @@ public interface Connection extends AutoCloseable, OperationGroup<Object, Object
      */
     NONE,
     /**
-     * {@link NONE} plus check local resources
+     * {@link Validation#NONE} plus check local resources
      */
     LOCAL,
     /**
-     * {@link LOCAL} plus the server isn't obviously unreachable (dead socket)
+     * {@link Validation#LOCAL} plus the server isn't obviously unreachable (dead socket)
      */
     SOCKET,
     /**
-     * {@link SOCKET} plus the network is intact (network PING)
+     * {@link Validation#SOCKET} plus the network is intact (network PING)
      */
     NETWORK,
     /**
-     * {@link NETWORK} plus significant server processes are running
+     * {@link Validation#NETWORK} plus significant server processes are running
      */
     SERVER,
     /**
-     * everything that can be checked is working. At least {@link SERVER}.
+     * everything that can be checked is working. At least {@link Validation#SERVER}.
      */
     COMPLETE;
   }
@@ -195,7 +195,7 @@ public interface Connection extends AutoCloseable, OperationGroup<Object, Object
     /**
      * Return a {@link Connection} with the attributes specified. Note that the
      * {@link Connection} may not be connected to a server. Call one of the
-     * {@link connect} convenience methods to connect the {@link Connection} to
+     * {@link Connection#connect} convenience methods to connect the {@link Connection} to
      * a server. The lifecycle of the new {@link Connection} is {@link Lifecycle#NEW}.
      *
      * @return a {@link Connection}
@@ -215,16 +215,16 @@ public interface Connection extends AutoCloseable, OperationGroup<Object, Object
    * Otherwise the {@link Operation} will complete exceptionally with
    * {@link SqlException}.
    *
-   * Note: It is highly recommended to use the {@link connect()} convenience
+   * Note: It is highly recommended to use the {@link Connection#connect} convenience
    * method or to use {@link DataSource#getConnection} which itself calls
-   * {@link connect()}. Unless there is a specific need, do not call this method
+   * {@link Connection#connect}. Unless there is a specific need, do not call this method
    * directly.
    *
    * This method exists partially to clearly explain that while creating a
    * {@link Connection} is non-blocking, the act of connecting to the server may
    * block and so is executed asynchronously. We could write a bunch of text
    * saying this but defining this method is more explicit. Given the
-   * {@link connect()} convenience methods there's probably not much reason to
+   * {@link Connection#connect} convenience methods there's probably not much reason to
    * use this method, but on the other hand, who knows, so here it is.
    *
    * @return an {@link Operation} that connects this {@link Connection} to a
@@ -240,13 +240,13 @@ public interface Connection extends AutoCloseable, OperationGroup<Object, Object
    *
    * Note: A {@link Connection} is an {@link OperationGroup} and so has some
    * advanced features that most users do not need. Management of these features
-   * is encapsulated in this method and the corresponding {@link close()}
+   * is encapsulated in this method and the corresponding {@link Connection#close}
    * convenience method. The vast majority of users should just use these
    * methods and not worry about the advanced features. The convenience methods
    * do the right thing for the overwhelming majority of use cases. A tiny
    * number of users might want to take advantage of the advanced features that
    * {@link OperationGroup} brings to {@link Connection} and so would call
-   * {@link connectOperation} directly.
+   * {@link Connection#connectOperation} directly.
    *
    * @return this Connection
    * @throws IllegalStateException if this {@link Connection} is in a lifecycle
@@ -334,7 +334,7 @@ public interface Connection extends AutoCloseable, OperationGroup<Object, Object
    * {@link Connection} is held; for more {@link Operation}s.
    *
    * Note: It is highly recommended to use try with resources or the
-   * {@link close()} convenience method. Unless there is a specific need, do not
+   * {@link Connection#close()} convenience method. Unless there is a specific need, do not
    * call this method directly.
    *
    * @return an {@link Operation} that will close this {@link Connection}.
@@ -349,12 +349,12 @@ public interface Connection extends AutoCloseable, OperationGroup<Object, Object
    * Note: A {@link Connection} is an {@link OperationGroup} and so has some
    * advanced features; that most users do not need. Management of these
    * features is encapsulated in this method and the corresponding
-   * {@link connect()} convenience method. The vast majority of users should
+   * {@link Connection#connect()} convenience method. The vast majority of users should
    * just use these methods and not worry about the advanced features. The
    * convenience methods do the right thing for the overwhelming majority of use
    * cases. A tiny number of user might want to take advantage of the advanced
    * features that {@link OperationGroup} brings to {@link Connection} and so
-   * would call {@link closeOperation} directly.
+   * would call {@link Connection#closeOperation} directly.
    *
    * @throws IllegalStateException if the Connection is not active
    */
@@ -426,7 +426,7 @@ public interface Connection extends AutoCloseable, OperationGroup<Object, Object
    * Register a listener that will be called whenever there is a change in the
    * lifecycle of this {@link Connection}.
    *
-   * @param listener. Can be {@code null}.
+   * @param listener Can be {@code null}.
    * @throws IllegalStateException if this Connection is not active
    */
   public void registerLifecycleListener(ConnectionLifecycleListener listener);
@@ -500,8 +500,8 @@ public interface Connection extends AutoCloseable, OperationGroup<Object, Object
    * lifecycle is {@link Lifecycle#OPEN} -&gt; {@link Lifecycle#INACTIVE}. If
    * the lifecycle is {@link Lifecycle#INACTIVE} or
    * {@link Lifecycle#NEW_INACTIVE} this method is a no-op. After calling this
-   * method calling any method other than {@link deactivate}, {@link activate},
-   * {@link abort}, or {@link getLifecycle} or submitting any member
+   * method calling any method other than {@link Connection#deactivate}, {@link Connection#activate},
+   * {@link Connection#abort}, or {@link Connection#getLifecycle} or submitting any member
    * {@link Operation} will throw {@link IllegalStateException}. Local
    * {@link Connection} state not created by {@link Connection.Builder} may not
    * be preserved.
