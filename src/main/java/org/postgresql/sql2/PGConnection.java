@@ -26,11 +26,11 @@ import java2.sql2.StaticMultiOperation;
 import java2.sql2.Submission;
 import java2.sql2.Transaction;
 import java2.sql2.TransactionOutcome;
-import org.postgresql.sql2.communication.ProtocolV3StateMachine;
+import org.postgresql.sql2.communication.ServerStreamReader;
+import org.postgresql.sql2.communication.ServerPacket;
 import org.postgresql.sql2.operations.ConnectOperation;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.time.Duration;
@@ -48,7 +48,7 @@ public class PGConnection implements Connection {
 
   private SocketChannel socketChannel;
   private boolean heldForMoreMember;
-  private ProtocolV3StateMachine protocol = new ProtocolV3StateMachine();
+  private ServerStreamReader protocol = new ServerStreamReader();
 
   public PGConnection(Executor executor, Map<ConnectionProperty, Object> properties) {
     this.executor = executor;
@@ -700,8 +700,12 @@ public class PGConnection implements Connection {
     try {
       int bytesRead = socketChannel.read(readBuffer);
       protocol.updateState(readBuffer, bytesRead);
-      while(protocol.hasMoreToWrite())
-        protocol.write(socketChannel);
+
+      ServerPacket packet = protocol.popPacket();
+
+      if(packet != null) {
+        //parse and do stuff
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }
