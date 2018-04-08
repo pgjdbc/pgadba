@@ -23,7 +23,7 @@ public enum PGConnectionProperties implements ConnectionProperty {
   /**
    * The database name. The default is to connect to a database with the same name as the user name.
    */
-  DATABASE(String.class, "", false),
+  DATABASE(String.class, "test", false),
 
   /**
    * The database user on whose behalf the connection is being made.
@@ -309,7 +309,58 @@ public enum PGConnectionProperties implements ConnectionProperty {
   /**
    * In default mode (disabled) hosts are connected in the given order. If enabled hosts are chosen randomly from the set of suitable candidates.
    */
-  LOAD_BALANCE_HOSTS(Boolean.class, false, false);
+  LOAD_BALANCE_HOSTS(Boolean.class, false, false),
+
+  /* TODO: settings below here are set by the server and should be moved into it's own class i think */
+  /**
+   * the charset that the server sets.
+   */
+  CLIENT_ENCODING(Charset.class, StandardCharsets.UTF_8, false),
+
+  /**
+   * the charset that the server uses.
+   */
+  SERVER_ENCODING(Charset.class, StandardCharsets.UTF_8, false),
+
+  /**
+   * Style of dates set by the server
+   */
+  DATESTYLE(String.class, "", false),
+
+  /**
+   * If the server uses integer of floating point dates
+   */
+  INTEGER_DATETIMES(String.class, "", false),
+
+  /**
+   *
+   */
+  INTERVALSTYLE(String.class, "", false),
+
+  /**
+   *
+   */
+  IS_SUPERUSER(String.class, "", false),
+
+  /**
+   *
+   */
+  SERVER_VERSION(String.class, "", false),
+
+  /**
+   *
+   */
+  SESSION_AUTHORIZATION(String.class, "", false),
+
+  /**
+   *
+   */
+  STANDARD_CONFORMING_STRINGS(String.class, "", false),
+
+  /**
+   *
+   */
+  TIMEZONE(String.class, "", false);
 
   private Class range;
   private Object defaultValue;
@@ -334,5 +385,14 @@ public enum PGConnectionProperties implements ConnectionProperty {
   @Override
   public boolean isSensitive() {
     return sensitive;
+  }
+
+  public static PGConnectionProperties lookup(String name) {
+    for(PGConnectionProperties prop : values()) {
+      if(prop.toString().equalsIgnoreCase(name))
+        return prop;
+    }
+
+    throw new IllegalArgumentException("no property with name: " + name);
   }
 }

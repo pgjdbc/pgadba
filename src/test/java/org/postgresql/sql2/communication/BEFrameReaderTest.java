@@ -11,7 +11,7 @@ import java.util.Collection;
 import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
-public class ServerStreamReaderTest {
+public class BEFrameReaderTest {
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
@@ -37,20 +37,20 @@ public class ServerStreamReaderTest {
   private String packetName;
   private byte[] packet;
 
-  public ServerStreamReaderTest(String packetName, byte[] packet) {
+  public BEFrameReaderTest(String packetName, byte[] packet) {
     this.packetName = packetName;
     this.packet = packet;
   }
 
   @Test
   public void parseNetworkPayload() {
-    ServerStreamReader instance = new ServerStreamReader();
+    BEFrameReader instance = new BEFrameReader();
 
     ByteBuffer bb = ByteBuffer.allocate(1024);
     bb.put(packet);
     instance.updateState(bb, packet.length);
 
-    ServerPacket sp = instance.popPacket();
+    BEFrame sp = instance.popFrame();
 
     assertNotNull(packetName + " could not be parsed", sp);
   }

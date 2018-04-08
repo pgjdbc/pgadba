@@ -1,15 +1,15 @@
 package org.postgresql.sql2.communication;
 
+import org.postgresql.sql2.util.BinaryHelper;
+
 import java.nio.ByteBuffer;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Reads bytes from the stream from the server and produces packages on a stack
  */
-public class ServerStreamReader {
+public class BEFrameReader {
   private enum States {
     BETWEEN,
     READ_TAG,
@@ -30,7 +30,7 @@ public class ServerStreamReader {
   private int payloadRead;
   private byte[] payload;
 
-  private Queue<ServerPacket> packets = new ConcurrentLinkedQueue<>();
+  private Queue<BEFrame> frames = new ConcurrentLinkedQueue<>();
 
   public void updateState(ByteBuffer readBuffer, int bytesRead) {
     readBuffer.flip();
@@ -56,7 +56,7 @@ public class ServerStreamReader {
         case READ_LEN3:
           len4 = readBuffer.get();
 
-          payloadLength = (len1 & 0xFF) << 24 | (len2 & 0xFF) << 16 | (len3 & 0xFF) << 8 | (len4 & 0xFF);
+          payloadLength = BinaryHelper.readInt(len1, len2, len3, len4);
           payload = new byte[payloadLength];
           payloadRead = 0;
 
@@ -66,7 +66,7 @@ public class ServerStreamReader {
           payload[payloadRead] = readBuffer.get();
           payloadRead++;
           if(payloadRead == payloadLength - 4) {
-            packets.add(new ServerPacket(tag, payload));
+            frames.add(new BEFrame(tag, payload));
             state = States.BETWEEN;
           }
           break;
@@ -74,7 +74,7 @@ public class ServerStreamReader {
     }
   }
 
-  public ServerPacket popPacket() {
-    return packets.poll();
+  public BEFrame popFrame() {
+    return frames.poll();
   }
 }

@@ -11,13 +11,15 @@ import java2.sql2.DataSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class PGDataSource implements DataSource {
-  private List<PGConnection> connections = new ArrayList<>();
+  private Queue<PGConnection> connections = new ConcurrentLinkedQueue<>();
   private Executor executor = null;
   private boolean closed;
 
@@ -53,6 +55,7 @@ public class PGDataSource implements DataSource {
     for(PGConnection connection : connections) {
       connection.close();
     }
+    System.out.println("closing connection");
     closed = true;
   }
 

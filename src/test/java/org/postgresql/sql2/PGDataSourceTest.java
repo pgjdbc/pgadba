@@ -24,6 +24,7 @@ public class PGDataSourceTest {
         .build();
     Connection con = ds.getConnection();
     //con.connect();
+    Thread.sleep(10000);
   }
 
   @Test

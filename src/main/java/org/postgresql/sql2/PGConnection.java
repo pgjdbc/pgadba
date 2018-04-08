@@ -26,12 +26,15 @@ import java2.sql2.StaticMultiOperation;
 import java2.sql2.Submission;
 import java2.sql2.Transaction;
 import java2.sql2.TransactionOutcome;
-import org.postgresql.sql2.communication.ServerStreamReader;
-import org.postgresql.sql2.communication.ServerPacket;
+import org.postgresql.sql2.communication.ProtocolV3;
+import org.postgresql.sql2.communication.BEFrameReader;
+import org.postgresql.sql2.communication.BEFrame;
 import org.postgresql.sql2.operations.ConnectOperation;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.NoConnectionPendingException;
+import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.SocketChannel;
 import java.time.Duration;
 import java.util.Map;
@@ -48,11 +51,13 @@ public class PGConnection implements Connection {
 
   private SocketChannel socketChannel;
   private boolean heldForMoreMember;
-  private ServerStreamReader protocol = new ServerStreamReader();
+  private BEFrameReader BEFrameReader = new BEFrameReader();
+  private ProtocolV3 protocol;
 
   public PGConnection(Executor executor, Map<ConnectionProperty, Object> properties) {
     this.executor = executor;
     this.properties = properties;
+    this.protocol = new ProtocolV3(properties);
     try {
       this.socketChannel = SocketChannel.open();
     } catch (IOException e) {
@@ -695,17 +700,34 @@ public class PGConnection implements Connection {
     return null;
   }
 
+  private boolean sentStartPacket = false;
+
   public void visit() {
     ByteBuffer readBuffer = ByteBuffer.allocate(1024);
     try {
-      int bytesRead = socketChannel.read(readBuffer);
-      protocol.updateState(readBuffer, bytesRead);
-
-      ServerPacket packet = protocol.popPacket();
-
-      if(packet != null) {
-        //parse and do stuff
+      if (!socketChannel.finishConnect()) {
+        System.out.println("not finished connecting");
+        return;
+      } else if (!sentStartPacket) {
+        protocol.sendStartupPacket();
+        sentStartPacket = true;
       }
+
+      try {
+        int bytesRead = socketChannel.read(readBuffer);
+        BEFrameReader.updateState(readBuffer, bytesRead);
+      } catch (NotYetConnectedException e) {
+        System.out.println("connection not connected");
+      }
+
+      BEFrame packet;
+      while ((packet = BEFrameReader.popFrame()) != null) {
+        protocol.readPacket(packet);
+      }
+
+      protocol.sendData(socketChannel);
+    } catch (NoConnectionPendingException e) {
+      e.printStackTrace();
     } catch (IOException e) {
       e.printStackTrace();
     }
