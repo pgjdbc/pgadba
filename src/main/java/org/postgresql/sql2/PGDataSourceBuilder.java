@@ -31,6 +31,6 @@ public class PGDataSourceBuilder implements DataSource.Builder {
 
   @Override
   public DataSource build() {
-    return new PGDataSource();
+    return new PGDataSource(properties);
   }
 }

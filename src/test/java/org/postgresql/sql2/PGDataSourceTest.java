@@ -16,7 +16,7 @@ public class PGDataSourceTest {
     Class.forName("org.postgresql.sql2.PGDataSourceFactory", true, ClassLoader.getSystemClassLoader());
     DataSource ds = DataSourceFactory.forName("Postgres Database")
         .builder()
-        .url("postgresql:database:@//localhost:5432/test")
+        .url("jdbc:postgresql://localhost/test")
         .username("test")
         .password("test")
         .connectionProperty(JdbcConnectionProperty.TRANSACTION_ISOLATION,

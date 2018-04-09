@@ -23,7 +23,7 @@ public enum PGConnectionProperties implements ConnectionProperty {
   /**
    * The database name. The default is to connect to a database with the same name as the user name.
    */
-  DATABASE(String.class, "test", false),
+  DATABASE(String.class, "", false),
 
   /**
    * The database user on whose behalf the connection is being made.

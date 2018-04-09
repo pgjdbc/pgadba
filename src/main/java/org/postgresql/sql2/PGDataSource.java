@@ -11,6 +11,7 @@ import java2.sql2.DataSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
@@ -22,8 +23,10 @@ public class PGDataSource implements DataSource {
   private Queue<PGConnection> connections = new ConcurrentLinkedQueue<>();
   private Executor executor = null;
   private boolean closed;
+  private Map<ConnectionProperty, Object> properties;
 
-  public PGDataSource() {
+  public PGDataSource(Map<ConnectionProperty, Object> properties) {
+    this.properties = properties;
     executor = new ThreadPoolExecutor(1, 2, 60, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
     executor.execute(new Runnable() {
       @Override
@@ -65,5 +68,9 @@ public class PGDataSource implements DataSource {
 
   public Executor getExecutor() {
     return executor;
+  }
+
+  public Map<ConnectionProperty, Object> getProperties() {
+    return properties;
   }
 }
