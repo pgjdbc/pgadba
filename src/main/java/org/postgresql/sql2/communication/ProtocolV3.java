@@ -1,6 +1,6 @@
 package org.postgresql.sql2.communication;
 
-import java2.sql2.ConnectionProperty;
+import jdk.incubator.sql2.ConnectionProperty;
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
 import org.postgresql.sql2.communication.packets.ParameterStatus;

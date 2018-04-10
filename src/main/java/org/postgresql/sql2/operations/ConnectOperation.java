@@ -1,7 +1,7 @@
 package org.postgresql.sql2.operations;
 
-import java2.sql2.Operation;
-import java2.sql2.Submission;
+import jdk.incubator.sql2.Operation;
+import jdk.incubator.sql2.Submission;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;

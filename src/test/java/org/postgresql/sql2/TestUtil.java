@@ -1,8 +1,8 @@
 package org.postgresql.sql2;
 
-import java2.sql2.DataSource;
-import java2.sql2.DataSourceFactory;
-import java2.sql2.JdbcConnectionProperty;
+import jdk.incubator.sql2.AdbaConnectionProperty;
+import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.DataSourceFactory;
 
 public class TestUtil {
   public static DataSource openDB() {
@@ -17,8 +17,8 @@ public class TestUtil {
         .url("postgresql:database:@//localhost:5432/test")
         .username("test")
         .password("test")
-        .connectionProperty(JdbcConnectionProperty.TRANSACTION_ISOLATION,
-            JdbcConnectionProperty.TransactionIsolation.REPEATABLE_READ)
+        .connectionProperty(AdbaConnectionProperty.TRANSACTION_ISOLATION,
+            AdbaConnectionProperty.TransactionIsolation.REPEATABLE_READ)
         .build();
 
   }

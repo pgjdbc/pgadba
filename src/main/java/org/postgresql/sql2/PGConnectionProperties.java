@@ -1,6 +1,6 @@
 package org.postgresql.sql2;
 
-import java2.sql2.ConnectionProperty;
+import jdk.incubator.sql2.ConnectionProperty;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -49,7 +49,7 @@ public enum PGConnectionProperties implements ConnectionProperty {
   SSL_FACTORY(Class.class, null, false),
 
   /**
-   * This value is an optional argument to the constructor of the sslfactory class provided above. For more information
+   * This value is an optional argument to the constructor of the ssl factory class provided above. For more information
    * see the section called ?Custom SSLSocketFactory?.
    */
   SSL_FACTORY_ARG(String.class, "", false),
@@ -64,7 +64,7 @@ public enum PGConnectionProperties implements ConnectionProperty {
    *  Information on binary data handling is detailed in Chapter 7, Storing Binary Data. To force the use of Large Objects
    *  set the compatible property to 7.1.
    *
-   *  When compatible is set to 7.4 or below, the default for the stringtype parameter is changed to unspecified.
+   *  When compatible is set to 7.4 or below, the default for the string type parameter is changed to unspecified.
    */
   COMPATIBLE(Float.class, 10.0, false),
 

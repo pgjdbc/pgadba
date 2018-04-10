@@ -1,11 +1,10 @@
 package org.postgresql.sql2.operations;
 
-import java2.sql2.CountOperation;
-import java2.sql2.ParameterizedCountOperation;
-import java2.sql2.Result;
-import java2.sql2.RowOperation;
-import java2.sql2.SqlType;
-import java2.sql2.Submission;
+import jdk.incubator.sql2.ParameterizedCountOperation;
+import jdk.incubator.sql2.Result;
+import jdk.incubator.sql2.RowOperation;
+import jdk.incubator.sql2.SqlType;
+import jdk.incubator.sql2.Submission;
 
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
@@ -24,8 +23,8 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
   }
 
   @Override
-  public ParameterizedCountOperation<R> apply(Function<? super Result.Count, ? extends R> processor) {
-    return this;
+  public ParameterizedCountOperation<R> apply(Function<Result.Count, ? extends R> processor) {
+    return null;
   }
 
   @Override

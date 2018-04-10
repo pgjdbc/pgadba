@@ -1,6 +1,6 @@
 package org.postgresql.sql2.communication;
 
-import java2.sql2.ConnectionProperty;
+import jdk.incubator.sql2.ConnectionProperty;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.postgresql.sql2.PGConnectionProperties;

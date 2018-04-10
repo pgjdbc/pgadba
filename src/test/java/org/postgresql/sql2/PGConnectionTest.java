@@ -1,22 +1,10 @@
 package org.postgresql.sql2;
 
-import java2.sql2.Connection;
-import java2.sql2.DataSource;
-import java2.sql2.JdbcType;
-import org.junit.Before;
+import jdk.incubator.sql2.AdbaType;
+import jdk.incubator.sql2.Connection;
+import jdk.incubator.sql2.DataSource;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collector;
-
-import static org.junit.Assert.*;
 
 public class PGConnectionTest {
 
@@ -30,16 +18,15 @@ public class PGConnectionTest {
         "id int", "name varchar(100)", "answer int");
   }
 
-
   @Test
   public void trivialInsert() {
 
     String sql = "insert into tab(id, name, answer) values (?, ?, ?)";
     try (Connection conn = ds.getConnection()) {
       conn.countOperation(sql)
-          .set("id", 1, JdbcType.NUMERIC)
-          .set("name", "Deep Thought", JdbcType.VARCHAR)
-          .set("answer", 42, JdbcType.NUMERIC)
+          .set("id", 1, AdbaType.NUMERIC)
+          .set("name", "Deep Thought", AdbaType.VARCHAR)
+          .set("answer", 42, AdbaType.NUMERIC)
           .submit();
     }
   }

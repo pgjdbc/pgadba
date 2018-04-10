@@ -1,14 +1,13 @@
 package org.postgresql.sql2;
 
-import java2.sql2.Connection;
-import java2.sql2.ConnectionProperty;
-import java2.sql2.JdbcConnectionProperty;
+import jdk.incubator.sql2.AdbaConnectionProperty;
+import jdk.incubator.sql2.Connection;
+import jdk.incubator.sql2.ConnectionProperty;
 import org.postgresql.sql2.exceptions.PropertyException;
 
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
@@ -25,12 +24,6 @@ public class PGConnectionBuilder implements Connection.Builder {
     for(Map.Entry<ConnectionProperty, Object> prop : dataSource.getProperties().entrySet())
       properties.put(prop.getKey(), prop.getValue());
 
-  }
-
-  @Override
-  public Connection.Builder executor(Executor exec) {
-    this.executor = exec;
-    return this;
   }
 
   @Override
@@ -51,7 +44,7 @@ public class PGConnectionBuilder implements Connection.Builder {
     if(executor == null)
       executor = dataSource.getExecutor();
 
-    Map<ConnectionProperty, Object> props = parseURL((String)properties.get(JdbcConnectionProperty.URL), null);
+    Map<ConnectionProperty, Object> props = parseURL((String)properties.get(AdbaConnectionProperty.URL), null);
 
     if(props != null) {
       for (Map.Entry<ConnectionProperty, Object> prop : props.entrySet()) {

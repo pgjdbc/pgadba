@@ -5,27 +5,28 @@
 package org.postgresql.sql2;
 
 
-import java2.sql2.ArrayCountOperation;
-import java2.sql2.Connection;
-import java2.sql2.ConnectionProperty;
-import java2.sql2.CountOperation;
-import java2.sql2.DataSource;
-import java2.sql2.DynamicMultiOperation;
-import java2.sql2.LocalOperation;
-import java2.sql2.Operation;
-import java2.sql2.OperationGroup;
-import java2.sql2.OutOperation;
-import java2.sql2.ParameterizedCountOperation;
-import java2.sql2.ParameterizedRowOperation;
-import java2.sql2.Result;
-import java2.sql2.RowOperation;
-import java2.sql2.ShardingKey;
-import java2.sql2.SqlException;
-import java2.sql2.SqlSkippedException;
-import java2.sql2.StaticMultiOperation;
-import java2.sql2.Submission;
-import java2.sql2.Transaction;
-import java2.sql2.TransactionOutcome;
+import jdk.incubator.sql2.ArrayCountOperation;
+import jdk.incubator.sql2.Connection;
+import jdk.incubator.sql2.ConnectionProperty;
+import jdk.incubator.sql2.CountOperation;
+import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.DynamicMultiOperation;
+import jdk.incubator.sql2.LocalOperation;
+import jdk.incubator.sql2.Operation;
+import jdk.incubator.sql2.OperationGroup;
+import jdk.incubator.sql2.OutOperation;
+import jdk.incubator.sql2.ParameterizedCountOperation;
+import jdk.incubator.sql2.ParameterizedRowOperation;
+import jdk.incubator.sql2.Result;
+import jdk.incubator.sql2.RowOperation;
+import jdk.incubator.sql2.RowProcessorOperation;
+import jdk.incubator.sql2.ShardingKey;
+import jdk.incubator.sql2.SqlException;
+import jdk.incubator.sql2.SqlSkippedException;
+import jdk.incubator.sql2.StaticMultiOperation;
+import jdk.incubator.sql2.Submission;
+import jdk.incubator.sql2.Transaction;
+import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.communication.ProtocolV3;
 import org.postgresql.sql2.communication.BEFrameReader;
 import org.postgresql.sql2.communication.BEFrame;
@@ -183,19 +184,33 @@ public class PGConnection implements Connection {
    * @throws IllegalStateException if this Connection is not active
    */
   @Override
-  public void registerLifecycleListener(Connection.ConnectionLifecycleListener listener) {
+  public Connection registerLifecycleListener(Connection.ConnectionLifecycleListener listener) {
+    return null;
   }
 
   /**
-   * Removes a listener that was registered by calling registerLifecycleListener.
-   * Sometime after this method returns the listener will stop receiving lifecycle
-   * events. If the listener is not registered, this is a noop.
+   * Removes a listener that was registered by calling
+   * registerLifecycleListener.Sometime after this method is called the listener
+   * will stop receiving lifecycle events. If the listener is not registered,
+   * this is a no-op.
    *
-   * @param listener
+   * @param listener Not {@code null}.
+   * @return this Connection
    * @throws IllegalStateException if this Connection is not active
    */
   @Override
-  public void removeLifecycleListener(Connection.ConnectionLifecycleListener listener) {
+  public Connection deregisterLifecycleListener(ConnectionLifecycleListener listener) {
+    return null;
+  }
+
+  /**
+   * Return the current lifecycle of this {@link Connection}.
+   *
+   * @return the current lifecycle of this {@link Connection}.
+   */
+  @Override
+  public Lifecycle getConnectionLifecycle() {
+    return null;
   }
 
   /**
@@ -211,16 +226,6 @@ public class PGConnection implements Connection {
    */
   @Override
   public Connection abort() {
-    return null;
-  }
-
-  /**
-   * Return the current lifecycle of this {@link Connection}.
-   *
-   * @return the current lifecycle of this {@link Connection}.
-   */
-  @Override
-  public Connection.Lifecycle getLifecycle() {
     return null;
   }
 
@@ -377,14 +382,14 @@ public class PGConnection implements Connection {
    *
    * ISSUE: Need a better name.
    *
-   * @return this OperationGroup
+   * @return a Submission
    * @throws IllegalStateException if this {@link OperationGroup} has been
    * submitted
    */
   @Override
-  public OperationGroup<Object, Object> holdForMoreMembers() {
+  public Submission<Object> submitHoldingForMoreMembers() {
     this.heldForMoreMember = true;
-    return this;
+    return null;
   }
 
   /**
@@ -413,10 +418,10 @@ public class PGConnection implements Connection {
 
   /**
    * Provides a {@link Collector} to reduce the results of the member
-   * {@link Operation}s.The result of this {@link OperationGroup} is the result
-   * of calling finisher on the final accumulated result. If the
+   * {@link Operation}s. The result of this {@link OperationGroup} is the result
+   * of calling finisher on the final accumulated result.If the
    * {@link Collector} is {@link Collector.Characteristics#UNORDERED} the member
-   * {@link Operation} results may be accumulated out of order. If the
+   * {@link Operation} results may be accumulated out of order.If the
    * {@link Collector} is {@link Collector.Characteristics#CONCURRENT} then the
    * member {@link Operation} results may be split into subsets that are reduced
    * separately and then combined. If this {@link OperationGroup} is sequential,
@@ -426,15 +431,28 @@ public class PGConnection implements Connection {
    * parallel the characteristics of the {@link Collector} may influence the
    * execution order of the member {@link Operation}s.
    *
-   * @param <A> the type of the accumulator
-   * @param <S> the type of the final result
+   * The default value is
+   * {@code Collector.of(()->null, (a,t)->{}, (l,r)->null, a->null)}.
+   *
    * @param c the Collector. Not null.
    * @return This OperationGroup
    * @throws IllegalStateException if called more than once or if this
    * {@link OperationGroup} has been submitted
    */
   @Override
-  public <A, S> RowOperation<Object> collect(Collector<? super Result.Row, A, S> c) {
+  public OperationGroup<Object, Object> collect(Collector<Object, ?, Object> c) {
+    return null;
+  }
+
+  /**
+   * Returns an Operation that is never skipped. Skipping stops with a catchOperation
+   * and the subsequent Operation is executed normally. The value of a
+   * catchOperation is always null.
+   *
+   * @return an unskippable Operation;
+   */
+  @Override
+  public Operation<Object> catchOperation() {
     return null;
   }
 
@@ -483,7 +501,7 @@ public class PGConnection implements Connection {
    * {@link OperationGroup}
    */
   @Override
-  public Operation<Void> operation(String sql) {
+  public Operation<Object> operation(String sql) {
     return null;
   }
 
@@ -512,6 +530,11 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> ParameterizedRowOperation<R> rowOperation(String sql) {
+    return null;
+  }
+
+  @Override
+  public <R> RowProcessorOperation<R> rowProcessorOperation(String sql) {
     return null;
   }
 
@@ -659,7 +682,7 @@ public class PGConnection implements Connection {
    * @return this {@link Operation}
    */
   @Override
-  public Operation<Object> onError(Consumer<Throwable> handler) {
+  public OperationGroup<Object, Object> onError(Consumer<Throwable> handler) {
     return null;
   }
 
