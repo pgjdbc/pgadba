@@ -1,13 +1,10 @@
 package org.postgresql.sql2;
 
-import static org.junit.Assert.*;
-
 import jdk.incubator.sql2.AdbaConnectionProperty;
-import org.junit.Test;
-
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.DataSourceFactory;
+import org.junit.Test;
 
 public class PGDataSourceTest {
 
@@ -23,7 +20,6 @@ public class PGDataSourceTest {
         .build();
     Connection con = ds.getConnection();
     //con.connect();
-    Thread.sleep(10000);
   }
 
   @Test

@@ -6,13 +6,13 @@ import org.mockito.ArgumentCaptor;
 import org.postgresql.sql2.PGConnectionProperties;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -25,17 +25,18 @@ public class ProtocolV3Test {
   @Test
   public void doAuthentication() throws IOException {
     Map<ConnectionProperty, Object> properties = new HashMap<>();
-    for(PGConnectionProperties prop : PGConnectionProperties.values())
+    for (PGConnectionProperties prop : PGConnectionProperties.values())
       properties.put(prop, prop.defaultValue());
 
     ProtocolV3 instance = new ProtocolV3(properties);
 
-    BEFrame authRequest = new BEFrame((byte) 0x52, new byte[] {0x00, 0x00, 0x00, 0x05, (byte)0xd9, 0x11, 0x4d, 0x0b});
+    instance.sendStartupPacket();
+
+    BEFrame authRequest = new BEFrame((byte) 0x52, new byte[]{0x00, 0x00, 0x00, 0x05, (byte) 0xd9, 0x11, 0x4d, 0x0b});
 
     instance.doAuthentication(authRequest);
 
     SocketChannel sc = mock(SocketChannel.class);
-
     instance.sendData(sc);
 
     ArgumentCaptor<ByteBuffer> bufferCaptor = ArgumentCaptor.forClass(ByteBuffer.class);
@@ -44,10 +45,7 @@ public class ProtocolV3Test {
     ByteBuffer buf = bufferCaptor.getValue();
     buf.flip();
 
-    byte[] expexted = new byte[] {
-        0x70, 0x00, 0x00, 0x00, 0x28, 0x6d, 0x64, 0x35, 0x33, 0x32, 0x34, 0x37, 0x32, 0x31, 0x63, 0x37,
-        0x32, 0x61, 0x64, 0x62, 0x39, 0x30, 0x33, 0x63, 0x63, 0x39, 0x61, 0x66, 0x30, 0x34, 0x62, 0x61,
-        0x31, 0x31, 0x64, 0x65, 0x39, 0x36, 0x35, 0x39, 0x00 };
-    assertArrayEquals(expexted, buf.array());
+    assertEquals("540003000075736572007465737400646174616261736500006170706c69636174696f6e5f6e616d65006a6176615f73716c325f636c69656e7400636c69656e745f656e636f64696e6700555446380000",
+        new BigInteger(buf.array()).toString(16));
   }
 }

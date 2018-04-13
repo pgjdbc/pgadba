@@ -28,7 +28,6 @@ public class PGConnectionTest {
           .set("$2", "Deep Thought", AdbaType.VARCHAR)
           .set("$3", 42, AdbaType.NUMERIC)
           .submit();
-      Thread.sleep(10000);
     }
   }
 }

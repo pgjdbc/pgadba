@@ -1,7 +1,5 @@
 package org.postgresql.sql2.communication.packets;
 
-import jdk.incubator.sql2.Transaction;
-
 public class ReadyForQuery {
   public enum TransactionStatus {
     IDLE('I'),
