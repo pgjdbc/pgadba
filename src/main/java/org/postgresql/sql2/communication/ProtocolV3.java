@@ -4,6 +4,7 @@ import jdk.incubator.sql2.ConnectionProperty;
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
 import org.postgresql.sql2.communication.packets.ParameterStatus;
+import org.postgresql.sql2.communication.packets.ReadyForQuery;
 import org.postgresql.sql2.util.BinaryHelper;
 
 import java.io.ByteArrayOutputStream;
@@ -21,6 +22,7 @@ public class ProtocolV3 {
   private Map<ConnectionProperty, Object> properties;
 
   private ConcurrentLinkedQueue<FEFrame> outputQue = new ConcurrentLinkedQueue<>();
+  private ConcurrentLinkedQueue<FEFrame> waitToSendQue = new ConcurrentLinkedQueue<>();
 
   public ProtocolV3(Map<ConnectionProperty, Object> properties) {
     this.properties = properties;
@@ -33,9 +35,8 @@ public class ProtocolV3 {
         break;
       case CANCELLATION_KEY_DATA:
         break;
-      case BIND:
-        break;
       case BIND_COMPLETE:
+
         break;
       case CLOSE_COMPLETE:
         break;
@@ -77,6 +78,7 @@ public class ProtocolV3 {
       case PORTAL_SUSPENDED:
         break;
       case READY_FOR_QUERY:
+        doReadyForQuery(packet);
         break;
       case ROW_DESCRIPTION:
         break;
@@ -84,6 +86,9 @@ public class ProtocolV3 {
   }
 
   public synchronized void sendData(SocketChannel socketChannel) {
+    if(outputQue.size() == 0 && waitToSendQue.size() != 0 && currentState == ProtocolV3States.States.IDLE) {
+      outputQue.add(waitToSendQue.poll());
+    }
     if(outputQue.size() != 0) {
       FEFrame packet = outputQue.peek();
 
@@ -100,6 +105,10 @@ public class ProtocolV3 {
         outputQue.poll();
       }
     }
+  }
+
+  public void queFrame(FEFrame frame) {
+    waitToSendQue.add(frame);
   }
 
   public void sendStartupPacket() {
@@ -174,6 +183,14 @@ public class ProtocolV3 {
       case SASL_FINAL:
         break;
     }
+  }
+
+  private void doReadyForQuery(BEFrame packet) {
+    ReadyForQuery readyForQuery = new ReadyForQuery(packet.getPayload());
+
+    //todo handle transaction stuff
+
+    currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.READY_FOR_QUERY);
   }
 
   public void doParameterStatus(BEFrame packet) {

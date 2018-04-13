@@ -19,15 +19,16 @@ public class PGConnectionTest {
   }
 
   @Test
-  public void trivialInsert() {
+  public void trivialInsert() throws InterruptedException {
 
-    String sql = "insert into tab(id, name, answer) values (?, ?, ?)";
+    String sql = "insert into tab(id, name, answer) values ($1, $2, $3)";
     try (Connection conn = ds.getConnection()) {
       conn.countOperation(sql)
-          .set("id", 1, AdbaType.NUMERIC)
-          .set("name", "Deep Thought", AdbaType.VARCHAR)
-          .set("answer", 42, AdbaType.NUMERIC)
+          .set("$1", 1, AdbaType.NUMERIC)
+          .set("$2", "Deep Thought", AdbaType.VARCHAR)
+          .set("$3", 42, AdbaType.NUMERIC)
           .submit();
+      Thread.sleep(10000);
     }
   }
 }

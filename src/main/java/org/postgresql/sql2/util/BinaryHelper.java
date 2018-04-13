@@ -17,6 +17,13 @@ public class BinaryHelper {
     return bb;
   }
 
+  public static byte[] writeShort(short val) {
+    byte[] bb = new byte[2];
+    bb[0] = (byte) (val >>> 8);
+    bb[1] = (byte) (val);
+    return bb;
+  }
+
   /*
    * Turn 16-byte stream into a human-readable 32-byte hex string
    */

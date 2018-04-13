@@ -56,7 +56,6 @@ public class PGDataSource implements DataSource {
     for(PGConnection connection : connections) {
       connection.close();
     }
-    System.out.println("closing connection");
     closed = true;
   }
 

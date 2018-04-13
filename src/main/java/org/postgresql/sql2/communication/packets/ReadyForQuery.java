@@ -1,0 +1,36 @@
+package org.postgresql.sql2.communication.packets;
+
+import jdk.incubator.sql2.Transaction;
+
+public class ReadyForQuery {
+  public enum TransactionStatus {
+    IDLE('I'),
+    OPEN('T'),
+    FAILED('E');
+
+    private byte code;
+
+    TransactionStatus(char code) {
+      this.code = (byte)code;
+    }
+
+    public static TransactionStatus lookup(byte b) {
+      for(TransactionStatus ts : values()) {
+        if(ts.code == b)
+          return ts;
+      }
+
+      throw new IllegalArgumentException("unknown ready for query packet tag: " + b);
+    }
+  }
+
+  private TransactionStatus transactionStatus;
+
+  public ReadyForQuery(byte[] payload) {
+    this.transactionStatus = TransactionStatus.lookup(payload[0]);
+  }
+
+  public TransactionStatus getTransactionStatus() {
+    return transactionStatus;
+  }
+}

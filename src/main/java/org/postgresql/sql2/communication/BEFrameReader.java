@@ -57,7 +57,7 @@ public class BEFrameReader {
           len4 = readBuffer.get();
 
           payloadLength = BinaryHelper.readInt(len1, len2, len3, len4);
-          payload = new byte[payloadLength];
+          payload = new byte[payloadLength - 4];
           payloadRead = 0;
 
           state = States.READ_LEN4;

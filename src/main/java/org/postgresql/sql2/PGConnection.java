@@ -27,10 +27,13 @@ import jdk.incubator.sql2.StaticMultiOperation;
 import jdk.incubator.sql2.Submission;
 import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
+import org.postgresql.sql2.communication.FEFrame;
 import org.postgresql.sql2.communication.ProtocolV3;
 import org.postgresql.sql2.communication.BEFrameReader;
 import org.postgresql.sql2.communication.BEFrame;
 import org.postgresql.sql2.operations.ConnectOperation;
+import org.postgresql.sql2.operations.PGCloseOperation;
+import org.postgresql.sql2.operations.PGCountOperation;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -141,7 +144,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Void> closeOperation() {
-    return null;
+    return new PGCloseOperation();
   }
 
   /**
@@ -489,7 +492,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> ParameterizedCountOperation<R> countOperation(String sql) {
-    return null;
+    return new PGCountOperation<>(this, sql);
   }
 
   /**
@@ -729,7 +732,6 @@ public class PGConnection implements Connection {
     ByteBuffer readBuffer = ByteBuffer.allocate(1024);
     try {
       if (!socketChannel.finishConnect()) {
-        System.out.println("not finished connecting");
         return;
       } else if (!sentStartPacket) {
         protocol.sendStartupPacket();
@@ -740,7 +742,6 @@ public class PGConnection implements Connection {
         int bytesRead = socketChannel.read(readBuffer);
         BEFrameReader.updateState(readBuffer, bytesRead);
       } catch (NotYetConnectedException e) {
-        System.out.println("connection not connected");
       }
 
       BEFrame packet;
@@ -749,10 +750,14 @@ public class PGConnection implements Connection {
       }
 
       protocol.sendData(socketChannel);
-    } catch (NoConnectionPendingException e) {
-      e.printStackTrace();
+    } catch (NoConnectionPendingException ignore) {
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
+
+  public void queFrame(FEFrame frame) {
+    protocol.queFrame(frame);
+  }
+
 }

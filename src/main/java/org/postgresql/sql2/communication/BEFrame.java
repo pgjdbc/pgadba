@@ -4,7 +4,6 @@ public class BEFrame {
   public enum BackendTag {
     AUTHENTICATION('R'),
     CANCELLATION_KEY_DATA('K'),
-    BIND('B'),
     BIND_COMPLETE('2'),
     CLOSE_COMPLETE('3'),
     COMMAND_COMPLETE('C'),

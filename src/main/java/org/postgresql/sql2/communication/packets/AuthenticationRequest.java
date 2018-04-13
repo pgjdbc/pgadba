@@ -37,10 +37,12 @@ public class AuthenticationRequest {
 
   public AuthenticationRequest(byte[] bytes) {
     type = Types.lookup(BinaryHelper.readInt(bytes[0], bytes[1], bytes[2], bytes[3]));
-    salt[0] = bytes[4];
-    salt[1] = bytes[5];
-    salt[2] = bytes[6];
-    salt[3] = bytes[7];
+    if(type == Types.MD5) {
+      salt[0] = bytes[4];
+      salt[1] = bytes[5];
+      salt[2] = bytes[6];
+      salt[3] = bytes[7];
+    }
   }
 
   public byte[] getSalt() {

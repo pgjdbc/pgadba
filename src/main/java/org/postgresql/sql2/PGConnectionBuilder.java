@@ -48,7 +48,6 @@ public class PGConnectionBuilder implements Connection.Builder {
 
     if(props != null) {
       for (Map.Entry<ConnectionProperty, Object> prop : props.entrySet()) {
-        System.out.println("setting " + prop);
         properties.put(prop.getKey(), prop.getValue());
       }
     }

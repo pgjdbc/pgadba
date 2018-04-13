@@ -6,15 +6,9 @@ import jdk.incubator.sql2.DataSourceFactory;
 
 public class TestUtil {
   public static DataSource openDB() {
-    try {
-      Class.forName("org.postgresql.sql2.PGDataSourceFactory", true, ClassLoader.getSystemClassLoader());
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
-
-    return DataSourceFactory.forName("Postgres Database")
+    return DataSourceFactory.forName("org.postgresql.sql2.PGDataSourceFactory")
         .builder()
-        .url("postgresql:database:@//localhost:5432/test")
+        .url("jdbc:postgresql://localhost/test")
         .username("test")
         .password("test")
         .connectionProperty(AdbaConnectionProperty.TRANSACTION_ISOLATION,

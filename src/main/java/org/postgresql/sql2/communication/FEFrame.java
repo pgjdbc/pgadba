@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 
 public class FEFrame {
   public enum FrontendTag {
+    BIND('B'),
+    PARSE('P'),
     PASSWORD_MESSAGE('p'),
     QUERY('Q'),
     SASL_INITIAL_RESPONSE('p'),
