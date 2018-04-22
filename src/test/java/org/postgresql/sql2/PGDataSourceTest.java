@@ -6,6 +6,8 @@ import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.DataSourceFactory;
 import org.junit.Test;
 
+import static org.junit.Assert.assertNotNull;
+
 public class PGDataSourceTest {
 
   @Test
@@ -19,6 +21,8 @@ public class PGDataSourceTest {
             AdbaConnectionProperty.TransactionIsolation.REPEATABLE_READ)
         .build();
     Connection con = ds.getConnection();
+    assertNotNull(con);
+    Thread.sleep(300);
     //con.connect();
   }
 

@@ -1,14 +1,23 @@
 package org.postgresql.sql2.communication;
 
 import jdk.incubator.sql2.ConnectionProperty;
+import jdk.incubator.sql2.SqlException;
+import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnectionProperties;
+import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
 import org.postgresql.sql2.communication.packets.ParameterStatus;
 import org.postgresql.sql2.communication.packets.ReadyForQuery;
+import org.postgresql.sql2.communication.packets.ErrorResponse;
+import org.postgresql.sql2.operations.helpers.FEFrameSerializer;
 import org.postgresql.sql2.util.BinaryHelper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.NoConnectionPendingException;
+import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -21,9 +30,64 @@ public class ProtocolV3 {
   private ConcurrentLinkedQueue<FEFrame> outputQue = new ConcurrentLinkedQueue<>();
   private ConcurrentLinkedQueue<FEFrame> waitToSendQue = new ConcurrentLinkedQueue<>();
 
+  private ConcurrentLinkedQueue<PGSubmission> submissions = new ConcurrentLinkedQueue<>();
+
+  private BEFrameReader BEFrameReader = new BEFrameReader();
+
+  private SocketChannel socketChannel;
+
+  private boolean sentStartPacket = false;
+
   public ProtocolV3(Map<ConnectionProperty, Object> properties) {
     this.properties = properties;
+    try {
+      this.socketChannel = SocketChannel.open();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
+
+  public void visit() {
+    ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+    PGSubmission sub = submissions.peek();
+    if (sub != null) {
+      try {
+        if(sub.isConnectionSubmission() && sub.getSendConsumed().compareAndSet(false, true)) {
+          socketChannel.configureBlocking(false);
+          socketChannel.connect(new InetSocketAddress((String) properties.get(PGConnectionProperties.HOST),
+              (Integer) properties.get(PGConnectionProperties.PORT)));
+        }
+        if (!socketChannel.finishConnect()) {
+          return;
+        } else if (!sentStartPacket) {
+          sendStartupPacket();
+          sentStartPacket = true;
+        }
+
+        if(!sub.isConnectionSubmission() && currentState == ProtocolV3States.States.IDLE && sub.getSendConsumed().compareAndSet(false, true)) {
+          queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql()));
+          queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql()));
+        }
+
+        try {
+          int bytesRead = socketChannel.read(readBuffer);
+          BEFrameReader.updateState(readBuffer, bytesRead);
+        } catch (NotYetConnectedException e) {
+        }
+
+        BEFrame packet;
+        while ((packet = BEFrameReader.popFrame()) != null) {
+          readPacket(packet);
+        }
+
+        sendData(socketChannel);
+      } catch(NoConnectionPendingException ignore){
+      } catch(IOException e){
+        e.printStackTrace();
+      }
+    }
+  }
+
 
   public void readPacket(BEFrame packet) {
     switch (packet.getTag()) {
@@ -54,6 +118,7 @@ public class ProtocolV3 {
       case EMPTY_QUERY_RESPONSE:
         break;
       case ERROR_RESPONSE:
+        doError(packet);
         break;
       case FUNCTION_CALL_RESPONSE:
         break;
@@ -80,6 +145,13 @@ public class ProtocolV3 {
       case ROW_DESCRIPTION:
         break;
     }
+  }
+
+  private void doError(BEFrame packet) {
+    ErrorResponse error = new ErrorResponse(packet.getPayload());
+    Submission sub = submissions.poll();
+    sub.getCompletionStage()
+        .toCompletableFuture().completeExceptionally(new SqlException("", null, "", 0, "", 0));
   }
 
   public synchronized void sendData(SocketChannel socketChannel) {
@@ -146,6 +218,8 @@ public class ProtocolV3 {
 
     switch (req.getType()) {
       case SUCCESS:
+        Submission sub = submissions.poll();
+        sub.getCompletionStage().toCompletableFuture().complete("");
         currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.AUTHENTICATION_SUCCESS);
         break;
       case KERBEROS_V5:
@@ -195,5 +269,9 @@ public class ProtocolV3 {
 
     properties.put(PGConnectionProperties.lookup(parameterStatus.getName()), parameterStatus.getValue());
     currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.PARAMETER_STATUS);
+  }
+
+  public void addSubmission(PGSubmission submission) {
+    submissions.add(submission);
   }
 }

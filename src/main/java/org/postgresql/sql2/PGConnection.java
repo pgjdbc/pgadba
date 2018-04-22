@@ -17,8 +17,6 @@ import jdk.incubator.sql2.OperationGroup;
 import jdk.incubator.sql2.OutOperation;
 import jdk.incubator.sql2.ParameterizedCountOperation;
 import jdk.incubator.sql2.ParameterizedRowOperation;
-import jdk.incubator.sql2.Result;
-import jdk.incubator.sql2.RowOperation;
 import jdk.incubator.sql2.RowProcessorOperation;
 import jdk.incubator.sql2.ShardingKey;
 import jdk.incubator.sql2.SqlException;
@@ -29,19 +27,15 @@ import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.communication.FEFrame;
 import org.postgresql.sql2.communication.ProtocolV3;
-import org.postgresql.sql2.communication.BEFrameReader;
-import org.postgresql.sql2.communication.BEFrame;
 import org.postgresql.sql2.operations.ConnectOperation;
 import org.postgresql.sql2.operations.PGCloseOperation;
 import org.postgresql.sql2.operations.PGCountOperation;
+import org.postgresql.sql2.operations.PGParameterizedRowOperation;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.NoConnectionPendingException;
-import java.nio.channels.NotYetConnectedException;
-import java.nio.channels.SocketChannel;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Flow;
@@ -50,23 +44,47 @@ import java.util.logging.Logger;
 import java.util.stream.Collector;
 
 public class PGConnection implements Connection {
+  protected static final CompletionStage<Object> ROOT = CompletableFuture.completedFuture(null);
+
+  static final Collector DEFAULT_COLLECTOR = Collector.of(
+      () -> null,
+      (a, v) -> {},
+      (a, b) -> null,
+      a -> null);
+
   private Executor executor;
   private Map<ConnectionProperty, Object> properties;
 
-  private SocketChannel socketChannel;
   private boolean heldForMoreMember;
-  private BEFrameReader BEFrameReader = new BEFrameReader();
   private ProtocolV3 protocol;
+
+  private Object accumulator;
+  private Collector collector = DEFAULT_COLLECTOR;
+  protected Consumer<Throwable> errorHandler = null;
+
+  /**
+   * completed when this OperationGroup is no longer held. Completion of this
+   * OperationGroup depends on held.
+   */
+  private final CompletableFuture<Object> held = new CompletableFuture<>();;
+
+  /**
+   * predecessor of all member Operations and the OperationGroup itself
+   */
+  private final CompletableFuture head = new CompletableFuture();;
+
+  /**
+   * The last CompletionStage of any submitted member Operation. Mutable until
+   * not isHeld().
+   */
+  private CompletionStage<Object> memberTail = head;
+
+
 
   public PGConnection(Executor executor, Map<ConnectionProperty, Object> properties) {
     this.executor = executor;
     this.properties = properties;
     this.protocol = new ProtocolV3(properties);
-    try {
-      this.socketChannel = SocketChannel.open();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
   }
 
   /**
@@ -99,8 +117,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Void> connectOperation() {
-    return new ConnectOperation(socketChannel, (String) properties.get(PGConnectionProperties.HOST),
-        (Integer) properties.get(PGConnectionProperties.PORT));
+    return new ConnectOperation((CompletionStage) memberTail, this);
   }
 
   /**
@@ -281,7 +298,7 @@ public class PGConnection implements Connection {
    * the lifecycle is {@link Lifecycle#INACTIVE} or
    * {@link Lifecycle#NEW_INACTIVE} this method is a no-op. After calling this
    * method calling any method other than {@link Connection#deactivate}, {@link Connection#activate},
-   * {@link Connection#abort}, or {@link Connection#getLifecycle} or submitting any member
+   * {@link Connection#abort}, or {@link Connection#getConnectionLifecycle} or submitting any member
    * {@link Operation} will throw {@link IllegalStateException}. Local
    * {@link Connection} state not created by {@link Connection.Builder} may not
    * be preserved.
@@ -492,7 +509,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> ParameterizedCountOperation<R> countOperation(String sql) {
-    return new PGCountOperation<>(this, sql);
+    return new PGCountOperation<R>(this, sql, (CompletionStage) memberTail);
   }
 
   /**
@@ -533,7 +550,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> ParameterizedRowOperation<R> rowOperation(String sql) {
-    return null;
+    return new PGParameterizedRowOperation<>(this, sql);
   }
 
   @Override
@@ -723,41 +740,50 @@ public class PGConnection implements Connection {
    */
   @Override
   public Submission<Object> submit() {
-    return null;
+    accumulator = collector.supplier().get();
+    memberTail = attachErrorHandler(follows(memberTail, executor));
+    return new PGSubmission(this::cancel, memberTail);
   }
 
-  private boolean sentStartPacket = false;
+
+  boolean cancel() {
+    // todo set life cycle to canceled
+    return true;
+  }
+
+  protected CompletionStage<Object> attachErrorHandler(CompletionStage<Object> result) {
+    if (errorHandler != null) {
+      return result.exceptionally(t -> {
+        Throwable ex = unwrapException(t);
+        errorHandler.accept(ex);
+        if (ex instanceof SqlSkippedException) throw (SqlSkippedException)ex;
+        else throw new SqlSkippedException("TODO", ex, null, -1, null, -1);
+      });
+    }
+    else {
+      return result;
+    }
+  }
+
+  static Throwable unwrapException(Throwable ex) {
+    return ex instanceof CompletionException ? ex.getCause() : ex;
+  }
+
+  protected CompletionStage<Object> follows(CompletionStage<?> predecessor, Executor executor) {
+    head.complete(predecessor); // completing head allows members to execute
+    return held.thenCompose( h -> // when held completes memberTail holds the last member
+        memberTail.thenApplyAsync( t -> collector.finisher().apply(accumulator), executor));
+  }
 
   public void visit() {
-    ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-    try {
-      if (!socketChannel.finishConnect()) {
-        return;
-      } else if (!sentStartPacket) {
-        protocol.sendStartupPacket();
-        sentStartPacket = true;
-      }
-
-      try {
-        int bytesRead = socketChannel.read(readBuffer);
-        BEFrameReader.updateState(readBuffer, bytesRead);
-      } catch (NotYetConnectedException e) {
-      }
-
-      BEFrame packet;
-      while ((packet = BEFrameReader.popFrame()) != null) {
-        protocol.readPacket(packet);
-      }
-
-      protocol.sendData(socketChannel);
-    } catch (NoConnectionPendingException ignore) {
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    protocol.visit();
   }
 
   public void queFrame(FEFrame frame) {
     protocol.queFrame(frame);
   }
 
+  public void addSubmissionOnQue(PGSubmission submission) {
+    protocol.addSubmission(submission);
+  }
 }

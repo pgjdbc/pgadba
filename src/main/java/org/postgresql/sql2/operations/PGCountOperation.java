@@ -6,14 +6,10 @@ import jdk.incubator.sql2.RowOperation;
 import jdk.incubator.sql2.SqlType;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
-import org.postgresql.sql2.communication.FEFrame;
+import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.operations.helpers.QueryParameter;
-import org.postgresql.sql2.util.BinaryHelper;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
@@ -23,10 +19,12 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
   private PGConnection connection;
   private String sql;
   private ParameterHolder holder;
+  private CompletionStage<R> memberTail;
 
-  public PGCountOperation(PGConnection connection, String sql) {
+  public PGCountOperation(PGConnection connection, String sql, CompletionStage<R> memberTail) {
     this.connection = connection;
     this.sql = sql;
+    this.memberTail = memberTail;
     this.holder = new ParameterHolder();
   }
 
@@ -76,60 +74,16 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    connection.queFrame(toParsePacket());
-    connection.queFrame(toBindPacket());
-    return null;
+    PGSubmission<R> submission = new PGSubmission<>(this::cancel, memberTail);
+    submission.setConnectionSubmission(false);
+    submission.setSql(sql);
+    submission.setHolder(holder);
+    connection.addSubmissionOnQue(submission);
+    return submission;
   }
 
-  private FEFrame toBindPacket() {
-    try {
-      ByteArrayOutputStream os = new ByteArrayOutputStream();
-      os.write(FEFrame.FrontendTag.BIND.getByte());
-      os.write(0);
-      os.write(0);
-      os.write(0);
-      os.write(0);
-      os.write("name of portal".getBytes(StandardCharsets.UTF_8));
-      os.write(0);
-      os.write("name of query".getBytes(StandardCharsets.UTF_8));
-      os.write(0);
-      os.write(BinaryHelper.writeShort(holder.size()));
-      for(QueryParameter qp : holder.parameters()) {
-        os.write(BinaryHelper.writeShort(qp.getParameterFormatCode()));
-      }
-      os.write(BinaryHelper.writeShort(holder.size()));
-      for(QueryParameter qp : holder.parameters()) {
-        os.write(BinaryHelper.writeInt(qp.getParameterLength()));
-        os.write(qp.getParameter());
-      }
-      os.write(BinaryHelper.writeShort((short) 0));
-      return new FEFrame(os.toByteArray(), false);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new Error(e.getMessage());
-    }
-  }
-
-  private FEFrame toParsePacket() {
-    try {
-      ByteArrayOutputStream os = new ByteArrayOutputStream();
-      os.write(FEFrame.FrontendTag.PARSE.getByte());
-      os.write(0);
-      os.write(0);
-      os.write(0);
-      os.write(0);
-      os.write("name of query".getBytes(StandardCharsets.UTF_8));
-      os.write(0);
-      os.write(sql.getBytes(StandardCharsets.UTF_8));
-      os.write(0);
-      os.write(BinaryHelper.writeShort(holder.size()));
-      for(QueryParameter qp : holder.parameters()) {
-        os.write(BinaryHelper.writeInt(qp.getOID()));
-      }
-      return new FEFrame(os.toByteArray(), false);
-    } catch (IOException e) {
-      e.printStackTrace();
-      throw new Error(e.getMessage());
-    }
+  boolean cancel() {
+    // todo set life cycle to canceled
+    return true;
   }
 }
