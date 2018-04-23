@@ -9,13 +9,13 @@ import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
-public class ConnectOperation implements Operation<Void> {
+public class PGConnectOperation implements Operation<Void> {
   private Consumer<Throwable> errorHandler;
   private Duration minTime;
   private CompletionStage<Void> memberTail;
   private PGConnection connection;
 
-  public ConnectOperation(CompletionStage<Void> memberTail, PGConnection connection) {
+  public PGConnectOperation(CompletionStage<Void> memberTail, PGConnection connection) {
     this.memberTail = memberTail;
     this.connection = connection;
   }
@@ -34,7 +34,7 @@ public class ConnectOperation implements Operation<Void> {
 
   @Override
   public Submission<Void> submit() {
-    PGSubmission submission = new PGSubmission(this::cancel, memberTail);
+    PGSubmission submission = new PGSubmission(this::cancel);
     submission.setConnectionSubmission(true);
     connection.addSubmissionOnQue(submission);
     return submission;

@@ -21,6 +21,7 @@ import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ProtocolV3 {
@@ -150,8 +151,8 @@ public class ProtocolV3 {
   private void doError(BEFrame packet) {
     ErrorResponse error = new ErrorResponse(packet.getPayload());
     Submission sub = submissions.poll();
-    sub.getCompletionStage()
-        .toCompletableFuture().completeExceptionally(new SqlException("", null, "", 0, "", 0));
+    ((CompletableFuture)sub.getCompletionStage())
+        .completeExceptionally(new SqlException("", null, "", 0, "", 0));
   }
 
   public synchronized void sendData(SocketChannel socketChannel) {

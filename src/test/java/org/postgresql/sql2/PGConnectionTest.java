@@ -10,10 +10,14 @@ import jdk.incubator.sql2.Transaction;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collector;
+
+import static junit.framework.TestCase.fail;
 
 public class PGConnectionTest {
 
@@ -28,7 +32,7 @@ public class PGConnectionTest {
   }
 
   @Test
-  public void trivialInsert() throws InterruptedException {
+  public void trivialInsert() {
 
     String sql = "insert into tab(id, name, answer) values ($1, $2, $3)";
     Submission sub;
@@ -39,13 +43,11 @@ public class PGConnectionTest {
           .set("$3", 42, AdbaType.NUMERIC)
           .submit();
     }
-    sub.getCompletionStage()
-        .thenAccept( c -> { System.out.println("updated rows: " + c); } );
-    sub.getCompletionStage()
-        .exceptionally(e -> {
-          System.out.print("exception!" + e.toString());
-          return null;
-        });
+    try {
+      ((CompletableFuture) sub.getCompletionStage()).join();
+      fail("table 'tab' doesn't exist, so an exception should be thrown");
+    } catch (CompletionException e) {
+    }
   }
 
   @Test

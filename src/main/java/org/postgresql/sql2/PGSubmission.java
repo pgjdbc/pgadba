@@ -3,26 +3,21 @@ package org.postgresql.sql2;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
-import java.util.Optional;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 public class PGSubmission<T> implements Submission<T> {
   final private Supplier<Boolean> cancel;
-  final private CompletionStage<T> stage;
-  private CompletionStage<T> publicStage;
+  private CompletableFuture<T> publicStage;
   private boolean connectionSubmission;
   private String sql;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
   private ParameterHolder holder;
 
-  public PGSubmission(Supplier<Boolean> cancel, CompletionStage<T> stage) {
+  public PGSubmission(Supplier<Boolean> cancel) {
     this.cancel = cancel;
-    this.stage = stage;
   }
 
   @Override
@@ -33,7 +28,7 @@ public class PGSubmission<T> implements Submission<T> {
   @Override
   public CompletionStage<T> getCompletionStage() {
     if (publicStage == null)
-      publicStage = ((CompletableFuture<T>) stage).minimalCompletionStage();
+      publicStage = new CompletableFuture<>();
     return publicStage;
   }
 

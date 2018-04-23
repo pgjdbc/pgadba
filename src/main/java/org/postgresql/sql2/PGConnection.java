@@ -27,7 +27,7 @@ import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.communication.FEFrame;
 import org.postgresql.sql2.communication.ProtocolV3;
-import org.postgresql.sql2.operations.ConnectOperation;
+import org.postgresql.sql2.operations.PGConnectOperation;
 import org.postgresql.sql2.operations.PGCloseOperation;
 import org.postgresql.sql2.operations.PGCountOperation;
 import org.postgresql.sql2.operations.PGParameterizedRowOperation;
@@ -117,7 +117,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Void> connectOperation() {
-    return new ConnectOperation((CompletionStage) memberTail, this);
+    return new PGConnectOperation((CompletionStage) memberTail, this);
   }
 
   /**
@@ -509,7 +509,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> ParameterizedCountOperation<R> countOperation(String sql) {
-    return new PGCountOperation<R>(this, sql, (CompletionStage) memberTail);
+    return new PGCountOperation<R>(this, sql);
   }
 
   /**
@@ -742,7 +742,7 @@ public class PGConnection implements Connection {
   public Submission<Object> submit() {
     accumulator = collector.supplier().get();
     memberTail = attachErrorHandler(follows(memberTail, executor));
-    return new PGSubmission(this::cancel, memberTail);
+    return new PGSubmission(this::cancel);
   }
 
 

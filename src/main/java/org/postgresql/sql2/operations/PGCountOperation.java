@@ -19,12 +19,10 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
   private PGConnection connection;
   private String sql;
   private ParameterHolder holder;
-  private CompletionStage<R> memberTail;
 
-  public PGCountOperation(PGConnection connection, String sql, CompletionStage<R> memberTail) {
+  public PGCountOperation(PGConnection connection, String sql) {
     this.connection = connection;
     this.sql = sql;
-    this.memberTail = memberTail;
     this.holder = new ParameterHolder();
   }
 
@@ -74,7 +72,7 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new PGSubmission<>(this::cancel, memberTail);
+    PGSubmission<R> submission = new PGSubmission<>(this::cancel);
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(holder);
