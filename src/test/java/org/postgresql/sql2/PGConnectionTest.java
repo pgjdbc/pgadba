@@ -7,7 +7,9 @@ import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.Submission;
 import jdk.incubator.sql2.Transaction;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -19,12 +21,14 @@ import java.util.stream.Collector;
 import static junit.framework.TestCase.fail;
 
 public class PGConnectionTest {
+  @ClassRule
+  public static PostgreSQLContainer postgres = new PostgreSQLContainer();
 
   private static DataSource ds;
 
   @BeforeClass
   public static void setUp() throws Exception {
-    ds = TestUtil.openDB();
+    ds = TestUtil.openDB(postgres);
 
     TestUtil.createTable(ds, "tab",
         "id int", "name varchar(100)", "answer int");
@@ -52,7 +56,7 @@ public class PGConnectionTest {
   @Test
   public void exampleFromADBAOverJDBCProject() {
     // get a DataSource and a Connection
-    try (DataSource ds = TestUtil.openDB();
+    try (DataSource ds = TestUtil.openDB(postgres);
          Connection conn = ds.getConnection(t -> System.out.println("ERROR: " + t.getMessage()))) {
       // get a Transaction
       Transaction trans = conn.transaction();

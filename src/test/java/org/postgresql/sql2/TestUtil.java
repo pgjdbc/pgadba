@@ -3,14 +3,16 @@ package org.postgresql.sql2;
 import jdk.incubator.sql2.AdbaConnectionProperty;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.DataSourceFactory;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 public class TestUtil {
-  public static DataSource openDB() {
+  public static DataSource openDB(PostgreSQLContainer postgres) {
     return DataSourceFactory.forName("org.postgresql.sql2.PGDataSourceFactory")
         .builder()
-        .url("jdbc:postgresql://localhost/test")
-        .username("test")
-        .password("test")
+        .url("jdbc:postgresql://" + postgres.getContainerIpAddress() + ":" + postgres.getMappedPort(5432) +
+            "/" + postgres.getDatabaseName())
+        .username(postgres.getUsername())
+        .password(postgres.getPassword())
         .connectionProperty(AdbaConnectionProperty.TRANSACTION_ISOLATION,
             AdbaConnectionProperty.TransactionIsolation.REPEATABLE_READ)
         .build();
