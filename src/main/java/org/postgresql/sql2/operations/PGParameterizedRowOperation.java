@@ -5,6 +5,7 @@ import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.SqlType;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
+import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.operations.helpers.QueryParameter;
 
@@ -70,6 +71,16 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
 
   @Override
   public Submission<R> submit() {
-    return null;
+    PGSubmission<R> submission = new PGSubmission<>(this::cancel);
+    submission.setConnectionSubmission(false);
+    submission.setSql(sql);
+    submission.setHolder(holder);
+    connection.addSubmissionOnQue(submission);
+    return submission;
+  }
+
+  private boolean cancel() {
+    // todo set life cycle to canceled
+    return true;
   }
 }

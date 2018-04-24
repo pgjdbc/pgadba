@@ -38,7 +38,7 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
 
   @Override
   public ParameterizedCountOperation<R> apply(Function<Result.Count, ? extends R> processor) {
-    return null;
+    return this;
   }
 
   @Override
@@ -80,7 +80,7 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
     return submission;
   }
 
-  boolean cancel() {
+  private boolean cancel() {
     // todo set life cycle to canceled
     return true;
   }

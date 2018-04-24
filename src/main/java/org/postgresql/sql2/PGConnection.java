@@ -27,10 +27,12 @@ import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.communication.FEFrame;
 import org.postgresql.sql2.communication.ProtocolV3;
+import org.postgresql.sql2.operations.PGCatchOperation;
 import org.postgresql.sql2.operations.PGConnectOperation;
 import org.postgresql.sql2.operations.PGCloseOperation;
 import org.postgresql.sql2.operations.PGCountOperation;
 import org.postgresql.sql2.operations.PGParameterizedRowOperation;
+import org.postgresql.sql2.operations.PGTransactionOperation;
 
 import java.time.Duration;
 import java.util.Map;
@@ -473,7 +475,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Object> catchOperation() {
-    return null;
+    return new PGCatchOperation(this);
   }
 
   /**
@@ -604,7 +606,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<TransactionOutcome> endTransactionOperation(Transaction trans) {
-    return null;
+    return new PGTransactionOperation(this);
   }
 
   /**

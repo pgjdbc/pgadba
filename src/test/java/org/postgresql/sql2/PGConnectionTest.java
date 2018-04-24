@@ -3,7 +3,6 @@ package org.postgresql.sql2;
 import jdk.incubator.sql2.AdbaType;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
-import jdk.incubator.sql2.DataSourceFactory;
 import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.Submission;
 import jdk.incubator.sql2.Transaction;
@@ -52,8 +51,6 @@ public class PGConnectionTest {
 
   @Test
   public void exampleFromADBAOverJDBCProject() {
-    // get the AoJ DataSourceFactory
-    DataSourceFactory factory = DataSourceFactory.forName("com.oracle.adbaoverjdbc.DataSourceFactory");
     // get a DataSource and a Connection
     try (DataSource ds = TestUtil.openDB();
          Connection conn = ds.getConnection(t -> System.out.println("ERROR: " + t.getMessage()))) {
