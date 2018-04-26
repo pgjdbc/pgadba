@@ -511,7 +511,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> ParameterizedCountOperation<R> countOperation(String sql) {
-    return new PGCountOperation<R>(this, sql);
+    return new PGCountOperation<>(this, sql);
   }
 
   /**

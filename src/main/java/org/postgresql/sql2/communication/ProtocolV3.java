@@ -12,6 +12,7 @@ import org.postgresql.sql2.communication.packets.ParameterStatus;
 import org.postgresql.sql2.communication.packets.ReadyForQuery;
 import org.postgresql.sql2.operations.helpers.FEFrameSerializer;
 import org.postgresql.sql2.util.BinaryHelper;
+import org.postgresql.sql2.util.PreparedStatementCache;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,6 +29,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class ProtocolV3 {
   private ProtocolV3States.States currentState = ProtocolV3States.States.NOT_CONNECTED;
   private Map<ConnectionProperty, Object> properties;
+  private PreparedStatementCache preparedStatementCache = new PreparedStatementCache();
 
   private ConcurrentLinkedQueue<FEFrame> outputQue = new ConcurrentLinkedQueue<>();
   private ConcurrentLinkedQueue<FEFrame> waitToSendQue = new ConcurrentLinkedQueue<>();
@@ -68,8 +70,8 @@ public class ProtocolV3 {
 
         if(!sub.isConnectionSubmission() && currentState == ProtocolV3States.States.IDLE
             && sub.getSendConsumed().compareAndSet(false, true)) {
-          queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql()));
-          queFrame(FEFrameSerializer.toBindPacket(sub.getHolder()));
+          queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+          queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
           queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql()));
           queFrame(FEFrameSerializer.toSyncPacket());
         }
