@@ -6,9 +6,10 @@ import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
+import org.postgresql.sql2.communication.packets.CommandComplete;
+import org.postgresql.sql2.communication.packets.ErrorResponse;
 import org.postgresql.sql2.communication.packets.ParameterStatus;
 import org.postgresql.sql2.communication.packets.ReadyForQuery;
-import org.postgresql.sql2.communication.packets.ErrorResponse;
 import org.postgresql.sql2.operations.helpers.FEFrameSerializer;
 import org.postgresql.sql2.util.BinaryHelper;
 
@@ -65,9 +66,12 @@ public class ProtocolV3 {
           sentStartPacket = true;
         }
 
-        if(!sub.isConnectionSubmission() && currentState == ProtocolV3States.States.IDLE && sub.getSendConsumed().compareAndSet(false, true)) {
+        if(!sub.isConnectionSubmission() && currentState == ProtocolV3States.States.IDLE
+            && sub.getSendConsumed().compareAndSet(false, true)) {
           queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql()));
-          queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql()));
+          queFrame(FEFrameSerializer.toBindPacket(sub.getHolder()));
+          queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql()));
+          queFrame(FEFrameSerializer.toSyncPacket());
         }
 
         try {
@@ -98,11 +102,12 @@ public class ProtocolV3 {
       case CANCELLATION_KEY_DATA:
         break;
       case BIND_COMPLETE:
-
+        doBindComplete(packet);
         break;
       case CLOSE_COMPLETE:
         break;
       case COMMAND_COMPLETE:
+        doCommandComplete(packet);
         break;
       case COPY_DATA:
         break;
@@ -137,6 +142,7 @@ public class ProtocolV3 {
         doParameterStatus(packet);
         break;
       case PARSE_COMPLETE:
+        doParseComplete(packet);
         break;
       case PORTAL_SUSPENDED:
         break;
@@ -146,6 +152,24 @@ public class ProtocolV3 {
       case ROW_DESCRIPTION:
         break;
     }
+  }
+
+  private void doCommandComplete(BEFrame packet) {
+    CommandComplete cc = new CommandComplete(packet.getPayload());
+
+    Submission sub = submissions.poll();
+    ((CompletableFuture)sub.getCompletionStage())
+        .complete(cc.getMessage());
+
+    currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.COMMAND_COMPLETE);
+  }
+
+  private void doBindComplete(BEFrame packet) {
+    currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.BIND_COMPLETE);
+  }
+
+  private void doParseComplete(BEFrame packet) {
+    currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.PARSE_COMPLETE);
   }
 
   private void doError(BEFrame packet) {

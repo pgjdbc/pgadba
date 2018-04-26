@@ -60,7 +60,12 @@ public class BEFrameReader {
           payload = new byte[payloadLength - 4];
           payloadRead = 0;
 
-          state = States.READ_LEN4;
+          if(payloadLength - 4 == 0) { // no payload sent, so we short cut this here
+            frames.add(new BEFrame(tag, payload));
+            state = States.BETWEEN;
+          } else {
+            state = States.READ_LEN4;
+          }
           break;
         case READ_LEN4:
           payload[payloadRead] = readBuffer.get();

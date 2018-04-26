@@ -9,7 +9,8 @@ public class ProtocolV3States {
     STARTUP_PACKET_SENT,
     AUTHENTICATION_REQUESTED,
     AUTHENTICATION_SENT,
-    IDLE
+    IDLE,
+    PROCESSING_QUERY
   }
 
   public enum Events {
@@ -19,7 +20,10 @@ public class ProtocolV3States {
     AUTHENTICATION_SUCCESS,
     PARAMETER_STATUS,
     BACKEND_KEY_DATA,
-    READY_FOR_QUERY
+    READY_FOR_QUERY,
+    PARSE_COMPLETE,
+    BIND_COMPLETE,
+    COMMAND_COMPLETE;
   }
 
   private final static Map<States, Map<Events, States>> transitions = new HashMap<>();
@@ -32,6 +36,10 @@ public class ProtocolV3States {
     addTransition(States.AUTHENTICATION_REQUESTED, Events.PARAMETER_STATUS, States.AUTHENTICATION_REQUESTED);
     addTransition(States.AUTHENTICATION_REQUESTED, Events.BACKEND_KEY_DATA, States.AUTHENTICATION_REQUESTED);
     addTransition(States.AUTHENTICATION_REQUESTED, Events.READY_FOR_QUERY, States.IDLE);
+    addTransition(States.IDLE, Events.PARSE_COMPLETE, States.PROCESSING_QUERY);
+    addTransition(States.PROCESSING_QUERY, Events.BIND_COMPLETE, States.PROCESSING_QUERY);
+    addTransition(States.PROCESSING_QUERY, Events.COMMAND_COMPLETE, States.PROCESSING_QUERY);
+    addTransition(States.PROCESSING_QUERY, Events.READY_FOR_QUERY, States.IDLE);
   }
 
   private static void addTransition(States start, Events event, States end) {

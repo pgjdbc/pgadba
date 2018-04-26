@@ -54,6 +54,24 @@ public class PGConnectionTest {
   }
 
   @Test
+  public void createTable() {
+
+    Submission sub;
+    try (Connection conn = ds.getConnection()) {
+      conn.countOperation("create table table1(i int)")
+          .submit();
+      sub = conn.countOperation("insert into table1(i) values(1)")
+          .submit();
+    }
+    try {
+      ((CompletableFuture) sub.getCompletionStage()).join();
+    } catch (CompletionException e) {
+      e.printStackTrace();
+      fail("table 'table1' doesn't exist, so an exception shouldn't be thrown");
+    }
+  }
+
+  @Test
   public void exampleFromADBAOverJDBCProject() {
     // get a DataSource and a Connection
     try (DataSource ds = TestUtil.openDB(postgres);

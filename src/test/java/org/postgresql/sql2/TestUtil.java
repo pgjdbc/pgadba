@@ -16,7 +16,6 @@ public class TestUtil {
         .connectionProperty(AdbaConnectionProperty.TRANSACTION_ISOLATION,
             AdbaConnectionProperty.TransactionIsolation.REPEATABLE_READ)
         .build();
-
   }
 
   public static void createTable(DataSource ds, String tab, String id_int, String s, String answer_int) {
