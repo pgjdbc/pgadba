@@ -161,7 +161,7 @@ public class ProtocolV3 {
 
     Submission sub = submissions.poll();
     ((CompletableFuture)sub.getCompletionStage())
-        .complete(cc.getMessage());
+        .complete(cc.getNumberOfRowsAffected());
 
     currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.COMMAND_COMPLETE);
   }

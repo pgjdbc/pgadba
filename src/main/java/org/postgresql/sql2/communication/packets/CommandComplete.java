@@ -3,13 +3,54 @@ package org.postgresql.sql2.communication.packets;
 import java.nio.charset.StandardCharsets;
 
 public class CommandComplete {
-  private String message;
+  public enum Types {
+    INSERT,
+    DELETE,
+    CREATE_TABLE,
+    UPDATE,
+    SELECT,
+    MOVE,
+    FETCH,
+    COPY
+  }
+  private int numberOfRowsAffected;
+  private Types type;
 
   public CommandComplete(byte[] payload) {
-    message = new String(payload, StandardCharsets.UTF_8);
+    String message = new String(payload, StandardCharsets.UTF_8);
+
+    if(message.startsWith("INSERT")) {
+      type = Types.INSERT;
+      numberOfRowsAffected = Integer.parseInt(message.substring(message.lastIndexOf(" ") + 1, message.length() - 1));
+    } else if(message.startsWith("DELETE")) {
+      type = Types.DELETE;
+      numberOfRowsAffected = Integer.parseInt(message.substring(message.lastIndexOf(" ") + 1, message.length() - 1));
+    } else if(message.startsWith("CREATE TABLE")) {
+      type = Types.CREATE_TABLE;
+      numberOfRowsAffected = 0;
+    } else if(message.startsWith("UPDATE")) {
+      type = Types.UPDATE;
+      numberOfRowsAffected = Integer.parseInt(message.substring(message.lastIndexOf(" ") + 1, message.length() - 1));
+    } else if(message.startsWith("SELECT")) {
+      type = Types.SELECT;
+      numberOfRowsAffected = Integer.parseInt(message.substring(message.lastIndexOf(" ") + 1, message.length() - 1));
+    } else if(message.startsWith("MOVE")) {
+      type = Types.MOVE;
+      numberOfRowsAffected = Integer.parseInt(message.substring(message.lastIndexOf(" ") + 1, message.length() - 1));
+    } else if(message.startsWith("FETCH")) {
+      type = Types.FETCH;
+      numberOfRowsAffected = Integer.parseInt(message.substring(message.lastIndexOf(" ") + 1, message.length() - 1));
+    } else if(message.startsWith("COPY")) {
+      type = Types.COPY;
+      numberOfRowsAffected = Integer.parseInt(message.substring(message.lastIndexOf(" ") + 1, message.length() - 1));
+    }
   }
 
-  public String getMessage() {
-    return message;
+  public int getNumberOfRowsAffected() {
+    return numberOfRowsAffected;
+  }
+
+  public Types getType() {
+    return type;
   }
 }

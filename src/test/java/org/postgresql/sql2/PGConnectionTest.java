@@ -14,11 +14,13 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collector;
 
 import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertEquals;
 
 public class PGConnectionTest {
   @ClassRule
@@ -56,18 +58,16 @@ public class PGConnectionTest {
   @Test
   public void createTable() {
 
-    Submission sub;
     try (Connection conn = ds.getConnection()) {
       conn.countOperation("create table table1(i int)")
           .submit();
-      sub = conn.countOperation("insert into table1(i) values(1)")
-          .submit();
-    }
-    try {
-      ((CompletableFuture) sub.getCompletionStage()).join();
-    } catch (CompletionException e) {
+      CompletionStage<Integer> idF = conn.<Integer>countOperation("insert into table1(i) values(1)")
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Integer.valueOf(1), idF.toCompletableFuture().get());
+    } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
-      fail("table 'table1' doesn't exist, so an exception shouldn't be thrown");
     }
   }
 
