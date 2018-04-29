@@ -8,6 +8,10 @@ public class BinaryHelper {
     return (byte1 & 0xFF) << 24 | (byte2 & 0xFF) << 16 | (byte3 & 0xFF) << 8 | (byte4 & 0xFF);
   }
 
+  public static short readShort(byte b1, byte b2) {
+    return (short) (((b1 & 255) << 8) + ((b2 & 255)));
+  }
+
   public static byte[] writeInt(int val) {
     byte[] bb = new byte[4];
     bb[0] = (byte) (val >>> 24);
@@ -82,5 +86,14 @@ public class BinaryHelper {
     System.arraycopy(source, srcBegin, destination, 0, srcEnd - srcBegin);
 
     return destination;
+  }
+
+  public static int nextNullBytePos(byte[] bytes, int pos) {
+    for(int i = pos; i < bytes.length; i++) {
+      if(bytes[i] == 0) {
+        return i;
+      }
+    }
+    return bytes.length;
   }
 }

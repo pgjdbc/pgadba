@@ -88,4 +88,22 @@ public class FEFrameSerializer {
     os.write(0);
     return new FEFrame(os.toByteArray(), false);
   }
+
+  public static FEFrame toDescribePacket(ParameterHolder holder, String sql, PreparedStatementCache preparedStatementCache) {
+    try {
+      ByteArrayOutputStream os = new ByteArrayOutputStream();
+      os.write(FEFrame.FrontendTag.DESCRIBE.getByte());
+      os.write(0);
+      os.write(0);
+      os.write(0);
+      os.write(0);
+      os.write('S');
+      os.write(preparedStatementCache.getNameForQuery(sql).getBytes(StandardCharsets.UTF_8));
+      os.write(0);
+      return new FEFrame(os.toByteArray(), false);
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw new Error(e.getMessage());
+    }
+  }
 }

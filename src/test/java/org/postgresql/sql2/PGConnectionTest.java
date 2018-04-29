@@ -3,6 +3,7 @@ package org.postgresql.sql2;
 import jdk.incubator.sql2.AdbaType;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.Submission;
 import jdk.incubator.sql2.Transaction;
@@ -61,13 +62,36 @@ public class PGConnectionTest {
     try (Connection conn = ds.getConnection()) {
       conn.countOperation("create table table1(i int)")
           .submit();
-      CompletionStage<Integer> idF = conn.<Integer>countOperation("insert into table1(i) values(1)")
+      CompletionStage<Result.Count> idF = conn.<Result.Count>countOperation("insert into table1(i) values(1)")
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(1), idF.toCompletableFuture().get());
+      assertEquals(1, idF.toCompletableFuture().get().getCount());
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
+    }
+  }
+
+  @Test
+  public void select1() {
+
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100 as t")
+          .collect(Collector.of(
+              () -> new int[1],
+              (a, r) -> {
+                a[0] = r.get("t", Integer.class);
+              },
+              (l, r) -> null,
+              a -> a[0])
+          )
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get());
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+      fail("");
     }
   }
 

@@ -76,6 +76,7 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(holder);
+    submission.setCompletionType(PGSubmission.Types.COUNT);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

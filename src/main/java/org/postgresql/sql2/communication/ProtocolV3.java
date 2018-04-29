@@ -7,11 +7,14 @@ import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
 import org.postgresql.sql2.communication.packets.CommandComplete;
+import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.communication.packets.ErrorResponse;
 import org.postgresql.sql2.communication.packets.ParameterStatus;
 import org.postgresql.sql2.communication.packets.ReadyForQuery;
+import org.postgresql.sql2.communication.packets.RowDescription;
 import org.postgresql.sql2.operations.helpers.FEFrameSerializer;
 import org.postgresql.sql2.util.BinaryHelper;
+import org.postgresql.sql2.util.PGCount;
 import org.postgresql.sql2.util.PreparedStatementCache;
 
 import java.io.ByteArrayOutputStream;
@@ -41,6 +44,11 @@ public class ProtocolV3 {
   private SocketChannel socketChannel;
 
   private boolean sentStartPacket = false;
+
+  private long rowNumber = 0;
+
+  private ConcurrentLinkedQueue<String> descriptionNameQue = new ConcurrentLinkedQueue<>();
+  private ConcurrentLinkedQueue<String> sentSqlNameQue = new ConcurrentLinkedQueue<>();
 
   public ProtocolV3(Map<ConnectionProperty, Object> properties) {
     this.properties = properties;
@@ -72,7 +80,10 @@ public class ProtocolV3 {
             && sub.getSendConsumed().compareAndSet(false, true)) {
           queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
           queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+          queFrame(FEFrameSerializer.toDescribePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+          descriptionNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql()));
           queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql()));
+          sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql()));
           queFrame(FEFrameSerializer.toSyncPacket());
         }
 
@@ -122,6 +133,7 @@ public class ProtocolV3 {
       case COPY_BOTH_RESPONSE:
         break;
       case DATA_ROW:
+        doDataRow(packet);
         break;
       case EMPTY_QUERY_RESPONSE:
         break;
@@ -152,16 +164,38 @@ public class ProtocolV3 {
         doReadyForQuery(packet);
         break;
       case ROW_DESCRIPTION:
+        doRowDescription(packet);
         break;
     }
+  }
+
+  private void doRowDescription(BEFrame packet) {
+    RowDescription rowDescription = new RowDescription(packet.getPayload());
+    String portalName = descriptionNameQue.poll();
+    preparedStatementCache.addDescriptionToPortal(portalName, rowDescription.getDescriptions());
+  }
+
+  private void doDataRow(BEFrame packet) {
+    String portalName = sentSqlNameQue.poll();
+    DataRow row = new DataRow(packet.getPayload(), preparedStatementCache.getDescription(portalName), rowNumber++);
+    PGSubmission sub = submissions.peek();
+    sub.addRow(row);
   }
 
   private void doCommandComplete(BEFrame packet) {
     CommandComplete cc = new CommandComplete(packet.getPayload());
 
-    Submission sub = submissions.poll();
-    ((CompletableFuture)sub.getCompletionStage())
-        .complete(cc.getNumberOfRowsAffected());
+    PGSubmission sub = submissions.poll();
+    switch(sub.getCompletionType()) {
+      case COUNT:
+        ((CompletableFuture)sub.getCompletionStage())
+            .complete(new PGCount(cc.getNumberOfRowsAffected()));
+        break;
+      case ROW:
+        ((CompletableFuture)sub.getCompletionStage())
+            .complete(sub.finish());
+        break;
+    }
 
     currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.COMMAND_COMPLETE);
   }
@@ -284,6 +318,8 @@ public class ProtocolV3 {
   }
 
   private void doReadyForQuery(BEFrame packet) {
+    rowNumber = 0;
+
     ReadyForQuery readyForQuery = new ReadyForQuery(packet.getPayload());
 
     //todo handle transaction stuff

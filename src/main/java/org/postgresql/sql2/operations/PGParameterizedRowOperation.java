@@ -18,6 +18,7 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
   private PGConnection connection;
   private String sql;
   private ParameterHolder holder;
+  private Collector collector;
 
   public PGParameterizedRowOperation(PGConnection connection, String sql) {
     this.connection = connection;
@@ -37,6 +38,7 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
 
   @Override
   public <A, S extends R> ParameterizedRowOperation<R> collect(Collector<? super Result.Row, A, S> c) {
+    collector = c;
     return this;
   }
 
@@ -75,6 +77,8 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(holder);
+    submission.setCompletionType(PGSubmission.Types.ROW);
+    submission.setCollector(collector);
     connection.addSubmissionOnQue(submission);
     return submission;
   }
