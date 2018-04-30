@@ -27,4 +27,14 @@ public class ErrorResponse {
   public List<ErrorResponseField> getFields() {
     return fields;
   }
+
+  public String getField(ErrorResponseField.Types type) {
+    for(ErrorResponseField field : fields) {
+      if(type == field.getType()) {
+        return field.getMessage();
+      }
+    }
+
+    return null;
+  }
 }

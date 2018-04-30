@@ -18,7 +18,11 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
   private PGConnection connection;
   private String sql;
   private ParameterHolder holder;
-  private Collector collector;
+  private Collector collector = Collector.of(
+      () -> null,
+      (a, v) -> {},
+      (a, b) -> null,
+      a -> null);
 
   public PGParameterizedRowOperation(PGConnection connection, String sql) {
     this.connection = connection;

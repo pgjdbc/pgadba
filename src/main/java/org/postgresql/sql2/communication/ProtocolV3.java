@@ -29,6 +29,12 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.DETAIL;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.HINT;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.MESSAGE;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.SEVERITY;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.SQLSTATE_CODE;
+
 public class ProtocolV3 {
   private ProtocolV3States.States currentState = ProtocolV3States.States.NOT_CONNECTED;
   private Map<ConnectionProperty, Object> properties;
@@ -211,9 +217,22 @@ public class ProtocolV3 {
 
   private void doError(BEFrame packet) {
     ErrorResponse error = new ErrorResponse(packet.getPayload());
+
+    StringBuilder message = new StringBuilder("Severity: " + error.getField(SEVERITY) +
+        "\nMessage: " + error.getField(MESSAGE));
+
+    if(error.getField(DETAIL) != null)
+      message.append("\nDetail: ").append(error.getField(DETAIL));
+    if(error.getField(HINT) != null)
+      message.append("\nHint: ").append(error.getField(HINT));
+
     Submission sub = submissions.poll();
+
+    SqlException exception = new SqlException(message.toString(), null, error.getField(SQLSTATE_CODE), 0,
+        ((PGSubmission) sub).getSql(), 0);
+
     ((CompletableFuture)sub.getCompletionStage())
-        .completeExceptionally(new SqlException("", null, "", 0, "", 0));
+        .completeExceptionally(exception);
   }
 
   public synchronized void sendData(SocketChannel socketChannel) {
