@@ -7,6 +7,7 @@ public class CommandComplete {
     INSERT,
     DELETE,
     CREATE_TABLE,
+    CREATE_TYPE,
     UPDATE,
     SELECT,
     MOVE,
@@ -27,6 +28,9 @@ public class CommandComplete {
       numberOfRowsAffected = Integer.parseInt(message.substring(message.lastIndexOf(" ") + 1, message.length() - 1));
     } else if(message.startsWith("CREATE TABLE")) {
       type = Types.CREATE_TABLE;
+      numberOfRowsAffected = 0;
+    } else if(message.startsWith("CREATE TYPE")) {
+      type = Types.CREATE_TYPE;
       numberOfRowsAffected = 0;
     } else if(message.startsWith("UPDATE")) {
       type = Types.UPDATE;

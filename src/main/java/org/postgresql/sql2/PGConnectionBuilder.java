@@ -6,6 +6,7 @@ import jdk.incubator.sql2.ConnectionProperty;
 import org.postgresql.sql2.exceptions.PropertyException;
 
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -80,7 +81,7 @@ public class PGConnectionBuilder implements Connection.Builder {
       if (slash == -1) {
         return null;
       }
-      urlProps.put(PGConnectionProperties.DATABASE, URLDecoder.decode(urlServer.substring(slash + 1)));
+      urlProps.put(PGConnectionProperties.DATABASE, URLDecoder.decode(urlServer.substring(slash + 1), StandardCharsets.UTF_8));
 
       String[] addresses = urlServer.substring(0, slash).split(",");
       StringBuilder hosts = new StringBuilder();
@@ -121,7 +122,7 @@ public class PGConnectionBuilder implements Connection.Builder {
         urlProps.put(PGConnectionProperties.HOST, "localhost");
       }
       if (defaults == null || !defaults.containsKey(PGConnectionProperties.DATABASE.name())) {
-        urlProps.put(PGConnectionProperties.DATABASE, URLDecoder.decode(urlServer));
+        urlProps.put(PGConnectionProperties.DATABASE, URLDecoder.decode(urlServer, StandardCharsets.UTF_8));
       }
     }
 
@@ -135,7 +136,7 @@ public class PGConnectionBuilder implements Connection.Builder {
       if (pos == -1) {
         urlProps.put(PGConnectionProperties.lookup(token), "");
       } else {
-        urlProps.put(PGConnectionProperties.lookup(token.substring(0, pos)), URLDecoder.decode(token.substring(pos + 1)));
+        urlProps.put(PGConnectionProperties.lookup(token.substring(0, pos)), URLDecoder.decode(token.substring(pos + 1), StandardCharsets.UTF_8));
       }
     }
 

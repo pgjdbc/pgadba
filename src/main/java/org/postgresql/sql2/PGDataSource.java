@@ -19,20 +19,17 @@ import java.util.concurrent.TimeUnit;
 
 public class PGDataSource implements DataSource {
   private Queue<PGConnection> connections = new ConcurrentLinkedQueue<>();
-  private Executor executor = null;
+  private Executor executor;
   private boolean closed;
   private Map<ConnectionProperty, Object> properties;
 
   public PGDataSource(Map<ConnectionProperty, Object> properties) {
     this.properties = properties;
     executor = new ThreadPoolExecutor(1, 2, 60, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
-    executor.execute(new Runnable() {
-      @Override
-      public void run() {
-        while (!closed) {
-          for(PGConnection connection : connections) {
-            connection.visit();
-          }
+    executor.execute(() -> {
+      while (!closed) {
+        for(PGConnection connection : connections) {
+          connection.visit();
         }
       }
     });

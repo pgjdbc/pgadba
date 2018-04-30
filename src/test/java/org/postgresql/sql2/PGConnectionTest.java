@@ -73,29 +73,6 @@ public class PGConnectionTest {
   }
 
   @Test
-  public void select1() {
-
-    try (Connection conn = ds.getConnection()) {
-      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100 as t")
-          .collect(Collector.of(
-              () -> new int[1],
-              (a, r) -> {
-                a[0] = r.get("t", Integer.class);
-              },
-              (l, r) -> null,
-              a -> a[0])
-          )
-          .submit()
-          .getCompletionStage();
-
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get());
-    } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
-      fail("");
-    }
-  }
-
-  @Test
   public void exampleFromADBAOverJDBCProject() {
     // get a DataSource and a Connection
     try (DataSource ds = TestUtil.openDB(postgres);

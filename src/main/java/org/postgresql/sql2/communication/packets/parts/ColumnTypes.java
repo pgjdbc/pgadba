@@ -172,7 +172,7 @@ public enum ColumnTypes {
   _REGNAMESPACE(4090, TextParser::array_out, BinaryParser::array_send),
   REGROLE(4096, TextParser::regroleout, BinaryParser::regrolesend),
   _REGROLE(4097, TextParser::array_out, BinaryParser::array_send),
-  OTHER(0, null, null);
+  OTHER(0, TextParser::passthrough, null);
 
   private final int oid;
   private final Function<String, Object> textParser;

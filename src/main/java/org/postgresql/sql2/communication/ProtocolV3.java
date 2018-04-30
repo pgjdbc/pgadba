@@ -176,7 +176,7 @@ public class ProtocolV3 {
   }
 
   private void doDataRow(BEFrame packet) {
-    String portalName = sentSqlNameQue.poll();
+    String portalName = sentSqlNameQue.peek();
     DataRow row = new DataRow(packet.getPayload(), preparedStatementCache.getDescription(portalName), rowNumber++);
     PGSubmission sub = submissions.peek();
     sub.addRow(row);
@@ -192,6 +192,7 @@ public class ProtocolV3 {
             .complete(new PGCount(cc.getNumberOfRowsAffected()));
         break;
       case ROW:
+        sentSqlNameQue.poll();
         ((CompletableFuture)sub.getCompletionStage())
             .complete(sub.finish());
         break;
