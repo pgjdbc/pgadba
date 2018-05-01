@@ -35,8 +35,11 @@ public class DataRow implements Result.Row {
       throw new IllegalArgumentException("no column with id " + id);
     }
 
-    switch (tc.getColumnDescription().getFormatCode()){
+    if(tc.getStart() > tc.getStop()) { // handle the null special case
+      return null;
+    }
 
+    switch (tc.getColumnDescription().getFormatCode()){
       case TEXT:
         String data = new String(BinaryHelper.subBytes(tc.getBytes(), tc.getStart(), tc.getStop()), StandardCharsets.UTF_8);
         return (T)tc.getColumnDescription().getColumnType().getTextParser().apply(data);

@@ -27,8 +27,13 @@ public class FEFrameSerializer {
       }
       os.write(BinaryHelper.writeShort(holder.size()));
       for(QueryParameter qp : holder.parameters()) {
-        os.write(BinaryHelper.writeInt(qp.getParameterLength()));
-        os.write(qp.getParameter());
+        byte[] paramData = qp.getParameter();
+        if(paramData.length == 0) { //handling the null special case
+          os.write(BinaryHelper.writeInt(-1));
+        } else {
+          os.write(BinaryHelper.writeInt(paramData.length));
+          os.write(paramData);
+        }
       }
       os.write(BinaryHelper.writeShort((short) 0));
       return new FEFrame(os.toByteArray(), false);

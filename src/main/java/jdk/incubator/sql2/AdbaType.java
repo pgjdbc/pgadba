@@ -34,7 +34,7 @@ package jdk.incubator.sql2;
  */
 public enum AdbaType implements SqlType {
     
-        /**
+    /**
      * Identifies the generic SQL type {@code BIT}.
      */
     BIT,

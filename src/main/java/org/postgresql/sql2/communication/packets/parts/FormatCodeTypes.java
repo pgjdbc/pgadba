@@ -19,4 +19,8 @@ public enum FormatCodeTypes {
 
     throw new IllegalArgumentException("no FormatType with code: " + code);
   }
+
+  public short getCode() {
+    return code;
+  }
 }
