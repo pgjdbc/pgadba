@@ -90,6 +90,10 @@ public class PGSubmission<T> implements Submission<T> {
   }
 
   public void addRow(DataRow row) {
-    collector.accumulator().accept(collectorHolder, row);
+    try {
+      collector.accumulator().accept(collectorHolder, row);
+    } catch (Throwable e) {
+      publicStage.completeExceptionally(e);
+    }
   }
 }
