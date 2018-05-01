@@ -42,11 +42,11 @@ public enum PGAdbaType implements SqlType {
   /**
    * Identifies the generic SQL type {@code NUMERIC}.
    */
-  NUMERIC("numeric", 1700, AdbaType.NUMERIC, BinaryGenerator::fromBigDecimal, FormatCodeTypes.BINARY),
+  NUMERIC("numeric", 1700, AdbaType.NUMERIC, BinaryGenerator::fromBigDecimal, FormatCodeTypes.TEXT),
   /**
    * Identifies the generic SQL type {@code DECIMAL}.
    */
-  DECIMAL("numeric", 1700, AdbaType.DECIMAL, BinaryGenerator::fromBigDecimal, FormatCodeTypes.BINARY),
+  DECIMAL("numeric", 1700, AdbaType.DECIMAL, BinaryGenerator::fromBigDecimal, FormatCodeTypes.TEXT),
   /**
    * Identifies the generic SQL type {@code CHAR}.
    */

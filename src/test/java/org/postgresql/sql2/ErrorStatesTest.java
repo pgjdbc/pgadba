@@ -3,6 +3,7 @@ package org.postgresql.sql2;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.SqlException;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -27,6 +28,12 @@ public class ErrorStatesTest {
 
     TestUtil.createTable(ds, "tab",
         "id int", "name varchar(100)", "answer int");
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    ds.close();
+    postgres.close();
   }
 
   @Test

@@ -2,6 +2,8 @@ package org.postgresql.sql2.communication.packets.parsers;
 
 import org.postgresql.sql2.util.BinaryHelper;
 
+import java.nio.charset.StandardCharsets;
+
 public class BinaryGenerator {
   public static byte[] fromBit(Object input) {
     return null;
@@ -38,6 +40,9 @@ public class BinaryGenerator {
   }
 
   public static byte[] fromBigDecimal(Object input) {
+    if(input instanceof Number) {
+      return input.toString().getBytes(StandardCharsets.UTF_8);
+    }
     return null;
   }
 
@@ -46,7 +51,7 @@ public class BinaryGenerator {
   }
 
   public static byte[] fromString(Object input) {
-    return null;
+    return ((String)input).getBytes(StandardCharsets.UTF_8);
   }
 
   public static byte[] fromLocalDate(Object input) {

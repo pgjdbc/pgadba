@@ -7,6 +7,7 @@ import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.Submission;
 import jdk.incubator.sql2.Transaction;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -30,11 +31,17 @@ public class PGConnectionTest {
   private static DataSource ds;
 
   @BeforeClass
-  public static void setUp() throws Exception {
+  public static void setUp() {
     ds = TestUtil.openDB(postgres);
 
     TestUtil.createTable(ds, "tab",
         "id int", "name varchar(100)", "answer int");
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    ds.close();
+    postgres.close();
   }
 
   @Test

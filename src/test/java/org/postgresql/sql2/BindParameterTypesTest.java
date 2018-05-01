@@ -2,6 +2,7 @@ package org.postgresql.sql2;
 
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -24,6 +25,12 @@ public class BindParameterTypesTest {
   @BeforeClass
   public static void setUp() {
     ds = TestUtil.openDB(postgres);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    ds.close();
+    postgres.close();
   }
 
   @Test
