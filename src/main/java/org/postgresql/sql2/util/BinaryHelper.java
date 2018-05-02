@@ -12,6 +12,19 @@ public class BinaryHelper {
     return (short) (((b1 & 255) << 8) + ((b2 & 255)));
   }
 
+  public static byte[] writeLong(long val) {
+    byte[] bb = new byte[8];
+    bb[0] = (byte) (val >>> 56);
+    bb[1] = (byte) (val >>> 48);
+    bb[2] = (byte) (val >>> 40);
+    bb[3] = (byte) (val >>> 32);
+    bb[4] = (byte) (val >>> 24);
+    bb[5] = (byte) (val >>> 16);
+    bb[6] = (byte) (val >>> 8);
+    bb[7] = (byte) (val);
+    return bb;
+  }
+
   public static byte[] writeInt(int val) {
     byte[] bb = new byte[4];
     bb[0] = (byte) (val >>> 24);

@@ -72,10 +72,10 @@ public class BindParameterTypesTest {
   @Test
   public void selectInteger2() throws ExecutionException, InterruptedException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int2 as t")
+      CompletionStage<Short> idF = conn.<Short>rowOperation("select $1::int2 as t")
           .set("$1", 100, PGAdbaType.SMALLINT)
           .collect(Collector.of(
-              () -> new int[1],
+              () -> new short[1],
               (a, r) -> a[0] = r.get("t", Short.class),
               (l, r) -> null,
               a -> a[0])
@@ -83,7 +83,79 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get());
+      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get());
+    }
+  }
+
+  @Test
+  public void selectInteger8() throws ExecutionException, InterruptedException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Long> idF = conn.<Long>rowOperation("select $1::int8 as t")
+          .set("$1", 100, PGAdbaType.BIGINT)
+          .collect(Collector.of(
+              () -> new long[1],
+              (a, r) -> a[0] = r.get("t", Long.class),
+              (l, r) -> null,
+              a -> a[0])
+          )
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get());
+    }
+  }
+
+  @Test
+  public void selectVarchar() throws ExecutionException, InterruptedException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
+          .set("$1", "a text I wrote", PGAdbaType.VARCHAR)
+          .collect(Collector.of(
+              () -> new String[1],
+              (a, r) -> a[0] = r.get("t", String.class),
+              (l, r) -> null,
+              a -> a[0])
+          )
+          .submit()
+          .getCompletionStage();
+
+      assertEquals("a text I wrote", idF.toCompletableFuture().get());
+    }
+  }
+
+  @Test
+  public void selectChar() throws ExecutionException, InterruptedException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
+          .set("$1", 'R', PGAdbaType.CHAR)
+          .collect(Collector.of(
+              () -> new Character[1],
+              (a, r) -> a[0] = r.get("t", Character.class),
+              (l, r) -> null,
+              a -> a[0])
+          )
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get());
+    }
+  }
+
+  @Test
+  public void selectCharNorwegianChar() throws ExecutionException, InterruptedException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
+          .set("$1", 'Ø', PGAdbaType.CHAR)
+          .collect(Collector.of(
+              () -> new Character[1],
+              (a, r) -> a[0] = r.get("t", Character.class),
+              (l, r) -> null,
+              a -> a[0])
+          )
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get());
     }
   }
 

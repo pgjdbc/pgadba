@@ -3,6 +3,8 @@ version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
 
+compileJava.options.encoding = 'UTF-8'
+
 sourceCompatibility = "1.10"
 targetCompatibility = "1.10"
 

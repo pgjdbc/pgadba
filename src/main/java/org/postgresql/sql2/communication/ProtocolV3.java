@@ -70,7 +70,7 @@ public class ProtocolV3 {
     PGSubmission sub = submissions.peek();
     if (sub != null) {
       try {
-        if(sub.isConnectionSubmission() && sub.getSendConsumed().compareAndSet(false, true)) {
+        if (sub.isConnectionSubmission() && sub.getSendConsumed().compareAndSet(false, true)) {
           socketChannel.configureBlocking(false);
           socketChannel.connect(new InetSocketAddress((String) properties.get(PGConnectionProperties.HOST),
               (Integer) properties.get(PGConnectionProperties.PORT)));
@@ -82,7 +82,7 @@ public class ProtocolV3 {
           sentStartPacket = true;
         }
 
-        if(!sub.isConnectionSubmission() && currentState == ProtocolV3States.States.IDLE
+        if (!sub.isConnectionSubmission() && currentState == ProtocolV3States.States.IDLE
             && sub.getSendConsumed().compareAndSet(false, true)) {
           queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
           queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
@@ -105,9 +105,10 @@ public class ProtocolV3 {
         }
 
         sendData(socketChannel);
-      } catch(NoConnectionPendingException ignore){
-      } catch(IOException e){
-        e.printStackTrace();
+      } catch (NoConnectionPendingException ignore) {
+      } catch (Throwable e) {
+        ((CompletableFuture) sub.getCompletionStage())
+            .completeExceptionally(e);
       }
     }
   }
@@ -192,14 +193,14 @@ public class ProtocolV3 {
     CommandComplete cc = new CommandComplete(packet.getPayload());
 
     PGSubmission sub = submissions.poll();
-    switch(sub.getCompletionType()) {
+    switch (sub.getCompletionType()) {
       case COUNT:
-        ((CompletableFuture)sub.getCompletionStage())
+        ((CompletableFuture) sub.getCompletionStage())
             .complete(new PGCount(cc.getNumberOfRowsAffected()));
         break;
       case ROW:
         sentSqlNameQue.poll();
-        ((CompletableFuture)sub.getCompletionStage())
+        ((CompletableFuture) sub.getCompletionStage())
             .complete(sub.finish());
         break;
     }
@@ -221,9 +222,9 @@ public class ProtocolV3 {
     StringBuilder message = new StringBuilder("Severity: " + error.getField(SEVERITY) +
         "\nMessage: " + error.getField(MESSAGE));
 
-    if(error.getField(DETAIL) != null)
+    if (error.getField(DETAIL) != null)
       message.append("\nDetail: ").append(error.getField(DETAIL));
-    if(error.getField(HINT) != null)
+    if (error.getField(HINT) != null)
       message.append("\nHint: ").append(error.getField(HINT));
 
     Submission sub = submissions.poll();
@@ -231,18 +232,18 @@ public class ProtocolV3 {
     SqlException exception = new SqlException(message.toString(), null, error.getField(SQLSTATE_CODE), 0,
         ((PGSubmission) sub).getSql(), 0);
 
-    ((CompletableFuture)sub.getCompletionStage())
+    ((CompletableFuture) sub.getCompletionStage())
         .completeExceptionally(exception);
   }
 
   public synchronized void sendData(SocketChannel socketChannel) {
-    if(outputQue.size() == 0 && waitToSendQue.size() != 0 && currentState == ProtocolV3States.States.IDLE) {
+    if (outputQue.size() == 0 && waitToSendQue.size() != 0 && currentState == ProtocolV3States.States.IDLE) {
       outputQue.add(waitToSendQue.poll());
     }
-    if(outputQue.size() != 0) {
+    if (outputQue.size() != 0) {
       FEFrame packet = outputQue.peek();
 
-      if(packet == null) {
+      if (packet == null) {
         return;
       }
 
@@ -251,7 +252,7 @@ public class ProtocolV3 {
       } catch (IOException e) {
         e.printStackTrace();
       }
-      if(!packet.hasRemaining()) {
+      if (!packet.hasRemaining()) {
         outputQue.poll();
       }
     }

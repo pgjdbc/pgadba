@@ -50,7 +50,7 @@ public enum PGAdbaType implements SqlType {
   /**
    * Identifies the generic SQL type {@code CHAR}.
    */
-  CHAR("char", 18, AdbaType.CHAR, BinaryGenerator::fromChar, FormatCodeTypes.TEXT),
+  CHAR("char", 1042, AdbaType.CHAR, BinaryGenerator::fromChar, FormatCodeTypes.TEXT),
   /**
    * Identifies the generic SQL type {@code VARCHAR}.
    */

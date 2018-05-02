@@ -28,7 +28,7 @@ public class BinaryGenerator {
   }
 
   public static byte[] fromBigInt(Object input) {
-    return null;
+    return BinaryHelper.writeLong(((Number)input).longValue());
   }
 
   public static byte[] fromFloat(Object input) {
@@ -47,6 +47,9 @@ public class BinaryGenerator {
   }
 
   public static byte[] fromChar(Object input) {
+    if(input instanceof Character) {
+      return ((Character) input).toString().getBytes(StandardCharsets.UTF_8);
+    }
     return null;
   }
 
