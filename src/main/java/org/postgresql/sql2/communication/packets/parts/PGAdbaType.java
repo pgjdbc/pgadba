@@ -170,7 +170,7 @@ public enum PGAdbaType implements SqlType {
   /**
    * Identifies the generic SQL type {@code TIMESTAMP WITH TIME ZONE}.
    */
-  TIMESTAMP_WITH_TIME_ZONE("time without timezone", 1083, AdbaType.TIMESTAMP_WITH_TIME_ZONE, BinaryGenerator::fromOffsetDateTime, FormatCodeTypes.TEXT);
+  TIMESTAMP_WITH_TIME_ZONE("timestamp with timezone", 1184, AdbaType.TIMESTAMP_WITH_TIME_ZONE, BinaryGenerator::fromOffsetDateTime, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
