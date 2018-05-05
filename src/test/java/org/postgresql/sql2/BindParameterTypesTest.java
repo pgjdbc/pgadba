@@ -7,6 +7,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.postgresql.sql2.communication.packets.parts.PGAdbaType;
+import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.time.LocalDate;
@@ -17,10 +18,10 @@ import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collector;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.postgresql.sql2.testUtil.CollectorUtils.singleCollector;
 
 public class BindParameterTypesTest {
   @ClassRule
@@ -30,7 +31,7 @@ public class BindParameterTypesTest {
 
   @BeforeClass
   public static void setUp() {
-    ds = TestUtil.openDB(postgres);
+    ds = ConnectUtil.openDB(postgres);
   }
 
   @AfterClass
@@ -44,12 +45,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
           .set("$1", null, PGAdbaType.INTEGER)
-          .collect(Collector.of(
-              () -> new Integer[1],
-              (a, r) -> a[0] = r.get("t", Integer.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(Integer.class))
           .submit()
           .getCompletionStage();
 
@@ -62,12 +58,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
           .set("$1", 100, PGAdbaType.INTEGER)
-          .collect(Collector.of(
-              () -> new int[1],
-              (a, r) -> a[0] = r.get("t", Integer.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(Integer.class))
           .submit()
           .getCompletionStage();
 
@@ -80,12 +71,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Short> idF = conn.<Short>rowOperation("select $1::int2 as t")
           .set("$1", 100, PGAdbaType.SMALLINT)
-          .collect(Collector.of(
-              () -> new short[1],
-              (a, r) -> a[0] = r.get("t", Short.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(Short.class))
           .submit()
           .getCompletionStage();
 
@@ -98,12 +84,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Long> idF = conn.<Long>rowOperation("select $1::int8 as t")
           .set("$1", 100, PGAdbaType.BIGINT)
-          .collect(Collector.of(
-              () -> new long[1],
-              (a, r) -> a[0] = r.get("t", Long.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(Long.class))
           .submit()
           .getCompletionStage();
 
@@ -116,12 +97,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
           .set("$1", "a text I wrote", PGAdbaType.VARCHAR)
-          .collect(Collector.of(
-              () -> new String[1],
-              (a, r) -> a[0] = r.get("t", String.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(String.class))
           .submit()
           .getCompletionStage();
 
@@ -132,14 +108,9 @@ public class BindParameterTypesTest {
   @Test
   public void selectVarCharNorwegianChar() throws ExecutionException, InterruptedException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<String> idF = conn.<String>rowOperation("select $1::char as t")
+      CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
           .set("$1", "Brød har lenge vore ein viktig del av norsk kosthald.", PGAdbaType.VARCHAR)
-          .collect(Collector.of(
-              () -> new String[1],
-              (a, r) -> a[0] = r.get("t", String.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(String.class))
           .submit()
           .getCompletionStage();
 
@@ -152,12 +123,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
           .set("$1", 'R', PGAdbaType.CHAR)
-          .collect(Collector.of(
-              () -> new Character[1],
-              (a, r) -> a[0] = r.get("t", Character.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(Character.class))
           .submit()
           .getCompletionStage();
 
@@ -170,12 +136,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
           .set("$1", 'Ø', PGAdbaType.CHAR)
-          .collect(Collector.of(
-              () -> new Character[1],
-              (a, r) -> a[0] = r.get("t", Character.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(Character.class))
           .submit()
           .getCompletionStage();
 
@@ -188,12 +149,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::text as t")
           .set("$1", "Som regel i form av smørbrød til frukost og lunsj.", PGAdbaType.LONGVARCHAR)
-          .collect(Collector.of(
-              () -> new String[1],
-              (a, r) -> a[0] = r.get("t", String.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(String.class))
           .submit()
           .getCompletionStage();
 
@@ -208,12 +164,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalDate> idF = conn.<LocalDate>rowOperation("select $1::date as t")
           .set("$1", d, PGAdbaType.DATE)
-          .collect(Collector.of(
-              () -> new LocalDate[1],
-              (a, r) -> a[0] = r.get("t", LocalDate.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(LocalDate.class))
           .submit()
           .getCompletionStage();
 
@@ -228,12 +179,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalTime> idF = conn.<LocalTime>rowOperation("select $1::time as t")
           .set("$1", d, PGAdbaType.TIME)
-          .collect(Collector.of(
-              () -> new LocalTime[1],
-              (a, r) -> a[0] = r.get("t", LocalTime.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(LocalTime.class))
           .submit()
           .getCompletionStage();
 
@@ -248,12 +194,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<OffsetTime> idF = conn.<OffsetTime>rowOperation("select $1::time with time zone as t")
           .set("$1", d, PGAdbaType.TIME_WITH_TIME_ZONE)
-          .collect(Collector.of(
-              () -> new OffsetTime[1],
-              (a, r) -> a[0] = r.get("t", OffsetTime.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(OffsetTime.class))
           .submit()
           .getCompletionStage();
 
@@ -268,12 +209,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalDateTime> idF = conn.<LocalDateTime>rowOperation("select $1::timestamp as t")
           .set("$1", d, PGAdbaType.TIMESTAMP)
-          .collect(Collector.of(
-              () -> new LocalDateTime[1],
-              (a, r) -> a[0] = r.get("t", LocalDateTime.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(LocalDateTime.class))
           .submit()
           .getCompletionStage();
 
@@ -288,12 +224,7 @@ public class BindParameterTypesTest {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<OffsetDateTime> idF = conn.<OffsetDateTime>rowOperation("select $1::timestamp with time zone as t")
           .set("$1", d, PGAdbaType.TIMESTAMP_WITH_TIME_ZONE)
-          .collect(Collector.of(
-              () -> new OffsetDateTime[1],
-              (a, r) -> a[0] = r.get("t", OffsetDateTime.class),
-              (l, r) -> null,
-              a -> a[0])
-          )
+          .collect(singleCollector(OffsetDateTime.class))
           .submit()
           .getCompletionStage();
 

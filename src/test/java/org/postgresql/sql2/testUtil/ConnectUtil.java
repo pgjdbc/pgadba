@@ -1,11 +1,11 @@
-package org.postgresql.sql2;
+package org.postgresql.sql2.testUtil;
 
 import jdk.incubator.sql2.AdbaConnectionProperty;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.DataSourceFactory;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-public class TestUtil {
+public class ConnectUtil {
   public static DataSource openDB(PostgreSQLContainer postgres) {
     return DataSourceFactory.forName("org.postgresql.sql2.PGDataSourceFactory")
         .builder()

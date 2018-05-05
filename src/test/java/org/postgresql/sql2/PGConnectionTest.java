@@ -11,6 +11,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.CompletableFuture;
@@ -32,9 +33,9 @@ public class PGConnectionTest {
 
   @BeforeClass
   public static void setUp() {
-    ds = TestUtil.openDB(postgres);
+    ds = ConnectUtil.openDB(postgres);
 
-    TestUtil.createTable(ds, "tab",
+    ConnectUtil.createTable(ds, "tab",
         "id int", "name varchar(100)", "answer int");
   }
 
@@ -82,7 +83,7 @@ public class PGConnectionTest {
   @Test
   public void exampleFromADBAOverJDBCProject() {
     // get a DataSource and a Connection
-    try (DataSource ds = TestUtil.openDB(postgres);
+    try (DataSource ds = ConnectUtil.openDB(postgres);
          Connection conn = ds.getConnection(t -> System.out.println("ERROR: " + t.getMessage()))) {
       // get a Transaction
       Transaction trans = conn.transaction();

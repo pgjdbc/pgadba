@@ -7,6 +7,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.CompletionStage;
@@ -24,9 +25,9 @@ public class ErrorStatesTest {
 
   @BeforeClass
   public static void setUp() {
-    ds = TestUtil.openDB(postgres);
+    ds = ConnectUtil.openDB(postgres);
 
-    TestUtil.createTable(ds, "tab",
+    ConnectUtil.createTable(ds, "tab",
         "id int", "name varchar(100)", "answer int");
   }
 
