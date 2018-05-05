@@ -10,6 +10,7 @@ import org.postgresql.sql2.communication.packets.parts.PGAdbaType;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -21,6 +22,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.postgresql.sql2.testUtil.CollectorUtils.singleCollector;
 
 public class BindParameterTypesTest {
@@ -229,6 +231,77 @@ public class BindParameterTypesTest {
           .getCompletionStage();
 
       assertEquals(d, idF.toCompletableFuture().get());
+    }
+  }
+
+  @Test
+  public void selectNumerical() throws ExecutionException, InterruptedException {
+    BigDecimal d = BigDecimal.TEN;
+
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<BigDecimal> idF = conn.<BigDecimal>rowOperation("select $1::numeric as t")
+          .set("$1", d, PGAdbaType.NUMERIC)
+          .collect(singleCollector(BigDecimal.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(d, idF.toCompletableFuture().get());
+    }
+  }
+
+  @Test
+  public void selectFloat() throws ExecutionException, InterruptedException {
+    Float d = (float) 100.155;
+
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Float> idF = conn.<Float>rowOperation("select $1::real as t")
+          .set("$1", d, PGAdbaType.REAL)
+          .collect(singleCollector(Float.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(d, idF.toCompletableFuture().get(), 0.0001);
+    }
+  }
+
+  @Test
+  public void selectDouble() throws ExecutionException, InterruptedException {
+    Double d = 100.155666;
+
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Double> idF = conn.<Double>rowOperation("select $1::double precision as t")
+          .set("$1", d, PGAdbaType.DOUBLE)
+          .collect(singleCollector(Double.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(d, idF.toCompletableFuture().get(), 0.0000001);
+    }
+  }
+
+  @Test
+  public void selectBoolean() throws ExecutionException, InterruptedException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("select $1::boolean as t")
+          .set("$1", true, PGAdbaType.BOOLEAN)
+          .collect(singleCollector(Boolean.class))
+          .submit()
+          .getCompletionStage();
+
+      assertTrue(idF.toCompletableFuture().get());
+    }
+  }
+
+  @Test
+  public void selectNull() throws ExecutionException, InterruptedException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
+          .set("$1", null, PGAdbaType.INTEGER)
+          .collect(singleCollector(Integer.class))
+          .submit()
+          .getCompletionStage();
+
+      assertNull(idF.toCompletableFuture().get());
     }
   }
 }

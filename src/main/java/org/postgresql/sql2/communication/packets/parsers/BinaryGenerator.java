@@ -4,6 +4,7 @@ import org.postgresql.sql2.util.BinaryHelper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -46,10 +47,16 @@ public class BinaryGenerator {
   }
 
   public static byte[] fromFloat(Object input) {
+    if(input instanceof Float) {
+      return ByteBuffer.allocate(4).putFloat((Float) input).array();
+    }
     return null;
   }
 
   public static byte[] fromDouble(Object input) {
+    if(input instanceof Double) {
+      return ByteBuffer.allocate(8).putDouble((Double) input).array();
+    }
     return null;
   }
 
@@ -145,6 +152,13 @@ public class BinaryGenerator {
   }
 
   public static byte[] fromBoolean(Object input) {
+    if(input instanceof Boolean) {
+      if((Boolean)input) {
+        return new byte[]{1};
+      } else {
+        return new byte[]{0};
+      }
+    }
     return null;
   }
 
