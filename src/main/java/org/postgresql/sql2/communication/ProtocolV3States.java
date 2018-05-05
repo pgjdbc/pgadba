@@ -37,6 +37,7 @@ public class ProtocolV3States {
     addTransition(States.AUTHENTICATION_REQUESTED, Events.BACKEND_KEY_DATA, States.AUTHENTICATION_REQUESTED);
     addTransition(States.AUTHENTICATION_REQUESTED, Events.READY_FOR_QUERY, States.IDLE);
     addTransition(States.IDLE, Events.PARSE_COMPLETE, States.PROCESSING_QUERY);
+    addTransition(States.IDLE, Events.BIND_COMPLETE, States.PROCESSING_QUERY);
     addTransition(States.PROCESSING_QUERY, Events.BIND_COMPLETE, States.PROCESSING_QUERY);
     addTransition(States.PROCESSING_QUERY, Events.COMMAND_COMPLETE, States.PROCESSING_QUERY);
     addTransition(States.PROCESSING_QUERY, Events.READY_FOR_QUERY, States.IDLE);

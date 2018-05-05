@@ -144,7 +144,7 @@ public class BinaryGenerator {
   }
 
   public static byte[] fromNull(Object input) {
-    return null;
+    return new byte[] {};
   }
 
   public static byte[] fromJavaObject(Object input) {

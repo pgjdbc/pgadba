@@ -20,7 +20,7 @@ public class FEFrameSerializer {
       os.write(0);
       os.write("name of portal".getBytes(StandardCharsets.UTF_8));
       os.write(0);
-      os.write(cache.getNameForQuery(sql).getBytes(StandardCharsets.UTF_8));
+      os.write(cache.getNameForQuery(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
       os.write(0);
       os.write(BinaryHelper.writeShort(holder.size()));
       for(QueryParameter qp : holder.parameters()) {
@@ -52,7 +52,7 @@ public class FEFrameSerializer {
       os.write(0);
       os.write(0);
       os.write(0);
-      os.write(cache.getNameForQuery(sql).getBytes(StandardCharsets.UTF_8));
+      os.write(cache.getNameForQuery(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
       os.write(0);
       os.write(sql.getBytes(StandardCharsets.UTF_8));
       os.write(0);
@@ -61,7 +61,7 @@ public class FEFrameSerializer {
         os.write(BinaryHelper.writeInt(qp.getOID()));
       }
       return new FEFrame(os.toByteArray(), false);
-    } catch (IOException e) {
+    } catch (IOException | InterruptedException | ExecutionException e) {
       e.printStackTrace();
       throw new Error(e.getMessage());
     }
@@ -104,10 +104,10 @@ public class FEFrameSerializer {
       os.write(0);
       os.write(0);
       os.write('S');
-      os.write(preparedStatementCache.getNameForQuery(sql).getBytes(StandardCharsets.UTF_8));
+      os.write(preparedStatementCache.getNameForQuery(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
       os.write(0);
       return new FEFrame(os.toByteArray(), false);
-    } catch (IOException e) {
+    } catch (IOException | ExecutionException | InterruptedException e) {
       e.printStackTrace();
       throw new Error(e.getMessage());
     }

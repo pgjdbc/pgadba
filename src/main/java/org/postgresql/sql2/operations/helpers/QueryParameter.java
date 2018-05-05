@@ -13,11 +13,25 @@ public class QueryParameter {
 
   public QueryParameter(Object value) {
     this.value = value;
+
+    if(value == null) {
+      type = PGAdbaType.NULL;
+    } else {
+      type = PGAdbaType.guessTypeFromClass(value.getClass());
+    }
   }
 
   public QueryParameter(Object value, SqlType type) {
     this.value = value;
-    this.type = PGAdbaType.convert(type);
+    if(type != null) {
+      this.type = PGAdbaType.convert(type);
+    } else {
+      if(value == null) {
+        this.type = PGAdbaType.NULL;
+      } else {
+        this.type = PGAdbaType.guessTypeFromClass(value.getClass());
+      }
+    }
   }
 
   public QueryParameter(CompletionStage<?> valueHolder) {
@@ -29,11 +43,31 @@ public class QueryParameter {
     this.type = PGAdbaType.convert(type);
   }
 
-  public int getOID() {
+  private void resolveType() throws ExecutionException, InterruptedException {
+    if(type == null && value == null && valueHolder == null) {
+      type = PGAdbaType.NULL;
+    } else if(type == null && valueHolder != null) {
+      value = valueHolder.toCompletableFuture().get();
+      valueHolder = null;
+
+      if(value == null) {
+        type = PGAdbaType.NULL;
+      } else {
+        type = PGAdbaType.guessTypeFromClass(value.getClass());
+      }
+    }
+
+  }
+
+  public int getOID() throws ExecutionException, InterruptedException {
+    resolveType();
+
     return type.getVendorTypeNumber();
   }
 
-  public short getParameterFormatCode() {
+  public short getParameterFormatCode() throws ExecutionException, InterruptedException {
+    resolveType();
+
     return type.getFormatCodeTypes().getCode();
   }
 

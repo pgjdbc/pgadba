@@ -4,6 +4,14 @@ import jdk.incubator.sql2.AdbaType;
 import jdk.incubator.sql2.SqlType;
 import org.postgresql.sql2.communication.packets.parsers.BinaryGenerator;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 public enum PGAdbaType implements SqlType {
@@ -86,7 +94,7 @@ public enum PGAdbaType implements SqlType {
   /**
    * Identifies the generic SQL value {@code NULL}.
    */
-  NULL("void", 2278, AdbaType.NULL, BinaryGenerator::fromNull, FormatCodeTypes.BINARY),
+  NULL("void", 0, AdbaType.NULL, BinaryGenerator::fromNull, FormatCodeTypes.TEXT),
   /**
    * Indicates that the SQL type
    * is database-specific and gets mapped to a Java object that can be
@@ -178,6 +186,51 @@ public enum PGAdbaType implements SqlType {
   private Function<Object, byte[]> byteGenerator;
   private FormatCodeTypes formatCodeTypes;
 
+  private static final Map<Class, PGAdbaType> classToDb = new HashMap<>();
+
+  static {
+    //classToDb.put(Void.class, BIT);
+    classToDb.put(Byte.class, TINYINT);
+    classToDb.put(Short.class, SMALLINT);
+    classToDb.put(Integer.class, INTEGER);
+    classToDb.put(Long.class, BIGINT);
+    classToDb.put(Float.class, FLOAT);
+    //classToDb.put(.class, REAL);
+    classToDb.put(Double.class, DOUBLE);
+    classToDb.put(BigDecimal.class, NUMERIC);
+    //classToDb.put(.class, DECIMAL);
+    classToDb.put(Character.class, CHAR);
+    classToDb.put(String.class, VARCHAR);
+    //classToDb.put(.class, LONGVARCHAR);
+    classToDb.put(LocalDate.class, DATE);
+    classToDb.put(LocalTime.class, TIME);
+    classToDb.put(LocalDateTime.class, TIMESTAMP);
+    //classToDb.put(.class, BINARY);
+    //classToDb.put(.class, VARBINARY);
+    //classToDb.put(.class, LONGVARBINARY);
+    classToDb.put(Void.class, NULL);
+    //classToDb.put(.class, OTHER);
+    //classToDb.put(.class, JAVA_OBJECT);
+    //classToDb.put(.class, DISTINCT);
+    //classToDb.put(.class, STRUCT);
+    //classToDb.put(.class, ARRAY);
+    classToDb.put(byte[].class, BLOB);
+    classToDb.put(char[].class, CLOB);
+    //classToDb.put(.class, REF);
+    //classToDb.put(.class, DATALINK);
+    classToDb.put(Boolean.class, BOOLEAN);
+    //classToDb.put(.class, ROWID);
+    //classToDb.put(.class, NCHAR);
+    //classToDb.put(.class, NVARCHAR);
+    //classToDb.put(.class, LONGNVARCHAR);
+    //classToDb.put(.class, NCLOB);
+    //classToDb.put(.class, SQLXML);
+    //classToDb.put(.class, REF_CURSOR);
+    classToDb.put(OffsetTime.class, TIME_WITH_TIME_ZONE);
+    classToDb.put(OffsetDateTime.class, TIMESTAMP_WITH_TIME_ZONE);
+
+  }
+
   PGAdbaType(String name, Integer oid, AdbaType adbaType, Function<Object, byte[]> byteGenerator, FormatCodeTypes formatCodeTypes) {
     this.name = name;
     this.oid = oid;
@@ -199,6 +252,10 @@ public enum PGAdbaType implements SqlType {
     }
 
     throw new IllegalArgumentException("unknown type " + type);
+  }
+
+  public static PGAdbaType guessTypeFromClass(Class clazz) {
+    return classToDb.computeIfAbsent(clazz, c -> OTHER);
   }
 
   @Override

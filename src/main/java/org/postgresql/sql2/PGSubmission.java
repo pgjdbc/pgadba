@@ -4,8 +4,10 @@ import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
@@ -95,5 +97,9 @@ public class PGSubmission<T> implements Submission<T> {
     } catch (Throwable e) {
       publicStage.completeExceptionally(e);
     }
+  }
+
+  public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
+    return holder.getParamTypes();
   }
 }
