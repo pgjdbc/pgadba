@@ -4,6 +4,7 @@ import jdk.incubator.sql2.SqlType;
 import org.postgresql.sql2.communication.packets.parts.PGAdbaType;
 
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 
 public class QueryParameter {
   private PGAdbaType type;
@@ -36,7 +37,11 @@ public class QueryParameter {
     return type.getFormatCodeTypes().getCode();
   }
 
-  public byte[] getParameter() {
-    return type.getByteGenerator().apply(value);
+  public byte[] getParameter() throws ExecutionException, InterruptedException {
+    if (valueHolder != null) {
+      return type.getByteGenerator().apply(valueHolder.toCompletableFuture().get());
+    } else {
+      return type.getByteGenerator().apply(value);
+    }
   }
 }

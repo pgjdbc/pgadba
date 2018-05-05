@@ -7,6 +7,7 @@ import org.postgresql.sql2.util.PreparedStatementCache;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutionException;
 
 public class FEFrameSerializer {
   public static FEFrame toBindPacket(ParameterHolder holder, String sql, PreparedStatementCache cache) {
@@ -37,7 +38,7 @@ public class FEFrameSerializer {
       }
       os.write(BinaryHelper.writeShort((short) 0));
       return new FEFrame(os.toByteArray(), false);
-    } catch (IOException e) {
+    } catch (IOException | InterruptedException | ExecutionException e) {
       e.printStackTrace();
       throw new Error(e.getMessage());
     }
