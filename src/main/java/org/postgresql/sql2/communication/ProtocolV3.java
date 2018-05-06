@@ -107,6 +107,17 @@ public class ProtocolV3 {
         }
 
         sendData(socketChannel);
+
+        if (outputQue.size() == 0 && waitToSendQue.size() != 0 && sub.getCompletionType() == PGSubmission.Types.CLOSE) {
+          try {
+            socketChannel.close();
+            ((CompletableFuture) sub.getCompletionStage())
+                .complete(sub.finish());
+          } catch (IOException e) {
+            ((CompletableFuture) sub.getCompletionStage())
+                .completeExceptionally(e);
+          }
+        }
       } catch (NoConnectionPendingException ignore) {
       } catch (Throwable e) {
         ((CompletableFuture) sub.getCompletionStage())
@@ -114,7 +125,6 @@ public class ProtocolV3 {
       }
     }
   }
-
 
   public void readPacket(BEFrame packet) {
     switch (packet.getTag()) {
@@ -204,6 +214,16 @@ public class ProtocolV3 {
         sentSqlNameQue.poll();
         ((CompletableFuture) sub.getCompletionStage())
             .complete(sub.finish());
+        break;
+      case CLOSE:
+        try {
+          socketChannel.close();
+          ((CompletableFuture) sub.getCompletionStage())
+              .complete(sub.finish());
+        } catch (IOException e) {
+          ((CompletableFuture) sub.getCompletionStage())
+              .completeExceptionally(e);
+        }
         break;
     }
 

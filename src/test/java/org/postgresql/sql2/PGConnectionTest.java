@@ -65,6 +65,24 @@ public class PGConnectionTest {
   }
 
   @Test
+  public void insertAfterClose() {
+
+    String sql = "insert into tab(id, name, answer) values ($1, $2, $3)";
+    Submission sub;
+    try (Connection conn = ds.getConnection()) {
+      conn.closeOperation()
+          .submit();
+      conn.countOperation(sql)
+          .set("$1", 1, AdbaType.NUMERIC)
+          .set("$2", "Deep Thought", AdbaType.VARCHAR)
+          .set("$3", 42, AdbaType.NUMERIC)
+          .submit();
+    } catch (IllegalStateException e) {
+      assertEquals("connection lifecycle in state: CLOSING and not open for new work", e.getMessage());
+    }
+  }
+
+  @Test
   public void createTable() {
 
     try (Connection conn = ds.getConnection()) {

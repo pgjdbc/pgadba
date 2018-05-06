@@ -15,7 +15,8 @@ import java.util.stream.Collector;
 public class PGSubmission<T> implements Submission<T> {
   public enum Types {
     COUNT,
-    ROW
+    ROW,
+    CLOSE
   }
 
   final private Supplier<Boolean> cancel;

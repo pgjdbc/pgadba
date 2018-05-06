@@ -63,6 +63,7 @@ public class PGConnection implements Connection {
   private Object accumulator;
   private Collector collector = DEFAULT_COLLECTOR;
   protected Consumer<Throwable> errorHandler = null;
+  private Lifecycle lifecycle = Lifecycle.NEW;
 
   /**
    * completed when this OperationGroup is no longer held. Completion of this
@@ -163,7 +164,8 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Void> closeOperation() {
-    return new PGCloseOperation();
+    lifecycle = lifecycle.close();
+    return new PGCloseOperation(this);
   }
 
   /**
@@ -248,6 +250,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public Connection abort() {
+    lifecycle = lifecycle.abort();
     return null;
   }
 
@@ -511,6 +514,10 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> ParameterizedCountOperation<R> countOperation(String sql) {
+    if (!lifecycle.isOpen()) {
+      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
     return new PGCountOperation<>(this, sql);
   }
 
