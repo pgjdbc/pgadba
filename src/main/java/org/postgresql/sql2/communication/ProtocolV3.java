@@ -3,6 +3,7 @@ package org.postgresql.sql2.communication;
 import jdk.incubator.sql2.ConnectionProperty;
 import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.Submission;
+import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
@@ -90,7 +91,7 @@ public class ProtocolV3 {
           queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
           queFrame(FEFrameSerializer.toDescribePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
           descriptionNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
-          queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql()));
+          queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
           sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
           queFrame(FEFrameSerializer.toSyncPacket());
         }
@@ -224,6 +225,10 @@ public class ProtocolV3 {
           ((CompletableFuture) sub.getCompletionStage())
               .completeExceptionally(e);
         }
+        break;
+      case TRANSACTION:
+        ((CompletableFuture) sub.getCompletionStage())
+            .complete(TransactionOutcome.UNKNOWN);
         break;
     }
 

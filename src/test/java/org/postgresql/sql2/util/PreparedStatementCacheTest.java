@@ -12,8 +12,8 @@ public class PreparedStatementCacheTest {
   public void getNameForQuery() {
     PreparedStatementCache cache = new PreparedStatementCache();
 
-    assertEquals("p1", cache.getNameForQuery("select 1", Arrays.asList(1, 2)));
-    assertEquals("p1", cache.getNameForQuery("select 1", Arrays.asList(1, 2)));
+    assertEquals("q1", cache.getNameForQuery("select 1", Arrays.asList(1, 2)));
+    assertEquals("q1", cache.getNameForQuery("select 1", Arrays.asList(1, 2)));
   }
 
   @Test

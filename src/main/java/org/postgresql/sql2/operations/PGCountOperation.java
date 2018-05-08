@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
-  private PGConnection connection;
+    private PGConnection connection;
   private String sql;
   private ParameterHolder holder;
 

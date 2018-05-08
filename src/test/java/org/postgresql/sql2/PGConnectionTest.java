@@ -11,6 +11,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.testcontainers.containers.PostgreSQLContainer;
 
@@ -46,7 +47,7 @@ public class PGConnectionTest {
   }
 
   @Test
-  public void trivialInsert() {
+  public void insertWithoutATable() {
 
     String sql = "insert into tab(id, name, answer) values ($1, $2, $3)";
     Submission sub;
@@ -61,6 +62,43 @@ public class PGConnectionTest {
       ((CompletableFuture) sub.getCompletionStage()).join();
       fail("table 'tab' doesn't exist, so an exception should be thrown");
     } catch (CompletionException e) {
+    }
+  }
+
+  @Test
+  public void insertWithATableWithWaitingBetween() throws ExecutionException, InterruptedException {
+    try (Connection conn = ds.getConnection()) {
+      conn.countOperation("create table tabForInsert(id int)")
+          .submit().getCompletionStage().toCompletableFuture().get();
+      conn.countOperation("insert into tabForInsert(id) values ($1)")
+          .set("$1", 1, AdbaType.NUMERIC)
+          .submit().getCompletionStage().toCompletableFuture().get();
+      Long count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
+          .collect(CollectorUtils.singleCollector(Long.class))
+          .submit().getCompletionStage().toCompletableFuture().get();
+      conn.countOperation("drop table tabForInsert")
+          .submit().getCompletionStage().toCompletableFuture().get();
+
+      assertEquals(Long.valueOf(1), count);
+    }
+  }
+
+  @Test
+  public void insertWithATableWithoutWaiting() throws ExecutionException, InterruptedException {
+    try (Connection conn = ds.getConnection()) {
+      conn.countOperation("create table tabForInsert(id int)")
+          .submit();
+      conn.countOperation("insert into tabForInsert(id) values ($1)")
+          .set("$1", 1, AdbaType.NUMERIC)
+          .submit();
+      Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
+          .collect(CollectorUtils.singleCollector(Long.class))
+          .submit();
+      Submission<Result.Count> drop = conn.<Result.Count>countOperation("drop table tabForInsert")
+          .submit();
+
+      assertEquals(Long.valueOf(1), count.getCompletionStage().toCompletableFuture().get());
+      assertEquals(0L, drop.getCompletionStage().toCompletableFuture().get().getCount());
     }
   }
 

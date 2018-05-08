@@ -39,6 +39,7 @@ public class PreparedStatementCache {
   }
 
   private Map<StatementKey, String> sqlToName = new ConcurrentHashMap<>();
+  private Map<StatementKey, String> sqlToPortalName = new ConcurrentHashMap<>();
   private Map<String, ColumnDescription[]> nameToDescription = new ConcurrentHashMap<>();
   private AtomicInteger names = new AtomicInteger(0);
 
@@ -48,8 +49,18 @@ public class PreparedStatementCache {
 
     StatementKey sk = new StatementKey(sql, params);
 
-    return sqlToName.computeIfAbsent(sk, key -> "p" + names.incrementAndGet());
+    return sqlToName.computeIfAbsent(sk, key -> "q" + names.incrementAndGet());
   }
+
+  public String getNameForPortal(String sql, List<Integer> params) {
+    if(sql == null)
+      return null;
+
+    StatementKey sk = new StatementKey(sql, params);
+
+    return sqlToPortalName.computeIfAbsent(sk, key -> "p" + names.incrementAndGet());
+  }
+
 
   public void addDescriptionToPortal(String portalName, ColumnDescription[] columnDescriptions) {
     nameToDescription.put(portalName, columnDescriptions);

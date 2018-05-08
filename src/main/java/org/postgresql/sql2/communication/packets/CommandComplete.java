@@ -8,6 +8,7 @@ public class CommandComplete {
     DELETE,
     CREATE_TABLE,
     CREATE_TYPE,
+    START_TRANSACTION,
     UPDATE,
     SELECT,
     MOVE,
@@ -31,6 +32,9 @@ public class CommandComplete {
       numberOfRowsAffected = 0;
     } else if(message.startsWith("CREATE TYPE")) {
       type = Types.CREATE_TYPE;
+      numberOfRowsAffected = 0;
+    } else if(message.startsWith("START TRANSACTION")) {
+      type = Types.START_TRANSACTION;
       numberOfRowsAffected = 0;
     } else if(message.startsWith("UPDATE")) {
       type = Types.UPDATE;

@@ -16,7 +16,8 @@ public class PGSubmission<T> implements Submission<T> {
   public enum Types {
     COUNT,
     ROW,
-    CLOSE
+    CLOSE,
+    TRANSACTION
   }
 
   final private Supplier<Boolean> cancel;

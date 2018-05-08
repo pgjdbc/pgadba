@@ -18,7 +18,7 @@ public class FEFrameSerializer {
       os.write(0);
       os.write(0);
       os.write(0);
-      os.write("name of portal".getBytes(StandardCharsets.UTF_8));
+      os.write(cache.getNameForPortal(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
       os.write(0);
       os.write(cache.getNameForQuery(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
       os.write(0);
@@ -67,7 +67,7 @@ public class FEFrameSerializer {
     }
   }
 
-  public static FEFrame toExecutePacket(ParameterHolder holder, String sql) {
+  public static FEFrame toExecutePacket(ParameterHolder holder, String sql, PreparedStatementCache cache) throws ExecutionException, InterruptedException {
     try {
       ByteArrayOutputStream os = new ByteArrayOutputStream();
       os.write(FEFrame.FrontendTag.EXECUTE.getByte());
@@ -75,7 +75,7 @@ public class FEFrameSerializer {
       os.write(0);
       os.write(0);
       os.write(0);
-      os.write("name of portal".getBytes(StandardCharsets.UTF_8));
+      os.write(cache.getNameForPortal(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
       os.write(0);
       os.write(BinaryHelper.writeInt(0)); // number of rows to return, 0 == all
       return new FEFrame(os.toByteArray(), false);
