@@ -9,6 +9,8 @@ public class CommandComplete {
     CREATE_TABLE,
     CREATE_TYPE,
     START_TRANSACTION,
+    ROLLBACK,
+    COMMIT,
     UPDATE,
     SELECT,
     MOVE,
@@ -35,6 +37,12 @@ public class CommandComplete {
       numberOfRowsAffected = 0;
     } else if(message.startsWith("START TRANSACTION")) {
       type = Types.START_TRANSACTION;
+      numberOfRowsAffected = 0;
+    } else if(message.startsWith("ROLLBACK")) {
+      type = Types.ROLLBACK;
+      numberOfRowsAffected = 0;
+    } else if(message.startsWith("COMMIT")) {
+      type = Types.COMMIT;
       numberOfRowsAffected = 0;
     } else if(message.startsWith("UPDATE")) {
       type = Types.UPDATE;

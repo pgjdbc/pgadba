@@ -227,8 +227,16 @@ public class ProtocolV3 {
         }
         break;
       case TRANSACTION:
-        ((CompletableFuture) sub.getCompletionStage())
-            .complete(TransactionOutcome.UNKNOWN);
+        if(cc.getType() == CommandComplete.Types.ROLLBACK) {
+          ((CompletableFuture) sub.getCompletionStage())
+              .complete(TransactionOutcome.ROLLBACK);
+        } else if(cc.getType() == CommandComplete.Types.COMMIT) {
+          ((CompletableFuture) sub.getCompletionStage())
+              .complete(TransactionOutcome.COMMIT);
+        } else {
+          ((CompletableFuture) sub.getCompletionStage())
+              .complete(TransactionOutcome.UNKNOWN);
+        }
         break;
     }
 

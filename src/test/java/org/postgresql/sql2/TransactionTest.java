@@ -51,6 +51,8 @@ public class TransactionTest {
       transaction.setRollbackOnly();
       CompletionStage<TransactionOutcome> roll = conn.commitMaybeRollback(transaction);
 
+      assertEquals(TransactionOutcome.ROLLBACK, roll.toCompletableFuture().get());
+
       CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("SELECT EXISTS (\n" +
           "   SELECT 1 \n" +
           "   FROM   pg_catalog.pg_class c\n" +
@@ -77,7 +79,9 @@ public class TransactionTest {
           .submit();
       conn.countOperation("insert into tab(i) values(123)")
           .submit();
-      conn.commitMaybeRollback(transaction);
+      CompletionStage<TransactionOutcome> roll = conn.commitMaybeRollback(transaction);
+
+      assertEquals(TransactionOutcome.COMMIT, roll.toCompletableFuture().get());
 
       CompletionStage<Long> idF = conn.<Long>rowOperation("select count(*) as t from tab")
           .collect(singleCollector(Long.class))
