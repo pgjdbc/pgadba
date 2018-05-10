@@ -7,5 +7,7 @@ public interface QueryParameter {
 
   short getParameterFormatCode() throws ExecutionException, InterruptedException;
 
-  byte[] getParameter() throws ExecutionException, InterruptedException;
+  byte[] getParameter(int index) throws ExecutionException, InterruptedException;
+
+  int numberOfQueryRepetitions() throws ExecutionException, InterruptedException;
 }

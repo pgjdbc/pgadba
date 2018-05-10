@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.DETAIL;
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.HINT;
@@ -90,10 +91,12 @@ public class ProtocolV3 {
           }
           queFrame(FEFrameSerializer.toDescribePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
           descriptionNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
-          queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-          queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-          sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
-          queFrame(FEFrameSerializer.toSyncPacket());
+          for(int i = 0; i < sub.numberOfQueryRepetitions(); i++) {
+            queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache, i));
+            queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+            sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
+            queFrame(FEFrameSerializer.toSyncPacket());
+          }
         }
 
         try {
@@ -205,16 +208,22 @@ public class ProtocolV3 {
   private void doCommandComplete(BEFrame packet) {
     CommandComplete cc = new CommandComplete(packet.getPayload());
 
-    PGSubmission sub = submissions.poll();
+    PGSubmission sub = submissions.peek();
+    if(sub == null) {
+      throw new IllegalStateException("Command Complete packet arrived without an corresponding submission, internal state corruption");
+    }
+
     switch (sub.getCompletionType()) {
       case COUNT:
         ((CompletableFuture) sub.getCompletionStage())
             .complete(new PGCount(cc.getNumberOfRowsAffected()));
+        submissions.poll();
         break;
       case ROW:
         sentSqlNameQue.poll();
         ((CompletableFuture) sub.getCompletionStage())
             .complete(sub.finish());
+        submissions.poll();
         break;
       case CLOSE:
         try {
@@ -225,6 +234,7 @@ public class ProtocolV3 {
           ((CompletableFuture) sub.getCompletionStage())
               .completeExceptionally(e);
         }
+        submissions.poll();
         break;
       case TRANSACTION:
         if(cc.getType() == CommandComplete.Types.ROLLBACK) {
@@ -236,6 +246,21 @@ public class ProtocolV3 {
         } else {
           ((CompletableFuture) sub.getCompletionStage())
               .complete(TransactionOutcome.UNKNOWN);
+        }
+        submissions.poll();
+        break;
+      case ARRAY_COUNT:
+        sub.countResult().add(cc.getNumberOfRowsAffected());
+        try {
+          if(sub.countResult().size() == sub.numberOfQueryRepetitions()) {
+            ((CompletableFuture) sub.getCompletionStage())
+                .complete(sub.countResult());
+            submissions.poll();
+          }
+        } catch (ExecutionException e) {
+          e.printStackTrace();
+        } catch (InterruptedException e) {
+          e.printStackTrace();
         }
         break;
     }

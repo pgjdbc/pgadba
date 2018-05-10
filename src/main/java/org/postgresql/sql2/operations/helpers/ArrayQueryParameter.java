@@ -3,15 +3,18 @@ package org.postgresql.sql2.operations.helpers;
 import jdk.incubator.sql2.SqlType;
 import org.postgresql.sql2.communication.packets.parts.PGAdbaType;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
-public class ValueQueryParameter implements QueryParameter {
+public class ArrayQueryParameter implements QueryParameter {
   private PGAdbaType type;
-  private Object value;
+  private List<?> values;
 
-  public ValueQueryParameter(Object value) {
-    this.value = value;
+  public ArrayQueryParameter(List<?> values) {
+    this.values = values;
 
+    Object value = firstNonNull(values);
     if(value == null) {
       type = PGAdbaType.NULL;
     } else {
@@ -19,17 +22,22 @@ public class ValueQueryParameter implements QueryParameter {
     }
   }
 
-  public ValueQueryParameter(Object value, SqlType type) {
-    this.value = value;
+  public ArrayQueryParameter(List<?> values, SqlType type) {
+    this.values = values;
     if(type != null) {
       this.type = PGAdbaType.convert(type);
     } else {
+      Object value = firstNonNull(values);
       if(value == null) {
         this.type = PGAdbaType.NULL;
       } else {
         this.type = PGAdbaType.guessTypeFromClass(value.getClass());
       }
     }
+  }
+
+  private Object firstNonNull(List<?> values) {
+    return values.stream().filter(Objects::nonNull).findFirst();
   }
 
   @Override
@@ -44,11 +52,11 @@ public class ValueQueryParameter implements QueryParameter {
 
   @Override
   public byte[] getParameter(int index) throws ExecutionException, InterruptedException {
-    return type.getByteGenerator().apply(value);
+    return type.getByteGenerator().apply(values.get(index));
   }
 
   @Override
   public int numberOfQueryRepetitions() {
-    return 1;
+    return values.size();
   }
 }

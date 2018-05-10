@@ -15,6 +15,7 @@ import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collector;
 
 import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 public class PGConnectionTest {
@@ -98,6 +100,47 @@ public class PGConnectionTest {
           .submit();
 
       assertEquals(Long.valueOf(1), count.getCompletionStage().toCompletableFuture().get());
+      assertEquals(0L, drop.getCompletionStage().toCompletableFuture().get().getCount());
+    }
+  }
+
+  @Test
+  public void multiInsertWithATable() throws ExecutionException, InterruptedException {
+    try (Connection conn = ds.getConnection()) {
+      conn.countOperation("create table tabForInsert(id int)")
+          .submit();
+      Submission<List<Integer>> arrayCount = conn.<List<Integer>>arrayCountOperation("insert into tabForInsert(id) values ($1)")
+          .set("$1", new Integer[] {1, 2, 3}, AdbaType.NUMERIC)
+          .submit();
+      Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
+          .collect(CollectorUtils.singleCollector(Long.class))
+          .submit();
+      Submission<Result.Count> drop = conn.<Result.Count>countOperation("drop table tabForInsert")
+          .submit();
+
+      assertArrayEquals(new Integer[]{1, 1, 1}, arrayCount.getCompletionStage().toCompletableFuture().get().toArray());
+      assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get());
+      assertEquals(0L, drop.getCompletionStage().toCompletableFuture().get().getCount());
+    }
+  }
+
+  @Test
+  public void multiInsertFutureWithATable() throws ExecutionException, InterruptedException {
+    CompletableFuture<Integer[]> f = CompletableFuture.supplyAsync(() -> new Integer[] {1, 2, 3});
+    try (Connection conn = ds.getConnection()) {
+      conn.countOperation("create table tabForInsert(id int)")
+          .submit();
+      Submission<List<Integer>> arrayCount = conn.<List<Integer>>arrayCountOperation("insert into tabForInsert(id) values ($1)")
+          .set("$1", f, AdbaType.NUMERIC)
+          .submit();
+      Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
+          .collect(CollectorUtils.singleCollector(Long.class))
+          .submit();
+      Submission<Result.Count> drop = conn.<Result.Count>countOperation("drop table tabForInsert")
+          .submit();
+
+      assertArrayEquals(new Integer[]{1, 1, 1}, arrayCount.getCompletionStage().toCompletableFuture().get().toArray());
+      assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get());
       assertEquals(0L, drop.getCompletionStage().toCompletableFuture().get().getCount());
     }
   }

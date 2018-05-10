@@ -51,11 +51,16 @@ public class FutureQueryParameter implements QueryParameter {
   }
 
   @Override
-  public byte[] getParameter() throws ExecutionException, InterruptedException {
+  public byte[] getParameter(int index) throws ExecutionException, InterruptedException {
     if (valueHolder != null) {
       return type.getByteGenerator().apply(valueHolder.toCompletableFuture().get());
     } else {
       return type.getByteGenerator().apply(value);
     }
+  }
+
+  @Override
+  public int numberOfQueryRepetitions() {
+    return 1;
   }
 }

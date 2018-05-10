@@ -8,7 +8,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
 public class ParameterHolder {
-  Map<Integer, QueryParameter> parameterMap = new TreeMap<>();
+  private Map<Integer, QueryParameter> parameterMap = new TreeMap<>();
 
   public short size() {
     return (short) parameterMap.size();
@@ -30,5 +30,13 @@ public class ParameterHolder {
     }
 
     return types;
+  }
+
+  public int numberOfQueryRepetitions() throws ExecutionException, InterruptedException {
+    if(parameterMap.size() == 0) {
+      return 1;
+    }
+
+    return parameterMap.entrySet().iterator().next().getValue().numberOfQueryRepetitions();
   }
 }

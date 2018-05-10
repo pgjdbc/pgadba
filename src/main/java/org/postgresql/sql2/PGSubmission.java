@@ -4,6 +4,7 @@ import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -17,7 +18,8 @@ public class PGSubmission<T> implements Submission<T> {
     COUNT,
     ROW,
     CLOSE,
-    TRANSACTION
+    TRANSACTION,
+    ARRAY_COUNT;
   }
 
   final private Supplier<Boolean> cancel;
@@ -30,6 +32,8 @@ public class PGSubmission<T> implements Submission<T> {
 
   private Collector collector;
   private Object collectorHolder;
+
+  private List<Long> countResults = new ArrayList<>();
 
   public PGSubmission(Supplier<Boolean> cancel) {
     this.cancel = cancel;
@@ -103,5 +107,17 @@ public class PGSubmission<T> implements Submission<T> {
 
   public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
     return holder.getParamTypes();
+  }
+
+  public int numberOfQueryRepetitions() throws ExecutionException, InterruptedException {
+    if (completionType == Types.ARRAY_COUNT) {
+      return holder.numberOfQueryRepetitions();
+    } else {
+      return 1;
+    }
+  }
+
+  public List<Long> countResult() {
+    return countResults;
   }
 }

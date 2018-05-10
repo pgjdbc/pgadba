@@ -27,6 +27,7 @@ import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.communication.FEFrame;
 import org.postgresql.sql2.communication.ProtocolV3;
+import org.postgresql.sql2.operations.PGArrayCountOperation;
 import org.postgresql.sql2.operations.PGCatchOperation;
 import org.postgresql.sql2.operations.PGCloseOperation;
 import org.postgresql.sql2.operations.PGConnectOperation;
@@ -501,7 +502,11 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> ArrayCountOperation<R> arrayCountOperation(String sql) {
-    return null;
+    if (!lifecycle.isOpen()) {
+      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
+    return new PGArrayCountOperation<>(this, sql);
   }
 
   /**

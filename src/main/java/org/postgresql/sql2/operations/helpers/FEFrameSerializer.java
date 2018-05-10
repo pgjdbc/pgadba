@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 
 public class FEFrameSerializer {
-  public static FEFrame toBindPacket(ParameterHolder holder, String sql, PreparedStatementCache cache) {
+  public static FEFrame toBindPacket(ParameterHolder holder, String sql, PreparedStatementCache cache, int index) {
     try {
       ByteArrayOutputStream os = new ByteArrayOutputStream();
       os.write(FEFrame.FrontendTag.BIND.getByte());
@@ -28,7 +28,7 @@ public class FEFrameSerializer {
       }
       os.write(BinaryHelper.writeShort(holder.size()));
       for(QueryParameter qp : holder.parameters()) {
-        byte[] paramData = qp.getParameter();
+        byte[] paramData = qp.getParameter(index);
         if(paramData.length == 0) { //handling the null special case
           os.write(BinaryHelper.writeInt(-1));
         } else {
