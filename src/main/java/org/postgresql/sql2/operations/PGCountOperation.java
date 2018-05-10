@@ -7,8 +7,9 @@ import jdk.incubator.sql2.SqlType;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
 import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.operations.helpers.FutureQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
-import org.postgresql.sql2.operations.helpers.QueryParameter;
+import org.postgresql.sql2.operations.helpers.ValueQueryParameter;
 
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
@@ -43,25 +44,25 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
 
   @Override
   public ParameterizedCountOperation<R> set(String id, Object value) {
-    holder.add(id, new QueryParameter(value));
+    holder.add(id, new ValueQueryParameter(value));
     return this;
   }
 
   @Override
   public ParameterizedCountOperation<R> set(String id, Object value, SqlType type) {
-    holder.add(id, new QueryParameter(value, type));
+    holder.add(id, new ValueQueryParameter(value, type));
     return this;
   }
 
   @Override
   public ParameterizedCountOperation<R> set(String id, CompletionStage<?> source) {
-    holder.add(id, new QueryParameter(source));
+    holder.add(id, new FutureQueryParameter(source));
     return this;
   }
 
   @Override
   public ParameterizedCountOperation<R> set(String id, CompletionStage<?> source, SqlType type) {
-    holder.add(id, new QueryParameter(source, type));
+    holder.add(id, new FutureQueryParameter(source, type));
     return this;
   }
 
