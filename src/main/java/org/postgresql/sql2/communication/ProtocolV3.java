@@ -423,4 +423,8 @@ public class ProtocolV3 {
   public void addSubmission(PGSubmission submission) {
     submissions.add(submission);
   }
+
+  public boolean isConnectionClosed() {
+    return !socketChannel.isConnected();
+  }
 }

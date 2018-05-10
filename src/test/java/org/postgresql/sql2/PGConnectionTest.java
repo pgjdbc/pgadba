@@ -183,6 +183,28 @@ public class PGConnectionTest {
   }
 
   @Test
+  public void validateCompleteGoodConnection() throws TimeoutException, ExecutionException, InterruptedException {
+    try (Connection conn = ds.getConnection()) {
+      Submission<Void> sub = conn.validationOperation(Connection.Validation.COMPLETE).submit();
+
+      sub.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    }
+  }
+
+  @Test
+  public void validateLocalGoodConnection() throws TimeoutException, ExecutionException, InterruptedException {
+    try (Connection conn = ds.getConnection()) {
+      //First do a normal query so that the connection has time to get established
+      conn.rowOperation("select 1").submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      //now validate it
+      Submission<Void> sub = conn.validationOperation(Connection.Validation.LOCAL).submit();
+
+      sub.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    }
+  }
+
+  @Test
   public void exampleFromADBAOverJDBCProject() {
     // get a DataSource and a Connection
     try (DataSource ds = ConnectUtil.openDB(postgres);

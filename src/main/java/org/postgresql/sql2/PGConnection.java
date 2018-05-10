@@ -36,6 +36,7 @@ import org.postgresql.sql2.operations.PGOperation;
 import org.postgresql.sql2.operations.PGParameterizedRowOperation;
 import org.postgresql.sql2.operations.PGTransaction;
 import org.postgresql.sql2.operations.PGTransactionOperation;
+import org.postgresql.sql2.operations.PGValidationOperation;
 
 import java.time.Duration;
 import java.util.Map;
@@ -141,7 +142,11 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Void> validationOperation(Connection.Validation depth) {
-    return null;
+    if (!lifecycle.isOpen()) {
+      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
+    return new PGValidationOperation(this, depth);
   }
 
   /**
@@ -762,7 +767,7 @@ public class PGConnection implements Connection {
   public Submission<Object> submit() {
     accumulator = collector.supplier().get();
     memberTail = attachErrorHandler(follows(memberTail, executor));
-    return new PGSubmission(this::cancel);
+    return new PGSubmission<>(this::cancel, PGSubmission.Types.VOID);
   }
 
 
@@ -805,5 +810,9 @@ public class PGConnection implements Connection {
 
   public void addSubmissionOnQue(PGSubmission submission) {
     protocol.addSubmission(submission);
+  }
+
+  public boolean isConnectionClosed() {
+    return protocol.isConnectionClosed();
   }
 }

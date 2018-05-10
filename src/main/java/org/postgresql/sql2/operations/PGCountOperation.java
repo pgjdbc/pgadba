@@ -73,11 +73,10 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new PGSubmission<>(this::cancel);
+    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.COUNT);
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(holder);
-    submission.setCompletionType(PGSubmission.Types.COUNT);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

@@ -34,7 +34,7 @@ public class PGConnectOperation implements Operation<Void> {
 
   @Override
   public Submission<Void> submit() {
-    PGSubmission submission = new PGSubmission(this::cancel);
+    PGSubmission submission = new PGSubmission(this::cancel, PGSubmission.Types.VOID);
     submission.setConnectionSubmission(true);
     connection.addSubmissionOnQue(submission);
     return submission;

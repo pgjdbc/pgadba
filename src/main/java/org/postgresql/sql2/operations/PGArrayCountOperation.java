@@ -71,11 +71,10 @@ public class PGArrayCountOperation<R> implements ArrayCountOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new PGSubmission<>(this::cancel);
+    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.ARRAY_COUNT);
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(holder);
-    submission.setCompletionType(PGSubmission.Types.ARRAY_COUNT);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

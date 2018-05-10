@@ -36,8 +36,9 @@ public class PGSubmission<T> implements Submission<T> {
 
   private List<Long> countResults = new ArrayList<>();
 
-  public PGSubmission(Supplier<Boolean> cancel) {
+  public PGSubmission(Supplier<Boolean> cancel, Types completionType) {
     this.cancel = cancel;
+    this.completionType = completionType;
   }
 
   @Override
@@ -82,10 +83,6 @@ public class PGSubmission<T> implements Submission<T> {
 
   public Types getCompletionType() {
     return completionType;
-  }
-
-  public void setCompletionType(Types completionType) {
-    this.completionType = completionType;
   }
 
   public void setCollector(Collector collector) {

@@ -30,11 +30,10 @@ public class PGOperation implements Operation<Object> {
 
   @Override
   public Submission<Object> submit() {
-    PGSubmission<Object> submission = new PGSubmission<>(this::cancel);
+    PGSubmission<Object> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID);
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(new ParameterHolder());
-    submission.setCompletionType(PGSubmission.Types.VOID);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

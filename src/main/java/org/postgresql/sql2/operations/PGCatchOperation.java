@@ -27,7 +27,7 @@ public class PGCatchOperation implements Operation<Object> {
 
   @Override
   public Submission<Object> submit() {
-    PGSubmission submission = new PGSubmission(this::cancel);
+    PGSubmission<Object> submission = new PGSubmission<>(this::cancel, null);
     submission.setConnectionSubmission(false);
     connection.addSubmissionOnQue(submission);
     return submission;

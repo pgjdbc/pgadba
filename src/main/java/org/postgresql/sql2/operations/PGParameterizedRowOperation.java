@@ -78,11 +78,10 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new PGSubmission<>(this::cancel);
+    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.ROW);
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(holder);
-    submission.setCompletionType(PGSubmission.Types.ROW);
     submission.setCollector(collector);
     connection.addSubmissionOnQue(submission);
     return submission;
