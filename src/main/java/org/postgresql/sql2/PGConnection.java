@@ -32,6 +32,7 @@ import org.postgresql.sql2.operations.PGCatchOperation;
 import org.postgresql.sql2.operations.PGCloseOperation;
 import org.postgresql.sql2.operations.PGConnectOperation;
 import org.postgresql.sql2.operations.PGCountOperation;
+import org.postgresql.sql2.operations.PGOperation;
 import org.postgresql.sql2.operations.PGParameterizedRowOperation;
 import org.postgresql.sql2.operations.PGTransaction;
 import org.postgresql.sql2.operations.PGTransactionOperation;
@@ -537,7 +538,11 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Object> operation(String sql) {
-    return null;
+    if (!lifecycle.isOpen()) {
+      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
+    return new PGOperation(this, sql);
   }
 
   /**

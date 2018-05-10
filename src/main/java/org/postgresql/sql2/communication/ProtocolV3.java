@@ -263,6 +263,11 @@ public class ProtocolV3 {
           e.printStackTrace();
         }
         break;
+      case VOID:
+        ((CompletableFuture) sub.getCompletionStage())
+            .complete(null);
+        submissions.poll();
+        break;
     }
 
     currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.COMMAND_COMPLETE);

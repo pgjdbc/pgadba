@@ -19,7 +19,8 @@ public class PGSubmission<T> implements Submission<T> {
     ROW,
     CLOSE,
     TRANSACTION,
-    ARRAY_COUNT;
+    ARRAY_COUNT,
+    VOID;
   }
 
   final private Supplier<Boolean> cancel;
