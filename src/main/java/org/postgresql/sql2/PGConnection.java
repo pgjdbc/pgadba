@@ -34,6 +34,7 @@ import org.postgresql.sql2.operations.PGConnectOperation;
 import org.postgresql.sql2.operations.PGCountOperation;
 import org.postgresql.sql2.operations.PGOperation;
 import org.postgresql.sql2.operations.PGParameterizedRowOperation;
+import org.postgresql.sql2.operations.PGRowProcessorOperation;
 import org.postgresql.sql2.operations.PGTransaction;
 import org.postgresql.sql2.operations.PGTransactionOperation;
 import org.postgresql.sql2.operations.PGValidationOperation;
@@ -486,6 +487,10 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Object> catchOperation() {
+    if (!lifecycle.isOpen()) {
+      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
     return new PGCatchOperation(this);
   }
 
@@ -575,12 +580,20 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> ParameterizedRowOperation<R> rowOperation(String sql) {
+    if (!lifecycle.isOpen()) {
+      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
     return new PGParameterizedRowOperation<>(this, sql);
   }
 
   @Override
   public <R> RowProcessorOperation<R> rowProcessorOperation(String sql) {
-    return null;
+    if (!lifecycle.isOpen()) {
+      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
+    return new PGRowProcessorOperation<>(this, sql);
   }
 
   /**

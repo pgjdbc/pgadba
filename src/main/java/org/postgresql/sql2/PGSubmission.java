@@ -1,5 +1,6 @@
 package org.postgresql.sql2;
 
+import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
@@ -20,7 +22,8 @@ public class PGSubmission<T> implements Submission<T> {
     CLOSE,
     TRANSACTION,
     ARRAY_COUNT,
-    VOID;
+    VOID,
+    PROCESSOR;
   }
 
   final private Supplier<Boolean> cancel;
@@ -33,6 +36,8 @@ public class PGSubmission<T> implements Submission<T> {
 
   private Collector collector;
   private Object collectorHolder;
+  private Flow.Processor<Result.Row, ? extends T> processor;
+
 
   private List<Long> countResults = new ArrayList<>();
 
@@ -91,6 +96,14 @@ public class PGSubmission<T> implements Submission<T> {
     collectorHolder = collector.supplier().get();
   }
 
+  public void setProcessor(Flow.Processor<Result.Row, ? extends T> processor) {
+    this.processor = processor;
+  }
+
+  public Flow.Processor<Result.Row,? extends T> getProcessor() {
+    return processor;
+  }
+
   public Object finish() {
     return collector.finisher().apply(collectorHolder);
   }
@@ -101,6 +114,10 @@ public class PGSubmission<T> implements Submission<T> {
     } catch (Throwable e) {
       publicStage.completeExceptionally(e);
     }
+  }
+
+  public void processRow(DataRow row) {
+    processor.onNext(row);
   }
 
   public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {

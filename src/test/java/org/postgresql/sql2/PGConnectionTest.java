@@ -19,7 +19,11 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Flow;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -112,7 +116,7 @@ public class PGConnectionTest {
       conn.countOperation("create table tabForInsert(id int)")
           .submit();
       Submission<List<Integer>> arrayCount = conn.<List<Integer>>arrayCountOperation("insert into tabForInsert(id) values ($1)")
-          .set("$1", new Integer[] {1, 2, 3}, AdbaType.NUMERIC)
+          .set("$1", new Integer[]{1, 2, 3}, AdbaType.NUMERIC)
           .submit();
       Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
           .collect(CollectorUtils.singleCollector(Long.class))
@@ -128,7 +132,7 @@ public class PGConnectionTest {
 
   @Test
   public void multiInsertFutureWithATable() throws ExecutionException, InterruptedException, TimeoutException {
-    CompletableFuture<Integer[]> f = CompletableFuture.supplyAsync(() -> new Integer[] {1, 2, 3});
+    CompletableFuture<Integer[]> f = CompletableFuture.supplyAsync(() -> new Integer[]{1, 2, 3});
     try (Connection conn = ds.getConnection()) {
       Submission<Object> noReturn = conn.operation("create table tabForInsert(id int)")
           .submit();
@@ -201,6 +205,46 @@ public class PGConnectionTest {
       Submission<Void> sub = conn.validationOperation(Connection.Validation.LOCAL).submit();
 
       sub.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    }
+  }
+
+  @Test
+  public void rowProcessorOperation() throws InterruptedException, ExecutionException, TimeoutException {
+    final Integer[] result = {null};
+    try (Connection conn = ds.getConnection()) {
+      //First do a normal query so that the connection has time to get established
+      conn.rowProcessorOperation("select 321 as t")
+          .rowProcessor(new Flow.Processor<Result.Row, String>() {
+            Flow.Subscription publisherSubscription;
+
+            final ExecutorService executor = Executors.newFixedThreadPool(4);
+            Flow.Subscription subscription;
+            ConcurrentLinkedQueue<String> dataItems;
+
+            @Override
+            public void subscribe(Flow.Subscriber<? super String> subscriber) {
+            }
+
+            @Override
+            public void onSubscribe(Flow.Subscription subscription) {
+            }
+
+            @Override
+            public void onNext(Result.Row item) {
+              result[0] = item.get("t", Integer.class);
+            }
+
+            @Override
+            public void onComplete() {
+            }
+
+            @Override
+            public void onError(Throwable t) {
+            }
+          })
+          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      assertEquals(Integer.valueOf(321), result[0]);
     }
   }
 

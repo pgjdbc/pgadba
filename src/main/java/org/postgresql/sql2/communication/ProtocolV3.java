@@ -202,7 +202,11 @@ public class ProtocolV3 {
     String portalName = sentSqlNameQue.peek();
     DataRow row = new DataRow(packet.getPayload(), preparedStatementCache.getDescription(portalName), rowNumber++);
     PGSubmission sub = submissions.peek();
-    sub.addRow(row);
+    if (sub.getCompletionType() == PGSubmission.Types.PROCESSOR) {
+      sub.processRow(row);
+    } else {
+      sub.addRow(row);
+    }
   }
 
   private void doCommandComplete(BEFrame packet) {
@@ -264,6 +268,11 @@ public class ProtocolV3 {
         }
         break;
       case VOID:
+        ((CompletableFuture) sub.getCompletionStage())
+            .complete(null);
+        submissions.poll();
+        break;
+      case PROCESSOR:
         ((CompletableFuture) sub.getCompletionStage())
             .complete(null);
         submissions.poll();
