@@ -20,6 +20,7 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
   private PGConnection connection;
   private String sql;
   private ParameterHolder holder;
+  private Consumer<Throwable> errorHandler;
 
   public PGCountOperation(PGConnection connection, String sql) {
     this.connection = connection;
@@ -33,7 +34,8 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
   }
 
   @Override
-  public ParameterizedCountOperation<R> onError(Consumer<Throwable> handler) {
+  public ParameterizedCountOperation<R> onError(Consumer<Throwable> errorHandler) {
+    this.errorHandler = errorHandler;
     return this;
   }
 
@@ -77,6 +79,7 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(holder);
+    submission.setErrorHandler(errorHandler);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

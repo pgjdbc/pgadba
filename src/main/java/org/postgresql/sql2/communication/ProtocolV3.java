@@ -301,10 +301,14 @@ public class ProtocolV3 {
     if (error.getField(HINT) != null)
       message.append("\nHint: ").append(error.getField(HINT));
 
-    Submission sub = submissions.poll();
+    PGSubmission sub = submissions.poll();
 
     SqlException exception = new SqlException(message.toString(), null, error.getField(SQLSTATE_CODE), 0,
-        ((PGSubmission) sub).getSql(), 0);
+        sub.getSql(), 0);
+
+    if(sub.getErrorHandler() != null) {
+      sub.getErrorHandler().accept(exception);
+    }
 
     ((CompletableFuture) sub.getCompletionStage())
         .completeExceptionally(exception);

@@ -10,19 +10,21 @@ import java.util.function.Consumer;
 
 public class PGCloseOperation implements Operation<Void> {
   private PGConnection connection;
+  private Consumer<Throwable> errorHandler;
 
   public PGCloseOperation(PGConnection connection) {
     this.connection = connection;
   }
 
   @Override
-  public Operation<Void> onError(Consumer<Throwable> handler) {
-    return null;
+  public Operation<Void> onError(Consumer<Throwable> errorHandler) {
+    this.errorHandler = errorHandler;
+    return this;
   }
 
   @Override
   public Operation<Void> timeout(Duration minTime) {
-    return null;
+    return this;
   }
 
   @Override
@@ -31,6 +33,7 @@ public class PGCloseOperation implements Operation<Void> {
     submission.setConnectionSubmission(false);
     submission.setSql(null);
     submission.setHolder(null);
+    submission.setErrorHandler(errorHandler);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

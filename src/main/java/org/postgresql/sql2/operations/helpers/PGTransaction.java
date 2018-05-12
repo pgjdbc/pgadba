@@ -1,4 +1,4 @@
-package org.postgresql.sql2.operations;
+package org.postgresql.sql2.operations.helpers;
 
 import jdk.incubator.sql2.Transaction;
 

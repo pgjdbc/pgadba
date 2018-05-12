@@ -17,6 +17,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class ErrorStatesTest {
@@ -46,7 +47,7 @@ public class ErrorStatesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      idF.toCompletableFuture().get(10, TimeUnit.SECONDS);
     } catch (ExecutionException e) {
       SqlException ex = (SqlException)e.getCause();
 
@@ -55,6 +56,58 @@ public class ErrorStatesTest {
       assertEquals("42601", ex.getSqlState());
       assertEquals("select select", ex.getSqlString());
     }
+  }
+
+  @Test
+  public void testRowOperationOnError() throws InterruptedException, TimeoutException {
+    final boolean[] onErrorResult = new boolean[] {false};
+    try (Connection conn = ds.getConnection()) {
+      conn.rowOperation("select select")
+          .onError(t -> onErrorResult[0] = true)
+          .submit()
+          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    } catch (ExecutionException ignore) {
+    }
+    assertTrue(onErrorResult[0]);
+  }
+
+  @Test
+  public void testCountOperationOnError() throws InterruptedException, TimeoutException {
+    final boolean[] onErrorResult = new boolean[] {false};
+    try (Connection conn = ds.getConnection()) {
+      conn.countOperation("select select")
+          .onError(t -> onErrorResult[0] = true)
+          .submit()
+          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    } catch (ExecutionException ignore) {
+    }
+    assertTrue(onErrorResult[0]);
+  }
+
+  @Test
+  public void testOperationOnError() throws InterruptedException, TimeoutException {
+    final boolean[] onErrorResult = new boolean[] {false};
+    try (Connection conn = ds.getConnection()) {
+      conn.operation("select select")
+          .onError(t -> onErrorResult[0] = true)
+          .submit()
+          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    } catch (ExecutionException ignore) {
+    }
+    assertTrue(onErrorResult[0]);
+  }
+
+  @Test
+  public void testRowProcessorOperationOnError() throws InterruptedException, TimeoutException {
+    final boolean[] onErrorResult = new boolean[] {false};
+    try (Connection conn = ds.getConnection()) {
+      conn.rowProcessorOperation("select select")
+          .onError(t -> onErrorResult[0] = true)
+          .submit()
+          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    } catch (ExecutionException ignore) {
+    }
+    assertTrue(onErrorResult[0]);
   }
 
   @Test

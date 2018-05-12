@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 public class PGTransactionOperation implements Operation<TransactionOutcome> {
   private Transaction transaction;
   private PGConnection connection;
+  private Consumer<Throwable> errorHandler;
 
   public PGTransactionOperation(Transaction transaction, PGConnection connection) {
     this.transaction = transaction;
@@ -21,7 +22,8 @@ public class PGTransactionOperation implements Operation<TransactionOutcome> {
   }
 
   @Override
-  public Operation<TransactionOutcome> onError(Consumer<Throwable> handler) {
+  public Operation<TransactionOutcome> onError(Consumer<Throwable> errorHandler) {
+    this.errorHandler = errorHandler;
     return this;
   }
 
@@ -40,6 +42,7 @@ public class PGTransactionOperation implements Operation<TransactionOutcome> {
       submission.setSql("COMMIT TRANSACTION");
     }
     submission.setHolder(new ParameterHolder());
+    submission.setErrorHandler(errorHandler);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

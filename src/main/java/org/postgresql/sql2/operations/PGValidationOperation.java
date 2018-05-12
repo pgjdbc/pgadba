@@ -14,6 +14,7 @@ import java.util.stream.Collector;
 public class PGValidationOperation implements Operation<Void> {
   private final PGConnection connection;
   private final Connection.Validation depth;
+  private Consumer<Throwable> errorHandler;
 
   public PGValidationOperation(PGConnection connection, Connection.Validation depth) {
     this.connection = connection;
@@ -21,7 +22,8 @@ public class PGValidationOperation implements Operation<Void> {
   }
 
   @Override
-  public Operation<Void> onError(Consumer<Throwable> handler) {
+  public Operation<Void> onError(Consumer<Throwable> errorHandler) {
+    this.errorHandler = errorHandler;
     return this;
   }
 
@@ -38,10 +40,12 @@ public class PGValidationOperation implements Operation<Void> {
         if (connection.isConnectionClosed()) {
           PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID);
           submission.getCompletionStage().toCompletableFuture().completeExceptionally(new IllegalStateException());
+          submission.setErrorHandler(errorHandler);
           return submission;
         } else {
           PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID);
           submission.getCompletionStage().toCompletableFuture().complete(null);
+          submission.setErrorHandler(errorHandler);
           return submission;
         }
       case SOCKET:
@@ -60,6 +64,7 @@ public class PGValidationOperation implements Operation<Void> {
             (a, v) -> {},
             (a, b) -> null,
             a -> null));
+        submission.setErrorHandler(errorHandler);
         connection.addSubmissionOnQue(submission);
         return submission;
     }

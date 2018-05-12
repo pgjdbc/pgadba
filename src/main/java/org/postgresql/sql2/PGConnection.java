@@ -35,7 +35,7 @@ import org.postgresql.sql2.operations.PGCountOperation;
 import org.postgresql.sql2.operations.PGOperation;
 import org.postgresql.sql2.operations.PGParameterizedRowOperation;
 import org.postgresql.sql2.operations.PGRowProcessorOperation;
-import org.postgresql.sql2.operations.PGTransaction;
+import org.postgresql.sql2.operations.helpers.PGTransaction;
 import org.postgresql.sql2.operations.PGTransactionOperation;
 import org.postgresql.sql2.operations.PGValidationOperation;
 

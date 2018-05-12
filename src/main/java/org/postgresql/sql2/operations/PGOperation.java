@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 public class PGOperation implements Operation<Object> {
   private final PGConnection connection;
   private final String sql;
+  private Consumer<Throwable> errorHandler;
 
   public PGOperation(PGConnection connection, String sql) {
     this.connection = connection;
@@ -19,13 +20,14 @@ public class PGOperation implements Operation<Object> {
   }
 
   @Override
-  public Operation<Object> onError(Consumer<Throwable> handler) {
-    return null;
+  public Operation<Object> onError(Consumer<Throwable> errorHandler) {
+    this.errorHandler = errorHandler;
+    return this;
   }
 
   @Override
   public Operation<Object> timeout(Duration minTime) {
-    return null;
+    return this;
   }
 
   @Override
@@ -34,6 +36,7 @@ public class PGOperation implements Operation<Object> {
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(new ParameterHolder());
+    submission.setErrorHandler(errorHandler);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

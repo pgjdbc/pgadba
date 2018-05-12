@@ -21,6 +21,7 @@ public class PGArrayCountOperation<R> implements ArrayCountOperation<R> {
   private final PGConnection connection;
   private final String sql;
   private ParameterHolder holder;
+  private Consumer<Throwable> errorHandler;
 
   public PGArrayCountOperation(PGConnection connection, String sql) {
     this.connection = connection;
@@ -80,7 +81,8 @@ public class PGArrayCountOperation<R> implements ArrayCountOperation<R> {
   }
 
   @Override
-  public ArrayCountOperation<R> onError(Consumer<Throwable> handler) {
+  public ArrayCountOperation<R> onError(Consumer<Throwable> errorHandler) {
+    this.errorHandler = errorHandler;
     return this;
   }
 

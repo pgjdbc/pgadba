@@ -20,6 +20,7 @@ public class PGRowProcessorOperation<R> implements RowProcessorOperation<R> {
   private String sql;
   private ParameterHolder holder;
   private Flow.Processor<Result.Row, ? extends R> processor;
+  private Consumer<Throwable> errorHandler;
 
   public PGRowProcessorOperation(PGConnection connection, String sql) {
     this.connection = connection;
@@ -39,7 +40,8 @@ public class PGRowProcessorOperation<R> implements RowProcessorOperation<R> {
   }
 
   @Override
-  public RowProcessorOperation<R> onError(Consumer<Throwable> handler) {
+  public RowProcessorOperation<R> onError(Consumer<Throwable> errorHandler) {
+    this.errorHandler = errorHandler;
     return this;
   }
 
@@ -79,6 +81,7 @@ public class PGRowProcessorOperation<R> implements RowProcessorOperation<R> {
     submission.setSql(sql);
     submission.setHolder(holder);
     submission.setProcessor(processor);
+    submission.setErrorHandler(errorHandler);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

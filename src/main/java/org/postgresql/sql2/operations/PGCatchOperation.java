@@ -10,13 +10,15 @@ import java.util.function.Consumer;
 
 public class PGCatchOperation implements Operation<Object> {
   private PGConnection connection;
+  private Consumer<Throwable> errorHandler;
 
   public PGCatchOperation(PGConnection connection) {
     this.connection = connection;
   }
 
   @Override
-  public Operation<Object> onError(Consumer<Throwable> handler) {
+  public Operation<Object> onError(Consumer<Throwable> errorHandler) {
+    this.errorHandler = errorHandler;
     return this;
   }
 
@@ -29,6 +31,7 @@ public class PGCatchOperation implements Operation<Object> {
   public Submission<Object> submit() {
     PGSubmission<Object> submission = new PGSubmission<>(this::cancel, null);
     submission.setConnectionSubmission(false);
+    submission.setErrorHandler(errorHandler);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

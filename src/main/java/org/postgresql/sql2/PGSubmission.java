@@ -12,6 +12,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
@@ -37,7 +38,7 @@ public class PGSubmission<T> implements Submission<T> {
   private Collector collector;
   private Object collectorHolder;
   private Flow.Processor<Result.Row, ? extends T> processor;
-
+  private Consumer<Throwable> errorHandler;
 
   private List<Long> countResults = new ArrayList<>();
 
@@ -134,5 +135,13 @@ public class PGSubmission<T> implements Submission<T> {
 
   public List<Long> countResult() {
     return countResults;
+  }
+
+  public void setErrorHandler(Consumer<Throwable> errorHandler) {
+    this.errorHandler = errorHandler;
+  }
+
+  public Consumer<Throwable> getErrorHandler() {
+    return errorHandler;
   }
 }

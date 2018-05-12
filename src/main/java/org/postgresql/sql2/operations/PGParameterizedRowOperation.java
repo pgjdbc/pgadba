@@ -24,6 +24,7 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
       (a, v) -> {},
       (a, b) -> null,
       a -> null);
+  private Consumer<Throwable> errorHandler;
 
   public PGParameterizedRowOperation(PGConnection connection, String sql) {
     this.connection = connection;
@@ -32,7 +33,8 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
   }
 
   @Override
-  public ParameterizedRowOperation<R> onError(Consumer<Throwable> handler) {
+  public ParameterizedRowOperation<R> onError(Consumer<Throwable> errorHandler) {
+    this.errorHandler = errorHandler;
     return this;
   }
 
@@ -83,6 +85,7 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
     submission.setSql(sql);
     submission.setHolder(holder);
     submission.setCollector(collector);
+    submission.setErrorHandler(errorHandler);
     connection.addSubmissionOnQue(submission);
     return submission;
   }
