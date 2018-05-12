@@ -17,6 +17,7 @@ import jdk.incubator.sql2.OperationGroup;
 import jdk.incubator.sql2.OutOperation;
 import jdk.incubator.sql2.ParameterizedCountOperation;
 import jdk.incubator.sql2.ParameterizedRowOperation;
+import jdk.incubator.sql2.PrimitiveOperation;
 import jdk.incubator.sql2.RowProcessorOperation;
 import jdk.incubator.sql2.ShardingKey;
 import jdk.incubator.sql2.SqlException;
@@ -485,7 +486,7 @@ public class PGConnection implements Connection {
    * @return an unskippable Operation;
    */
   @Override
-  public Operation<Object> catchOperation() {
+  public PrimitiveOperation<Object> catchOperation() {
     if (!lifecycle.isOpen()) {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
