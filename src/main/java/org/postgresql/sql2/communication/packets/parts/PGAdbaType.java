@@ -66,7 +66,7 @@ public enum PGAdbaType implements SqlType {
   /**
    * Identifies the generic SQL type {@code LONGVARCHAR}.
    */
-  LONGVARCHAR("text", 25, AdbaType.LONGVARCHAR, BinaryGenerator::fromString, FormatCodeTypes.TEXT),
+  LONGVARCHAR("text", 25, AdbaType.LONG_VARCHAR, BinaryGenerator::fromString, FormatCodeTypes.TEXT),
   /**
    * Identifies the generic SQL type {@code DATE}.
    */
@@ -90,7 +90,7 @@ public enum PGAdbaType implements SqlType {
   /**
    * Identifies the generic SQL type {@code LONGVARBINARY}.
    */
-  LONGVARBINARY("bytea", 17, AdbaType.LONGVARBINARY, BinaryGenerator::fromByteArray, FormatCodeTypes.TEXT),
+  LONGVARBINARY("bytea", 17, AdbaType.LONG_VARBINARY, BinaryGenerator::fromByteArray, FormatCodeTypes.TEXT),
   /**
    * Identifies the generic SQL value {@code NULL}.
    */
@@ -155,7 +155,7 @@ public enum PGAdbaType implements SqlType {
   /**
    * Identifies the generic SQL type {@code LONGNVARCHAR}.
    */
-  LONGNVARCHAR("text", 25, AdbaType.LONGNVARCHAR, BinaryGenerator::fromString, FormatCodeTypes.TEXT),
+  LONGNVARCHAR("text", 25, AdbaType.LONG_NVARCHAR, BinaryGenerator::fromString, FormatCodeTypes.TEXT),
   /**
    * Identifies the generic SQL type {@code NCLOB}.
    */

@@ -10,8 +10,8 @@ import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.ConnectionProperty;
 import jdk.incubator.sql2.CountOperation;
 import jdk.incubator.sql2.DataSource;
-import jdk.incubator.sql2.DynamicMultiOperation;
 import jdk.incubator.sql2.LocalOperation;
+import jdk.incubator.sql2.MultiOperation;
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.OperationGroup;
 import jdk.incubator.sql2.OutOperation;
@@ -21,7 +21,6 @@ import jdk.incubator.sql2.RowProcessorOperation;
 import jdk.incubator.sql2.ShardingKey;
 import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.SqlSkippedException;
-import jdk.incubator.sql2.StaticMultiOperation;
 import jdk.incubator.sql2.Submission;
 import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
@@ -35,9 +34,9 @@ import org.postgresql.sql2.operations.PGCountOperation;
 import org.postgresql.sql2.operations.PGOperation;
 import org.postgresql.sql2.operations.PGParameterizedRowOperation;
 import org.postgresql.sql2.operations.PGRowProcessorOperation;
-import org.postgresql.sql2.operations.helpers.PGTransaction;
 import org.postgresql.sql2.operations.PGTransactionOperation;
 import org.postgresql.sql2.operations.PGValidationOperation;
+import org.postgresql.sql2.operations.helpers.PGTransaction;
 
 import java.time.Duration;
 import java.util.Map;
@@ -587,6 +586,18 @@ public class PGConnection implements Connection {
     return new PGParameterizedRowOperation<>(this, sql);
   }
 
+  /**
+   * Return a new {@link RowProcessorOperation} that is a member {@link Operation}
+   * of this {@link OperationGroup}.
+   *
+   * @param <R> the type of the result of the returned
+   * {@link RowProcessorOperation}
+   * @param sql SQL for the {@link Operation}. Must return a row sequence.
+   * @return a new {@link RowProcessorOperation} that is a member of this
+   * {@link OperationGroup}
+   * @throws IllegalStateException if the {@link OperationGroup} has been
+   * submitted and is not held
+   */
   @Override
   public <R> RowProcessorOperation<R> rowProcessorOperation(String sql) {
     if (!lifecycle.isOpen()) {
@@ -597,31 +608,19 @@ public class PGConnection implements Connection {
   }
 
   /**
-   * Return a {@link StaticMultiOperation}.
+   * Return a new {@link MultiOperation} that is a member
+   * {@link Operation} of this {@link OperationGroup}.
    *
    * @param <R> the type of the result of the returned
-   * {@link StaticMultiOperation}
+   * {@link MultiOperation}
    * @param sql SQL for the {@link Operation}
-   * @return a new {@link StaticMultiOperation} that is a member of this
+   * @return a new {@link MultiOperation} that is a member of this
    * {@link OperationGroup}
+   * @throws IllegalStateException if the {@link OperationGroup} has been
+   * submitted and is not held
    */
   @Override
-  public <R> StaticMultiOperation<R> staticMultiOperation(String sql) {
-    return null;
-  }
-
-  /**
-   * Return a {@link DynamicMultiOperation}. Use this when the number and type
-   * of the results is not knowable.
-   *
-   * @param <R> the type of the result of the returned
-   * {@link DynamicMultiOperation}
-   * @param sql SQL for the {@link Operation}
-   * @return a new {@link DynamicMultiOperation} that is a member of this
-   * {@link OperationGroup}
-   */
-  @Override
-  public <R> DynamicMultiOperation<R> dynamicMultiOperation(String sql) {
+  public <R> MultiOperation<R> multiOperation(String sql) {
     return null;
   }
 
