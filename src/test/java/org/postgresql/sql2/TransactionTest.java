@@ -13,6 +13,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -39,7 +41,7 @@ public class TransactionTest {
   }
 
   @Test
-  public void insertAndRollback() throws ExecutionException, InterruptedException {
+  public void insertAndRollback() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       Transaction transaction = conn.transaction();
       conn.countOperation("start transaction")
@@ -51,7 +53,7 @@ public class TransactionTest {
       transaction.setRollbackOnly();
       CompletionStage<TransactionOutcome> roll = conn.commitMaybeRollback(transaction);
 
-      assertEquals(TransactionOutcome.ROLLBACK, roll.toCompletableFuture().get());
+      assertEquals(TransactionOutcome.ROLLBACK, roll.toCompletableFuture().get(10, TimeUnit.SECONDS));
 
       CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("SELECT EXISTS (\n" +
           "   SELECT 1 \n" +
@@ -65,12 +67,12 @@ public class TransactionTest {
           .submit()
           .getCompletionStage();
 
-      assertFalse(idF.toCompletableFuture().get());
+      assertFalse(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void insertAndCommit() throws ExecutionException, InterruptedException {
+  public void insertAndCommit() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       Transaction transaction = conn.transaction();
       conn.countOperation("start transaction")
@@ -81,17 +83,17 @@ public class TransactionTest {
           .submit();
       CompletionStage<TransactionOutcome> roll = conn.commitMaybeRollback(transaction);
 
-      assertEquals(TransactionOutcome.COMMIT, roll.toCompletableFuture().get());
+      assertEquals(TransactionOutcome.COMMIT, roll.toCompletableFuture().get(10, TimeUnit.SECONDS));
 
       CompletionStage<Long> idF = conn.<Long>rowOperation("select count(*) as t from tab")
           .collect(singleCollector(Long.class))
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf(1), idF.toCompletableFuture().get());
+      assertEquals(Long.valueOf(1), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
 
       conn.countOperation("drop table tab")
-          .submit().getCompletionStage().toCompletableFuture().get();
+          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
     }
   }
 

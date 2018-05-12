@@ -20,6 +20,8 @@ import java.time.ZoneOffset;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -44,7 +46,7 @@ public class BindParameterTypesTest {
   }
 
   @Test
-  public void bindNullAsInteger4() throws ExecutionException, InterruptedException {
+  public void bindNullAsInteger4() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
           .set("$1", null, PGAdbaType.INTEGER)
@@ -52,12 +54,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertNull(idF.toCompletableFuture().get());
+      assertNull(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureNullAsInteger4() throws ExecutionException, InterruptedException {
+  public void bindFutureNullAsInteger4() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Integer> f = CompletableFuture.supplyAsync(() -> null);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
@@ -66,12 +68,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertNull(idF.toCompletableFuture().get());
+      assertNull(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindNullAsInteger4NoType() throws ExecutionException, InterruptedException {
+  public void bindNullAsInteger4NoType() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
           .set("$1", null)
@@ -79,12 +81,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertNull(idF.toCompletableFuture().get());
+      assertNull(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureNullAsInteger4NoType() throws ExecutionException, InterruptedException {
+  public void bindFutureNullAsInteger4NoType() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Integer> f = CompletableFuture.supplyAsync(() -> null);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
@@ -93,12 +95,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertNull(idF.toCompletableFuture().get());
+      assertNull(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindInteger4() throws ExecutionException, InterruptedException {
+  public void bindInteger4() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
           .set("$1", 100, PGAdbaType.INTEGER)
@@ -106,12 +108,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get());
+      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureInteger4() throws ExecutionException, InterruptedException {
+  public void bindFutureInteger4() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Integer> f = CompletableFuture.supplyAsync(() -> 100);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
@@ -120,12 +122,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get());
+      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindInteger4NoType() throws ExecutionException, InterruptedException {
+  public void bindInteger4NoType() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
           .set("$1", 100)
@@ -133,12 +135,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get());
+      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureInteger4NoType() throws ExecutionException, InterruptedException {
+  public void bindFutureInteger4NoType() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Integer> f = CompletableFuture.supplyAsync(() -> 100);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
@@ -147,12 +149,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get());
+      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindInteger2() throws ExecutionException, InterruptedException {
+  public void bindInteger2() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Short> idF = conn.<Short>rowOperation("select $1::int2 as t")
           .set("$1", 100, PGAdbaType.SMALLINT)
@@ -160,12 +162,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get());
+      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureInteger2() throws ExecutionException, InterruptedException {
+  public void bindFutureInteger2() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Short> f = CompletableFuture.supplyAsync(() -> (short)100);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Short> idF = conn.<Short>rowOperation("select $1::int2 as t")
@@ -174,12 +176,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get());
+      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindInteger2NoType() throws ExecutionException, InterruptedException {
+  public void bindInteger2NoType() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Short> idF = conn.<Short>rowOperation("select $1::int2 as t")
           .set("$1", 100)
@@ -187,12 +189,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get());
+      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureInteger2NoType() throws ExecutionException, InterruptedException {
+  public void bindFutureInteger2NoType() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Short> f = CompletableFuture.supplyAsync(() -> (short)100);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Short> idF = conn.<Short>rowOperation("select $1::int2 as t")
@@ -201,12 +203,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get());
+      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindInteger8() throws ExecutionException, InterruptedException {
+  public void bindInteger8() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Long> idF = conn.<Long>rowOperation("select $1::int8 as t")
           .set("$1", 100, PGAdbaType.BIGINT)
@@ -214,12 +216,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get());
+      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureInteger8() throws ExecutionException, InterruptedException {
+  public void bindFutureInteger8() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Long> f = CompletableFuture.supplyAsync(() -> 100L);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Long> idF = conn.<Long>rowOperation("select $1::int8 as t")
@@ -228,12 +230,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get());
+      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindInteger8NoType() throws ExecutionException, InterruptedException {
+  public void bindInteger8NoType() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Long> idF = conn.<Long>rowOperation("select $1::int8 as t")
           .set("$1", 100)
@@ -241,12 +243,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get());
+      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureInteger8NoType() throws ExecutionException, InterruptedException {
+  public void bindFutureInteger8NoType() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Long> f = CompletableFuture.supplyAsync(() -> 100L);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Long> idF = conn.<Long>rowOperation("select $1::int8 as t")
@@ -255,12 +257,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get());
+      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindVarchar() throws ExecutionException, InterruptedException {
+  public void bindVarchar() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
           .set("$1", "a text I wrote", PGAdbaType.VARCHAR)
@@ -268,12 +270,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("a text I wrote", idF.toCompletableFuture().get());
+      assertEquals("a text I wrote", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureVarchar() throws ExecutionException, InterruptedException {
+  public void bindFutureVarchar() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<String> f = CompletableFuture.supplyAsync(() -> "a text I wrote");
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
@@ -282,12 +284,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("a text I wrote", idF.toCompletableFuture().get());
+      assertEquals("a text I wrote", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindVarcharNoType() throws ExecutionException, InterruptedException {
+  public void bindVarcharNoType() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
           .set("$1", "a text I wrote")
@@ -295,12 +297,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("a text I wrote", idF.toCompletableFuture().get());
+      assertEquals("a text I wrote", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureVarcharNoType() throws ExecutionException, InterruptedException {
+  public void bindFutureVarcharNoType() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<String> f = CompletableFuture.supplyAsync(() -> "a text I wrote");
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
@@ -309,12 +311,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("a text I wrote", idF.toCompletableFuture().get());
+      assertEquals("a text I wrote", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindVarCharNorwegianChar() throws ExecutionException, InterruptedException {
+  public void bindVarCharNorwegianChar() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
           .set("$1", "Brød har lenge vore ein viktig del av norsk kosthald.", PGAdbaType.VARCHAR)
@@ -322,12 +324,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", idF.toCompletableFuture().get());
+      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureVarCharNorwegianChar() throws ExecutionException, InterruptedException {
+  public void bindFutureVarCharNorwegianChar() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<String> f = CompletableFuture.supplyAsync(() -> "Brød har lenge vore ein viktig del av norsk kosthald.");
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
@@ -336,12 +338,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", idF.toCompletableFuture().get());
+      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindVarCharNorwegianCharNoType() throws ExecutionException, InterruptedException {
+  public void bindVarCharNorwegianCharNoType() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
           .set("$1", "Brød har lenge vore ein viktig del av norsk kosthald.")
@@ -349,12 +351,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", idF.toCompletableFuture().get());
+      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureVarCharNorwegianCharNoType() throws ExecutionException, InterruptedException {
+  public void bindFutureVarCharNorwegianCharNoType() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<String> f = CompletableFuture.supplyAsync(() -> "Brød har lenge vore ein viktig del av norsk kosthald.");
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
@@ -363,12 +365,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", idF.toCompletableFuture().get());
+      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindChar() throws ExecutionException, InterruptedException {
+  public void bindChar() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
           .set("$1", 'R', PGAdbaType.CHAR)
@@ -376,12 +378,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get());
+      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureChar() throws ExecutionException, InterruptedException {
+  public void bindFutureChar() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Character> f = CompletableFuture.supplyAsync(() -> 'R');
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
@@ -390,12 +392,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get());
+      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindCharNoType() throws ExecutionException, InterruptedException {
+  public void bindCharNoType() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
           .set("$1", 'R')
@@ -403,12 +405,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get());
+      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureCharNoType() throws ExecutionException, InterruptedException {
+  public void bindFutureCharNoType() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Character> f = CompletableFuture.supplyAsync(() -> 'R');
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
@@ -417,12 +419,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get());
+      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindCharNorwegianChar() throws ExecutionException, InterruptedException {
+  public void bindCharNorwegianChar() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
           .set("$1", 'Ø', PGAdbaType.CHAR)
@@ -430,12 +432,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get());
+      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureCharNorwegianChar() throws ExecutionException, InterruptedException {
+  public void bindFutureCharNorwegianChar() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Character> f = CompletableFuture.supplyAsync(() -> 'Ø');
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
@@ -444,12 +446,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get());
+      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindCharNorwegianCharNoType() throws ExecutionException, InterruptedException {
+  public void bindCharNorwegianCharNoType() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
           .set("$1", 'Ø')
@@ -457,12 +459,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get());
+      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureCharNorwegianCharNoType() throws ExecutionException, InterruptedException {
+  public void bindFutureCharNorwegianCharNoType() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Character> f = CompletableFuture.supplyAsync(() -> 'Ø');
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
@@ -471,12 +473,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get());
+      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindLongVarCharNorwegianChar() throws ExecutionException, InterruptedException {
+  public void bindLongVarCharNorwegianChar() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::text as t")
           .set("$1", "Som regel i form av smørbrød til frukost og lunsj.", PGAdbaType.LONGVARCHAR)
@@ -484,12 +486,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", idF.toCompletableFuture().get());
+      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureLongVarCharNorwegianChar() throws ExecutionException, InterruptedException {
+  public void bindFutureLongVarCharNorwegianChar() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<String> f = CompletableFuture.supplyAsync(() -> "Som regel i form av smørbrød til frukost og lunsj.");
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::text as t")
@@ -498,12 +500,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", idF.toCompletableFuture().get());
+      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindLongVarCharNorwegianCharNoType() throws ExecutionException, InterruptedException {
+  public void bindLongVarCharNorwegianCharNoType() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::text as t")
           .set("$1", "Som regel i form av smørbrød til frukost og lunsj.")
@@ -511,12 +513,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", idF.toCompletableFuture().get());
+      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureLongVarCharNorwegianCharNoType() throws ExecutionException, InterruptedException {
+  public void bindFutureLongVarCharNorwegianCharNoType() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<String> f = CompletableFuture.supplyAsync(() -> "Som regel i form av smørbrød til frukost og lunsj.");
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::text as t")
@@ -525,13 +527,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", idF.toCompletableFuture().get());
+      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindDate() throws ExecutionException, InterruptedException {
-    LocalDate d = LocalDate.now();
+  public void bindDate() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalDate d = LocalDate.of(2018, 3, 11);
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalDate> idF = conn.<LocalDate>rowOperation("select $1::date as t")
@@ -540,13 +542,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureDate() throws ExecutionException, InterruptedException {
-    LocalDate d = LocalDate.now();
+  public void bindFutureDate() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalDate d = LocalDate.of(2018, 3, 12);
     CompletableFuture<LocalDate> f = CompletableFuture.supplyAsync(() -> d);
 
     try (Connection conn = ds.getConnection()) {
@@ -556,13 +558,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindDateNoType() throws ExecutionException, InterruptedException {
-    LocalDate d = LocalDate.now();
+  public void bindDateNoType() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalDate d = LocalDate.of(2018, 2, 11);
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalDate> idF = conn.<LocalDate>rowOperation("select $1::date as t")
@@ -571,13 +573,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureDateNoType() throws ExecutionException, InterruptedException {
-    LocalDate d = LocalDate.now();
+  public void bindFutureDateNoType() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalDate d = LocalDate.of(2018, 5, 9);
     CompletableFuture<LocalDate> f = CompletableFuture.supplyAsync(() -> d);
 
     try (Connection conn = ds.getConnection()) {
@@ -587,13 +589,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindTime() throws ExecutionException, InterruptedException {
-    LocalTime d = LocalTime.now();
+  public void bindTime() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalTime d = LocalTime.of(14, 55, 32, 123456000);
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalTime> idF = conn.<LocalTime>rowOperation("select $1::time as t")
@@ -602,13 +604,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureTime() throws ExecutionException, InterruptedException {
-    LocalTime d = LocalTime.now();
+  public void bindFutureTime() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalTime d = LocalTime.of(11, 55, 13, 123456000);
     CompletableFuture<LocalTime> f = CompletableFuture.supplyAsync(() -> d);
 
     try (Connection conn = ds.getConnection()) {
@@ -618,13 +620,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindTimeNoType() throws ExecutionException, InterruptedException {
-    LocalTime d = LocalTime.now();
+  public void bindTimeNoType() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalTime d = LocalTime.of(19, 12, 40, 654321000);
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalTime> idF = conn.<LocalTime>rowOperation("select $1::time as t")
@@ -633,13 +635,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureTimeNoType() throws ExecutionException, InterruptedException {
-    LocalTime d = LocalTime.now();
+  public void bindFutureTimeNoType() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalTime d = LocalTime.of(3, 20, 22, 2000);
     CompletableFuture<LocalTime> f = CompletableFuture.supplyAsync(() -> d);
 
     try (Connection conn = ds.getConnection()) {
@@ -649,13 +651,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindTimeWithTimeZone() throws ExecutionException, InterruptedException {
-    OffsetTime d = OffsetTime.now(ZoneOffset.UTC);
+  public void bindTimeWithTimeZone() throws ExecutionException, InterruptedException, TimeoutException {
+    OffsetTime d = OffsetTime.of(13, 33, 11, 34000, ZoneOffset.UTC);
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<OffsetTime> idF = conn.<OffsetTime>rowOperation("select $1::time with time zone as t")
@@ -664,13 +666,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureTimeWithTimeZone() throws ExecutionException, InterruptedException {
-    OffsetTime d = OffsetTime.now(ZoneOffset.UTC);
+  public void bindFutureTimeWithTimeZone() throws ExecutionException, InterruptedException, TimeoutException {
+    OffsetTime d = OffsetTime.of(7, 26, 11, 987000, ZoneOffset.UTC);
     CompletableFuture<OffsetTime> f = CompletableFuture.supplyAsync(() -> d);
 
     try (Connection conn = ds.getConnection()) {
@@ -680,13 +682,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindTimeWithTimeZoneNoType() throws ExecutionException, InterruptedException {
-    OffsetTime d = OffsetTime.now(ZoneOffset.UTC);
+  public void bindTimeWithTimeZoneNoType() throws ExecutionException, InterruptedException, TimeoutException {
+    OffsetTime d = OffsetTime.of(3, 10, 1, 220000, ZoneOffset.UTC);
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<OffsetTime> idF = conn.<OffsetTime>rowOperation("select $1::time with time zone as t")
@@ -695,13 +697,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureTimeWithTimeZoneNoType() throws ExecutionException, InterruptedException {
-    OffsetTime d = OffsetTime.now(ZoneOffset.UTC);
+  public void bindFutureTimeWithTimeZoneNoType() throws ExecutionException, InterruptedException, TimeoutException {
+    OffsetTime d = OffsetTime.of(12, 22, 33, 440000, ZoneOffset.UTC);
     CompletableFuture<OffsetTime> f = CompletableFuture.supplyAsync(() -> d);
 
     try (Connection conn = ds.getConnection()) {
@@ -711,13 +713,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindTimestamp() throws ExecutionException, InterruptedException {
-    LocalDateTime d = LocalDateTime.now();
+  public void bindTimestamp() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalDateTime d = LocalDateTime.of(2018, 1, 2, 3, 4, 5, 6000);
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalDateTime> idF = conn.<LocalDateTime>rowOperation("select $1::timestamp as t")
@@ -726,13 +728,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureTimestamp() throws ExecutionException, InterruptedException {
-    LocalDateTime d = LocalDateTime.now();
+  public void bindFutureTimestamp() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalDateTime d = LocalDateTime.of(2018, 3, 22, 13, 55, 2, 88000);
     CompletableFuture<LocalDateTime> f = CompletableFuture.supplyAsync(() -> d);
 
     try (Connection conn = ds.getConnection()) {
@@ -742,13 +744,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindTimestampNoType() throws ExecutionException, InterruptedException {
-    LocalDateTime d = LocalDateTime.now();
+  public void bindTimestampNoType() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalDateTime d = LocalDateTime.of(2018, 6, 6, 4, 45, 0, 722000);
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalDateTime> idF = conn.<LocalDateTime>rowOperation("select $1::timestamp as t")
@@ -757,13 +759,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureTimestampNoType() throws ExecutionException, InterruptedException {
-    LocalDateTime d = LocalDateTime.now();
+  public void bindFutureTimestampNoType() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalDateTime d = LocalDateTime.of(2018, 12, 10, 5, 4, 3, 2000);
     CompletableFuture<LocalDateTime> f = CompletableFuture.supplyAsync(() -> d);
 
     try (Connection conn = ds.getConnection()) {
@@ -773,13 +775,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindTimestampWithTimeZone() throws ExecutionException, InterruptedException {
-    OffsetDateTime d = OffsetDateTime.now(ZoneOffset.UTC);
+  public void bindTimestampWithTimeZone() throws ExecutionException, InterruptedException, TimeoutException {
+    OffsetDateTime d = OffsetDateTime.of(2018, 3, 9, 12, 22, 33, 45000, ZoneOffset.UTC);
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<OffsetDateTime> idF = conn.<OffsetDateTime>rowOperation("select $1::timestamp with time zone as t")
@@ -788,13 +790,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureTimestampWithTimeZone() throws ExecutionException, InterruptedException {
-    OffsetDateTime d = OffsetDateTime.now(ZoneOffset.UTC);
+  public void bindFutureTimestampWithTimeZone() throws ExecutionException, InterruptedException, TimeoutException {
+    OffsetDateTime d = OffsetDateTime.of(2018, 1, 1, 13, 44, 38, 411000, ZoneOffset.UTC);
     CompletableFuture<OffsetDateTime> f = CompletableFuture.supplyAsync(() -> d);
 
     try (Connection conn = ds.getConnection()) {
@@ -804,13 +806,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindTimestampWithTimeZoneNoType() throws ExecutionException, InterruptedException {
-    OffsetDateTime d = OffsetDateTime.now(ZoneOffset.UTC);
+  public void bindTimestampWithTimeZoneNoType() throws ExecutionException, InterruptedException, TimeoutException {
+    OffsetDateTime d = OffsetDateTime.of(2018, 7, 3, 22, 43, 22, 67000, ZoneOffset.UTC);
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<OffsetDateTime> idF = conn.<OffsetDateTime>rowOperation("select $1::timestamp with time zone as t")
@@ -819,13 +821,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureTimestampWithTimeZoneNoType() throws ExecutionException, InterruptedException {
-    OffsetDateTime d = OffsetDateTime.now(ZoneOffset.UTC);
+  public void bindFutureTimestampWithTimeZoneNoType() throws ExecutionException, InterruptedException, TimeoutException {
+    OffsetDateTime d = OffsetDateTime.of(2018, 11, 2, 20, 20, 20, 321000, ZoneOffset.UTC);
     CompletableFuture<OffsetDateTime> f = CompletableFuture.supplyAsync(() -> d);
 
     try (Connection conn = ds.getConnection()) {
@@ -835,12 +837,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindNumerical() throws ExecutionException, InterruptedException {
+  public void bindNumerical() throws ExecutionException, InterruptedException, TimeoutException {
     BigDecimal d = BigDecimal.TEN;
 
     try (Connection conn = ds.getConnection()) {
@@ -850,12 +852,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureNumerical() throws ExecutionException, InterruptedException {
+  public void bindFutureNumerical() throws ExecutionException, InterruptedException, TimeoutException {
     BigDecimal d = BigDecimal.TEN;
     CompletableFuture<BigDecimal> f = CompletableFuture.supplyAsync(() -> d);
 
@@ -866,12 +868,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindNumericalNoType() throws ExecutionException, InterruptedException {
+  public void bindNumericalNoType() throws ExecutionException, InterruptedException, TimeoutException {
     BigDecimal d = BigDecimal.TEN;
 
     try (Connection conn = ds.getConnection()) {
@@ -881,12 +883,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureNumericalNoType() throws ExecutionException, InterruptedException {
+  public void bindFutureNumericalNoType() throws ExecutionException, InterruptedException, TimeoutException {
     BigDecimal d = BigDecimal.TEN;
     CompletableFuture<BigDecimal> f = CompletableFuture.supplyAsync(() -> d);
 
@@ -897,12 +899,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFloat() throws ExecutionException, InterruptedException {
+  public void bindFloat() throws ExecutionException, InterruptedException, TimeoutException {
     Float d = (float) 100.155;
 
     try (Connection conn = ds.getConnection()) {
@@ -912,12 +914,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(), 0.0001);
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0001);
     }
   }
 
   @Test
-  public void bindFutureFloat() throws ExecutionException, InterruptedException {
+  public void bindFutureFloat() throws ExecutionException, InterruptedException, TimeoutException {
     Float d = (float) 100.155;
     CompletableFuture<Float> f = CompletableFuture.supplyAsync(() -> d);
 
@@ -928,12 +930,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(), 0.0001);
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0001);
     }
   }
 
   @Test
-  public void bindFloatNoType() throws ExecutionException, InterruptedException {
+  public void bindFloatNoType() throws ExecutionException, InterruptedException, TimeoutException {
     Float d = (float) 100.155;
 
     try (Connection conn = ds.getConnection()) {
@@ -943,12 +945,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(), 0.0001);
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0001);
     }
   }
 
   @Test
-  public void bindFutureFloatNoType() throws ExecutionException, InterruptedException {
+  public void bindFutureFloatNoType() throws ExecutionException, InterruptedException, TimeoutException {
     Float d = (float) 100.155;
     CompletableFuture<Float> f = CompletableFuture.supplyAsync(() -> d);
 
@@ -959,12 +961,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(), 0.0001);
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0001);
     }
   }
 
   @Test
-  public void bindDouble() throws ExecutionException, InterruptedException {
+  public void bindDouble() throws ExecutionException, InterruptedException, TimeoutException {
     Double d = 100.155666;
 
     try (Connection conn = ds.getConnection()) {
@@ -974,12 +976,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(), 0.0000001);
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0000001);
     }
   }
 
   @Test
-  public void bindFutureDouble() throws ExecutionException, InterruptedException {
+  public void bindFutureDouble() throws ExecutionException, InterruptedException, TimeoutException {
     Double d = 100.155666;
     CompletableFuture<Double> f = CompletableFuture.supplyAsync(() -> d);
 
@@ -990,12 +992,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(), 0.0000001);
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0000001);
     }
   }
 
   @Test
-  public void bindDoubleNoType() throws ExecutionException, InterruptedException {
+  public void bindDoubleNoType() throws ExecutionException, InterruptedException, TimeoutException {
     Double d = 100.155666;
 
     try (Connection conn = ds.getConnection()) {
@@ -1005,12 +1007,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(), 0.0000001);
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0000001);
     }
   }
 
   @Test
-  public void bindFutureDoubleNoType() throws ExecutionException, InterruptedException {
+  public void bindFutureDoubleNoType() throws ExecutionException, InterruptedException, TimeoutException {
     Double d = 100.155666;
     CompletableFuture<Double> f = CompletableFuture.supplyAsync(() -> d);
 
@@ -1021,12 +1023,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(), 0.0000001);
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0000001);
     }
   }
 
   @Test
-  public void bindBoolean() throws ExecutionException, InterruptedException {
+  public void bindBoolean() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("select $1::boolean as t")
           .set("$1", true, PGAdbaType.BOOLEAN)
@@ -1034,12 +1036,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertTrue(idF.toCompletableFuture().get());
+      assertTrue(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureBoolean() throws ExecutionException, InterruptedException {
+  public void bindFutureBoolean() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Boolean> f = CompletableFuture.supplyAsync(() -> true);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("select $1::boolean as t")
@@ -1048,12 +1050,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertTrue(idF.toCompletableFuture().get());
+      assertTrue(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindBooleanNoType() throws ExecutionException, InterruptedException {
+  public void bindBooleanNoType() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("select $1::boolean as t")
           .set("$1", true)
@@ -1061,12 +1063,12 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertTrue(idF.toCompletableFuture().get());
+      assertTrue(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindFutureBooleanNoType() throws ExecutionException, InterruptedException {
+  public void bindFutureBooleanNoType() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Boolean> f = CompletableFuture.supplyAsync(() -> true);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("select $1::boolean as t")
@@ -1075,13 +1077,13 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertTrue(idF.toCompletableFuture().get());
+      assertTrue(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void bindTimeMultipleUsages() throws ExecutionException, InterruptedException {
-    LocalTime d = LocalTime.now();
+  public void bindTimeMultipleUsages() throws ExecutionException, InterruptedException, TimeoutException {
+    LocalTime d = LocalTime.of(17, 30, 54, 45000);
     CompletableFuture<LocalTime> f = CompletableFuture.supplyAsync(() -> d);
     CompletableFuture<LocalTime> f2 = CompletableFuture.supplyAsync(() -> d);
 
@@ -1092,7 +1094,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get());
+      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
 
       CompletionStage<LocalTime> idF1 = conn.<LocalTime>rowOperation("select $1::time as t")
           .set("$1", f, PGAdbaType.TIME)
@@ -1100,7 +1102,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF1.toCompletableFuture().get());
+      assertEquals(d, idF1.toCompletableFuture().get(10, TimeUnit.SECONDS));
 
       CompletionStage<LocalTime> idF2 = conn.<LocalTime>rowOperation("select $1::time as t")
           .set("$1", d)
@@ -1108,7 +1110,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF2.toCompletableFuture().get());
+      assertEquals(d, idF2.toCompletableFuture().get(10, TimeUnit.SECONDS));
 
       CompletionStage<LocalTime> idF3 = conn.<LocalTime>rowOperation("select $1::time as t")
           .set("$1", f2)
@@ -1116,7 +1118,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF3.toCompletableFuture().get());
+      assertEquals(d, idF3.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 

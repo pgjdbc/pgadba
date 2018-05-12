@@ -12,6 +12,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 
 import static org.junit.Assert.assertEquals;
@@ -38,13 +40,13 @@ public class ErrorStatesTest {
   }
 
   @Test
-  public void testSqlError() throws InterruptedException {
+  public void testSqlError() throws InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select select")
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get());
+      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     } catch (ExecutionException e) {
       SqlException ex = (SqlException)e.getCause();
 
@@ -56,7 +58,7 @@ public class ErrorStatesTest {
   }
 
   @Test
-  public void testGetNameThatIsntUsed() throws InterruptedException {
+  public void testGetNameThatIsntUsed() throws InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100 as t")
           .collect(Collector.of(
@@ -68,7 +70,7 @@ public class ErrorStatesTest {
           .submit()
           .getCompletionStage();
 
-      idF.toCompletableFuture().get();
+      idF.toCompletableFuture().get(10, TimeUnit.SECONDS);
       fail("the column 'notused' doesn't exist in the result.row and should result in an IllegalArgumentException");
     } catch (ExecutionException e) {
       IllegalArgumentException ex = (IllegalArgumentException)e.getCause();
@@ -78,7 +80,7 @@ public class ErrorStatesTest {
   }
 
   @Test
-  public void testGetCaseInsensitive1() throws ExecutionException, InterruptedException {
+  public void testGetCaseInsensitive1() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100 as t")
           .collect(Collector.of(
@@ -90,12 +92,12 @@ public class ErrorStatesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get());
+      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void testGetCaseInsensitive2() throws ExecutionException, InterruptedException {
+  public void testGetCaseInsensitive2() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100 as T")
           .collect(Collector.of(
@@ -107,7 +109,7 @@ public class ErrorStatesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get());
+      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 }

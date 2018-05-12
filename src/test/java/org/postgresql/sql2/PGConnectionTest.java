@@ -74,25 +74,25 @@ public class PGConnectionTest {
   }
 
   @Test
-  public void insertWithATableWithWaitingBetween() throws ExecutionException, InterruptedException {
+  public void insertWithATableWithWaitingBetween() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       conn.operation("create table tabForInsert(id int)")
-          .submit().getCompletionStage().toCompletableFuture().get();
+          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
       conn.countOperation("insert into tabForInsert(id) values ($1)")
           .set("$1", 1, AdbaType.NUMERIC)
-          .submit().getCompletionStage().toCompletableFuture().get();
+          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
       Long count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
           .collect(CollectorUtils.singleCollector(Long.class))
-          .submit().getCompletionStage().toCompletableFuture().get();
+          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
       conn.operation("drop table tabForInsert")
-          .submit().getCompletionStage().toCompletableFuture().get();
+          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
 
       assertEquals(Long.valueOf(1), count);
     }
   }
 
   @Test
-  public void insertWithATableWithoutWaiting() throws ExecutionException, InterruptedException {
+  public void insertWithATableWithoutWaiting() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       conn.operation("create table tabForInsert(id int)")
           .submit();
@@ -105,13 +105,13 @@ public class PGConnectionTest {
       Submission<Object> drop = conn.operation("drop table tabForInsert")
           .submit();
 
-      assertEquals(Long.valueOf(1), count.getCompletionStage().toCompletableFuture().get());
-      assertNull(drop.getCompletionStage().toCompletableFuture().get());
+      assertEquals(Long.valueOf(1), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
   @Test
-  public void multiInsertWithATable() throws ExecutionException, InterruptedException {
+  public void multiInsertWithATable() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       conn.countOperation("create table tabForInsert(id int)")
           .submit();
@@ -124,9 +124,9 @@ public class PGConnectionTest {
       Submission<Object> drop = conn.operation("drop table tabForInsert")
           .submit();
 
-      assertArrayEquals(new Integer[]{1, 1, 1}, arrayCount.getCompletionStage().toCompletableFuture().get().toArray());
-      assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get());
-      assertNull(drop.getCompletionStage().toCompletableFuture().get());
+      assertArrayEquals(new Integer[]{1, 1, 1}, arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
+      assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
@@ -171,7 +171,7 @@ public class PGConnectionTest {
   }
 
   @Test
-  public void createTable() {
+  public void createTable() throws TimeoutException {
 
     try (Connection conn = ds.getConnection()) {
       conn.operation("create table table1(i int)")
@@ -180,7 +180,7 @@ public class PGConnectionTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(1, idF.toCompletableFuture().get().getCount());
+      assertEquals(1, idF.toCompletableFuture().get(10, TimeUnit.SECONDS).getCount());
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
