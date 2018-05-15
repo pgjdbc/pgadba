@@ -4,9 +4,7 @@ import jdk.incubator.sql2.AdbaType;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.Result;
-import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.Submission;
-import jdk.incubator.sql2.Transaction;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -24,10 +22,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Flow;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collector;
 
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertArrayEquals;
@@ -246,46 +242,5 @@ public class PGConnectionTest {
 
       assertEquals(Integer.valueOf(321), result[0]);
     }
-  }
-
-  @Test
-  public void exampleFromADBAOverJDBCProject() {
-    // get a DataSource and a Connection
-    try (DataSource ds = ConnectUtil.openDB(postgres);
-         Connection conn = ds.getConnection(t -> System.out.println("ERROR: " + t.getMessage()))) {
-      // get a Transaction
-      Transaction trans = conn.transaction();
-      // select the EMPNO of CLARK
-      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select empno, ename from emp where ename = $1 for update")
-          .set("$1", "CLARK", AdbaType.VARCHAR)
-          .collect(Collector.of(
-              () -> new int[1],
-              (a, r) -> {
-                a[0] = r.get("empno", Integer.class);
-              },
-              (l, r) -> null,
-              a -> a[0])
-          )
-          .submit()
-          .getCompletionStage();
-      // update CLARK to work in department 50
-      conn.<Long>countOperation("update emp set deptno = $1 where empno = $2")
-          .set("$1", 50, AdbaType.INTEGER)
-          .set("$2", idF, AdbaType.INTEGER)
-          .apply(c -> {
-            if (c.getCount() != 1L) {
-              trans.setRollbackOnly();
-              throw new SqlException("updated wrong number of rows", null, null, -1, null, -1);
-            }
-            return c.getCount();
-          })
-          .onError(Throwable::printStackTrace)
-          .submit();
-
-      conn.catchErrors();  // resume normal execution if there were any errors
-      conn.commitMaybeRollback(trans); // commit (or rollback) the transaction
-    }
-    // wait for the async tasks to complete before exiting
-    ForkJoinPool.commonPool().awaitQuiescence(1, TimeUnit.MINUTES);
   }
 }
