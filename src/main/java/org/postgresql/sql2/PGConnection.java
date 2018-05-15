@@ -143,7 +143,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Void> validationOperation(Connection.Validation depth) {
-    if (!lifecycle.isOpen()) {
+    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
@@ -301,7 +301,8 @@ public class PGConnection implements Connection {
    */
   @Override
   public Connection activate() {
-    return null;
+    this.lifecycle = lifecycle.activate();
+    return this;
   }
 
   /**
@@ -331,7 +332,8 @@ public class PGConnection implements Connection {
    */
   @Override
   public Connection deactivate() {
-    return null;
+    this.lifecycle = lifecycle.deactivate();
+    return this;
   }
 
   /**
@@ -487,7 +489,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public PrimitiveOperation<Object> catchOperation() {
-    if (!lifecycle.isOpen()) {
+    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
@@ -513,7 +515,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> ArrayCountOperation<R> arrayCountOperation(String sql) {
-    if (!lifecycle.isOpen()) {
+    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
@@ -531,7 +533,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> ParameterizedCountOperation<R> countOperation(String sql) {
-    if (!lifecycle.isOpen()) {
+    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
@@ -548,7 +550,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Object> operation(String sql) {
-    if (!lifecycle.isOpen()) {
+    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
@@ -580,7 +582,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> ParameterizedRowOperation<R> rowOperation(String sql) {
-    if (!lifecycle.isOpen()) {
+    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
@@ -601,7 +603,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public <R> RowProcessorOperation<R> rowProcessorOperation(String sql) {
-    if (!lifecycle.isOpen()) {
+    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 

@@ -152,7 +152,6 @@ public class PGConnectionTest {
   public void insertAfterClose() {
 
     String sql = "insert into tab(id, name, answer) values ($1, $2, $3)";
-    Submission sub;
     try (Connection conn = ds.getConnection()) {
       conn.closeOperation()
           .submit();
@@ -161,8 +160,40 @@ public class PGConnectionTest {
           .set("$2", "Deep Thought", AdbaType.VARCHAR)
           .set("$3", 42, AdbaType.NUMERIC)
           .submit();
+      fail("an IllegalStateException should have been thrown");
     } catch (IllegalStateException e) {
       assertEquals("connection lifecycle in state: CLOSING and not open for new work", e.getMessage());
+    }
+  }
+
+  @Test
+  public void insertAfterDeactivate() {
+
+    String sql = "insert into tab(id, name, answer) values ($1, $2, $3)";
+    try (Connection conn = ds.getConnection()) {
+      conn.deactivate();
+      conn.countOperation(sql)
+          .set("$1", 1, AdbaType.NUMERIC)
+          .set("$2", "Deep Thought", AdbaType.VARCHAR)
+          .set("$3", 42, AdbaType.NUMERIC)
+          .submit();
+      fail("an IllegalStateException should have been thrown");
+    } catch (IllegalStateException e) {
+      assertEquals("connection lifecycle in state: NEW_INACTIVE and not open for new work", e.getMessage());
+    }
+  }
+
+  @Test
+  public void selectAfterDeactivateActivate() throws InterruptedException, ExecutionException, TimeoutException {
+
+    String sql = "select 1 as t";
+    try (Connection conn = ds.getConnection()) {
+      conn.deactivate();
+      conn.activate();
+      Integer result = conn.<Integer>rowOperation(sql)
+          .collect(CollectorUtils.singleCollector(Integer.class))
+          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      assertEquals(Integer.valueOf(1), result);
     }
   }
 
