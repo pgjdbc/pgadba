@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DataRow implements Result.Row {
+public class DataRow implements Result.Row, Result.OutParameterMap {
   private Map<String, TableCell> columns;
   private long rowNumber;
 

@@ -204,6 +204,8 @@ public class ProtocolV3 {
     PGSubmission sub = submissions.peek();
     if (sub.getCompletionType() == PGSubmission.Types.PROCESSOR) {
       sub.processRow(row);
+    } else if (sub.getCompletionType() == PGSubmission.Types.OUT_PARAMETER) {
+      sub.applyOutRow(row);
     } else {
       sub.addRow(row);
     }
@@ -273,6 +275,11 @@ public class ProtocolV3 {
         submissions.poll();
         break;
       case PROCESSOR:
+        ((CompletableFuture) sub.getCompletionStage())
+            .complete(null);
+        submissions.poll();
+        break;
+      case OUT_PARAMETER:
         ((CompletableFuture) sub.getCompletionStage())
             .complete(null);
         submissions.poll();

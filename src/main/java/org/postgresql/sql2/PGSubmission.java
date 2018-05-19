@@ -1,18 +1,21 @@
 package org.postgresql.sql2;
 
 import jdk.incubator.sql2.Result;
+import jdk.incubator.sql2.SqlType;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
@@ -24,7 +27,8 @@ public class PGSubmission<T> implements Submission<T> {
     TRANSACTION,
     ARRAY_COUNT,
     VOID,
-    PROCESSOR;
+    PROCESSOR,
+    OUT_PARAMETER;
   }
 
   final private Supplier<Boolean> cancel;
@@ -39,6 +43,9 @@ public class PGSubmission<T> implements Submission<T> {
   private Object collectorHolder;
   private Flow.Processor<Result.Row, ? extends T> processor;
   private Consumer<Throwable> errorHandler;
+  private Map<String, SqlType> outParameterTypeMap;
+  private Function<Result.OutParameterMap, ? extends T> outParameterProcessor;
+
 
   private List<Long> countResults = new ArrayList<>();
 
@@ -121,6 +128,10 @@ public class PGSubmission<T> implements Submission<T> {
     processor.onNext(row);
   }
 
+  public void applyOutRow(DataRow row) {
+    outParameterProcessor.apply(row);
+  }
+
   public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
     return holder.getParamTypes();
   }
@@ -135,6 +146,22 @@ public class PGSubmission<T> implements Submission<T> {
 
   public List<Long> countResult() {
     return countResults;
+  }
+
+  public void setOutParameterTypeMap(Map<String, SqlType> outParameterTypeMap) {
+    this.outParameterTypeMap = outParameterTypeMap;
+  }
+
+  public Map<String, SqlType> getOutParameterTypeMap() {
+    return outParameterTypeMap;
+  }
+
+  public void setOutParameterProcessor(Function<Result.OutParameterMap,? extends T> outParameterProcessor) {
+    this.outParameterProcessor = outParameterProcessor;
+  }
+
+  public Function<Result.OutParameterMap,? extends T> getOutParameterProcessor() {
+    return outParameterProcessor;
   }
 
   public void setErrorHandler(Consumer<Throwable> errorHandler) {
