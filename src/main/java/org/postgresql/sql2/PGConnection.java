@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Flow;
 import java.util.function.Consumer;
@@ -70,6 +71,7 @@ public class PGConnection implements Connection {
   private Collector collector = DEFAULT_COLLECTOR;
   protected Consumer<Throwable> errorHandler = null;
   private Lifecycle lifecycle = Lifecycle.NEW;
+  private ConcurrentLinkedQueue<ConnectionLifecycleListener> lifecycleListeners = new ConcurrentLinkedQueue<>();
 
   /**
    * completed when this OperationGroup is no longer held. Completion of this
@@ -174,7 +176,13 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Void> closeOperation() {
+    Lifecycle oldLifecycle = lifecycle;
     lifecycle = lifecycle.close();
+
+    for(ConnectionLifecycleListener listener : lifecycleListeners) {
+      listener.lifecycleEvent(this, oldLifecycle, lifecycle);
+    }
+
     return new PGCloseOperation(this);
   }
 
@@ -219,7 +227,15 @@ public class PGConnection implements Connection {
    */
   @Override
   public Connection registerLifecycleListener(Connection.ConnectionLifecycleListener listener) {
-    return null;
+    if(!lifecycle.isActive()) {
+      throw new IllegalStateException("connection not active");
+    }
+
+    if(listener != null) {
+      lifecycleListeners.add(listener);
+    }
+
+    return this;
   }
 
   /**
@@ -234,6 +250,14 @@ public class PGConnection implements Connection {
    */
   @Override
   public Connection deregisterLifecycleListener(ConnectionLifecycleListener listener) {
+    if(!lifecycle.isActive()) {
+      throw new IllegalStateException("connection not active");
+    }
+
+    if(listener != null) {
+      lifecycleListeners.remove(listener);
+    }
+
     return null;
   }
 
@@ -244,7 +268,7 @@ public class PGConnection implements Connection {
    */
   @Override
   public Lifecycle getConnectionLifecycle() {
-    return null;
+    return lifecycle;
   }
 
   /**
@@ -260,7 +284,13 @@ public class PGConnection implements Connection {
    */
   @Override
   public Connection abort() {
+    Lifecycle oldLifecycle = lifecycle;
     lifecycle = lifecycle.abort();
+
+    for(ConnectionLifecycleListener listener : lifecycleListeners) {
+      listener.lifecycleEvent(this, oldLifecycle, lifecycle);
+    }
+
     return null;
   }
 
@@ -302,7 +332,13 @@ public class PGConnection implements Connection {
    */
   @Override
   public Connection activate() {
+    Lifecycle oldLifecycle = lifecycle;
     this.lifecycle = lifecycle.activate();
+
+    for(ConnectionLifecycleListener listener : lifecycleListeners) {
+      listener.lifecycleEvent(this, oldLifecycle, lifecycle);
+    }
+
     return this;
   }
 
@@ -333,7 +369,13 @@ public class PGConnection implements Connection {
    */
   @Override
   public Connection deactivate() {
+    Lifecycle oldLifecycle = lifecycle;
     this.lifecycle = lifecycle.deactivate();
+
+    for(ConnectionLifecycleListener listener : lifecycleListeners) {
+      listener.lifecycleEvent(this, oldLifecycle, lifecycle);
+    }
+
     return this;
   }
 

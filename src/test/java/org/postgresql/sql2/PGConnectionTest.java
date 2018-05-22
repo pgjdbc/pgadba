@@ -198,6 +198,41 @@ public class PGConnectionTest {
   }
 
   @Test
+  public void deactivationListener() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      final Connection[] eventConn = new Connection[1];
+      final Connection.Lifecycle[] eventPrevious = new Connection.Lifecycle[1];
+      final Connection.Lifecycle[] eventCurrent = new Connection.Lifecycle[1];
+
+      conn.registerLifecycleListener(new Connection.ConnectionLifecycleListener() {
+        @Override
+        public void lifecycleEvent(Connection conn, Connection.Lifecycle previous, Connection.Lifecycle current) {
+          eventConn[0] = conn;
+          eventPrevious[0] = previous;
+          eventCurrent[0] = current;
+        }
+      });
+      conn.deactivate();
+
+      assertEquals(conn, eventConn[0]);
+      assertEquals(Connection.Lifecycle.NEW, eventPrevious[0]);
+      assertEquals(Connection.Lifecycle.NEW_INACTIVE, eventCurrent[0]);
+
+      conn.activate();
+
+      assertEquals(conn, eventConn[0]);
+      assertEquals(Connection.Lifecycle.NEW_INACTIVE, eventPrevious[0]);
+      assertEquals(Connection.Lifecycle.NEW, eventCurrent[0]);
+
+      Integer result = conn.<Integer>rowOperation("select 1 as t")
+          .collect(CollectorUtils.singleCollector(Integer.class))
+          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      assertEquals(Integer.valueOf(1), result);
+    }
+  }
+
+  @Test
   public void createTable() throws TimeoutException {
 
     try (Connection conn = ds.getConnection()) {
@@ -284,7 +319,7 @@ public class PGConnectionTest {
           "   x := 1;\n" +
           "   y := 2;\n" +
           "END;\n" +
-          "$$  LANGUAGE plpgsql;").submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+          "$$  LANGUAGE plpgsql").submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
 
       conn.outOperation("select * from get_test() as result")
           .outParameter("$1", AdbaType.INTEGER)
