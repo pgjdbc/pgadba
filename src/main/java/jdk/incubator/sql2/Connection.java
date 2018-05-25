@@ -27,6 +27,7 @@ package jdk.incubator.sql2;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 

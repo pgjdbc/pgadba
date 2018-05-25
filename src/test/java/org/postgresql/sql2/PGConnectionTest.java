@@ -198,6 +198,17 @@ public class PGConnectionTest {
   }
 
   @Test
+  public void connectTwice() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      Thread.sleep(1000); // wait a bit so that the connection have time to come up
+      conn.connectOperation();
+      fail("you are not allowed to connect twice");
+    } catch (IllegalStateException e) {
+      assertEquals("only connections in state NEW are allowed to start connecting", e.getMessage());
+    }
+  }
+
+  @Test
   public void deactivationListener() throws InterruptedException, ExecutionException, TimeoutException {
 
     try (Connection conn = ds.getConnection()) {

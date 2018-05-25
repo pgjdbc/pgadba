@@ -386,7 +386,7 @@ public class ProtocolV3 {
     switch (req.getType()) {
       case SUCCESS:
         Submission sub = submissions.poll();
-        sub.getCompletionStage().toCompletableFuture().complete("");
+        sub.getCompletionStage().toCompletableFuture().complete(null);
         currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.AUTHENTICATION_SUCCESS);
         break;
       case KERBEROS_V5:

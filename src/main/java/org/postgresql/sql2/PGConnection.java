@@ -128,6 +128,10 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<Void> connectOperation() {
+    if(lifecycle != Lifecycle.NEW) {
+      throw new IllegalStateException("only connections in state NEW are allowed to start connecting");
+    }
+
     return new PGConnectOperation((CompletionStage) memberTail, this);
   }
 
@@ -876,5 +880,15 @@ public class PGConnection implements Connection {
 
   public boolean isConnectionClosed() {
     return protocol.isConnectionClosed();
+  }
+
+  public void setLifeCycleOpen() {
+    Lifecycle oldLifecycle = lifecycle;
+    this.lifecycle = lifecycle.connect();
+
+    for(ConnectionLifecycleListener listener : lifecycleListeners) {
+      listener.lifecycleEvent(this, oldLifecycle, lifecycle);
+    }
+
   }
 }

@@ -37,6 +37,9 @@ public class PGConnectOperation implements Operation<Void> {
     PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID);
     submission.setConnectionSubmission(true);
     submission.setErrorHandler(errorHandler);
+    submission.getCompletionStage().thenAccept(s -> {
+      connection.setLifeCycleOpen();
+    });
     connection.addSubmissionOnQue(submission);
     return submission;
   }
