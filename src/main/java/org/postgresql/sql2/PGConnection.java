@@ -32,6 +32,7 @@ import org.postgresql.sql2.operations.PGCatchOperation;
 import org.postgresql.sql2.operations.PGCloseOperation;
 import org.postgresql.sql2.operations.PGConnectOperation;
 import org.postgresql.sql2.operations.PGCountOperation;
+import org.postgresql.sql2.operations.PGLocalOperation;
 import org.postgresql.sql2.operations.PGOperation;
 import org.postgresql.sql2.operations.PGOutOperation;
 import org.postgresql.sql2.operations.PGParameterizedRowOperation;
@@ -695,6 +696,10 @@ public class PGConnection implements Connection {
    */
   @Override
   public Operation<TransactionOutcome> endTransactionOperation(Transaction trans) {
+    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
+      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
     return new PGTransactionOperation(trans, this);
   }
 
@@ -706,8 +711,12 @@ public class PGConnection implements Connection {
    * is not held
    */
   @Override
-  public LocalOperation<Object> localOperation() {
-    return null;
+  public <R extends Object> LocalOperation<R> localOperation() {
+    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
+      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
+    return new PGLocalOperation<>(this);
   }
 
   /**

@@ -84,7 +84,14 @@ public class ProtocolV3 {
           sentStartPacket = true;
         }
 
-        if (!sub.isConnectionSubmission() && currentState == ProtocolV3States.States.IDLE
+        if(sub.getCompletionType() == PGSubmission.Types.LOCAL) {
+          try {
+            sub.getCompletionStage().toCompletableFuture().complete(sub.getLocalAction().call());
+          } catch (Exception e) {
+            sub.getCompletionStage().toCompletableFuture().completeExceptionally(e);
+          }
+          submissions.poll();
+        } else if (!sub.isConnectionSubmission() && currentState == ProtocolV3States.States.IDLE
             && sub.getSendConsumed().compareAndSet(false, true)) {
           if (preparedStatementCache.sqlNotPreparedBefore(sub.getHolder(), sub.getSql())) {
             queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));

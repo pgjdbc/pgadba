@@ -282,6 +282,32 @@ public class PGConnectionTest {
   }
 
   @Test
+  public void localOperationSimple() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      //First do a normal query so that the connection has time to get established
+      Integer result = conn.<Integer>localOperation().onExecution(() -> {
+        return 100;
+      }).submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      assertEquals(Integer.valueOf(100), result);
+    }
+  }
+
+  @Test
+  public void localOperationExceptional() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      //First do a normal query so that the connection has time to get established
+      conn.<Integer>localOperation().onExecution(() -> {
+        throw new Exception("thrown from a local operation");
+      }).submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      fail("the future should have completed exceptionally");
+    } catch (Exception e) {
+      assertEquals("thrown from a local operation", e.getCause().getMessage());
+    }
+  }
+
+  @Test
   public void rowProcessorOperation() throws InterruptedException, ExecutionException, TimeoutException {
     final Integer[] result = {null};
     try (Connection conn = ds.getConnection()) {

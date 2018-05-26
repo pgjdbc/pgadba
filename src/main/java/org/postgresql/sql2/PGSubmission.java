@@ -9,6 +9,7 @@ import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -28,7 +29,8 @@ public class PGSubmission<T> implements Submission<T> {
     ARRAY_COUNT,
     VOID,
     PROCESSOR,
-    OUT_PARAMETER;
+    OUT_PARAMETER,
+    LOCAL;
   }
 
   final private Supplier<Boolean> cancel;
@@ -45,7 +47,7 @@ public class PGSubmission<T> implements Submission<T> {
   private Consumer<Throwable> errorHandler;
   private Map<String, SqlType> outParameterTypeMap;
   private Function<Result.OutParameterMap, ? extends T> outParameterProcessor;
-
+  private Callable<T> localAction;
 
   private List<Long> countResults = new ArrayList<>();
 
@@ -158,6 +160,14 @@ public class PGSubmission<T> implements Submission<T> {
 
   public void setOutParameterProcessor(Function<Result.OutParameterMap,? extends T> outParameterProcessor) {
     this.outParameterProcessor = outParameterProcessor;
+  }
+
+  public void setLocalAction(Callable<T> localAction) {
+    this.localAction = localAction;
+  }
+
+  public Callable<T> getLocalAction() {
+    return localAction;
   }
 
   public Function<Result.OutParameterMap,? extends T> getOutParameterProcessor() {
