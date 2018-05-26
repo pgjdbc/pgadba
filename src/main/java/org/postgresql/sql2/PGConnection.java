@@ -50,6 +50,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Flow;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collector;
 
@@ -61,6 +62,8 @@ public class PGConnection implements Connection {
       (a, v) -> {},
       (a, b) -> null,
       a -> null);
+
+  private Logger logger = Logger.getLogger(PGConnection.class.getName());
 
   private Executor executor;
   private Map<ConnectionProperty, Object> properties;
@@ -541,6 +544,10 @@ public class PGConnection implements Connection {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
+    if(logger.isLoggable(Level.CONFIG)) {
+      logger.log(Level.CONFIG, "CatchOperation created for connection " + this);
+    }
+
     return new PGCatchOperation(this);
   }
 
@@ -567,6 +574,10 @@ public class PGConnection implements Connection {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
+    if(logger.isLoggable(Level.CONFIG)) {
+      logger.log(Level.CONFIG, "ArrayCountOperation created for connection " + this);
+    }
+
     return new PGArrayCountOperation<>(this, sql);
   }
 
@@ -585,6 +596,10 @@ public class PGConnection implements Connection {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
+    if(logger.isLoggable(Level.CONFIG)) {
+      logger.log(Level.CONFIG, "CountOperation created for connection " + this);
+    }
+
     return new PGCountOperation<>(this, sql);
   }
 
@@ -600,6 +615,10 @@ public class PGConnection implements Connection {
   public Operation<Object> operation(String sql) {
     if (!lifecycle.isOpen() || !lifecycle.isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
+    if(logger.isLoggable(Level.CONFIG)) {
+      logger.log(Level.CONFIG, "Operation created for connection " + this);
     }
 
     return new PGOperation(this, sql);
@@ -621,6 +640,10 @@ public class PGConnection implements Connection {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
+    if(logger.isLoggable(Level.CONFIG)) {
+      logger.log(Level.CONFIG, "OutOperation created for connection " + this);
+    }
+
     return new PGOutOperation<R>(this, sql);
   }
 
@@ -636,6 +659,10 @@ public class PGConnection implements Connection {
   public <R> ParameterizedRowOperation<R> rowOperation(String sql) {
     if (!lifecycle.isOpen() || !lifecycle.isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
+    if(logger.isLoggable(Level.CONFIG)) {
+      logger.log(Level.CONFIG, "RowOperation created for connection " + this);
     }
 
     return new PGParameterizedRowOperation<>(this, sql);
@@ -657,6 +684,10 @@ public class PGConnection implements Connection {
   public <R> RowProcessorOperation<R> rowProcessorOperation(String sql) {
     if (!lifecycle.isOpen() || !lifecycle.isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
+    if(logger.isLoggable(Level.CONFIG)) {
+      logger.log(Level.CONFIG, "RowProcessorOperation created for connection " + this);
     }
 
     return new PGRowProcessorOperation<>(this, sql);
@@ -700,6 +731,10 @@ public class PGConnection implements Connection {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
+    if(logger.isLoggable(Level.CONFIG)) {
+      logger.log(Level.CONFIG, "EndTransactionOperation created for connection " + this);
+    }
+
     return new PGTransactionOperation(trans, this);
   }
 
@@ -714,6 +749,10 @@ public class PGConnection implements Connection {
   public <R extends Object> LocalOperation<R> localOperation() {
     if (!lifecycle.isOpen() || !lifecycle.isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
+    if(logger.isLoggable(Level.CONFIG)) {
+      logger.log(Level.CONFIG, "LocalOperation created for connection " + this);
     }
 
     return new PGLocalOperation<>(this);
@@ -790,7 +829,16 @@ public class PGConnection implements Connection {
    */
   @Override
   public OperationGroup<Object, Object> logger(Logger logger) {
-    return null;
+    if (logger == null) {
+      return this;
+    }
+    this.logger = logger;
+
+    if(logger.isLoggable(Level.INFO)) {
+      logger.log(Level.INFO, "logger for connection " + this + " updated to " + logger);
+    }
+
+    return this;
   }
 
   /**
