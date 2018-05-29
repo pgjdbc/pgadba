@@ -51,9 +51,10 @@ public class PGSubmission<T> implements Submission<T> {
 
   private List<Long> countResults = new ArrayList<>();
 
-  public PGSubmission(Supplier<Boolean> cancel, Types completionType) {
+  public PGSubmission(Supplier<Boolean> cancel, Types completionType, Consumer<Throwable> errorHandler) {
     this.cancel = cancel;
     this.completionType = completionType;
+    this.errorHandler = errorHandler;
   }
 
   @Override
@@ -172,10 +173,6 @@ public class PGSubmission<T> implements Submission<T> {
 
   public Function<Result.OutParameterMap,? extends T> getOutParameterProcessor() {
     return outParameterProcessor;
-  }
-
-  public void setErrorHandler(Consumer<Throwable> errorHandler) {
-    this.errorHandler = errorHandler;
   }
 
   public Consumer<Throwable> getErrorHandler() {

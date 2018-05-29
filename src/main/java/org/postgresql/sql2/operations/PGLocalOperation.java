@@ -29,6 +29,10 @@ public class PGLocalOperation<T> implements LocalOperation<T> {
 
   @Override
   public LocalOperation<T> onError(Consumer<Throwable> errorHandler) {
+    if (this.errorHandler != null) {
+      throw new IllegalStateException("you are not allowed to call onError multiple times");
+    }
+
     this.errorHandler = errorHandler;
     return this;
   }
@@ -40,9 +44,8 @@ public class PGLocalOperation<T> implements LocalOperation<T> {
 
   @Override
   public Submission<T> submit() {
-    PGSubmission<T> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.LOCAL);
+    PGSubmission<T> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.LOCAL, errorHandler);
     submission.setConnectionSubmission(false);
-    submission.setErrorHandler(errorHandler);
     submission.setLocalAction(action);
     connection.addSubmissionOnQue(submission);
     return submission;

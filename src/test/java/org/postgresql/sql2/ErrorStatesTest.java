@@ -16,9 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class ErrorStatesTest {
   @ClassRule
@@ -69,6 +67,22 @@ public class ErrorStatesTest {
     } catch (ExecutionException ignore) {
     }
     assertTrue(onErrorResult[0]);
+  }
+
+  @Test
+  public void testRowOperationOnErrorTwice() throws InterruptedException, TimeoutException, ExecutionException {
+    final boolean[] onErrorResult = new boolean[] {false};
+    try (Connection conn = ds.getConnection()) {
+      conn.rowOperation("select select")
+          .onError(t -> onErrorResult[0] = true)
+          .onError(t -> onErrorResult[0] = true)
+          .submit()
+          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      fail("you are not allowed to call onError twice");
+    } catch (IllegalStateException e) {
+      assertEquals("you are not allowed to call onError multiple times", e.getMessage());
+    }
+    assertFalse(onErrorResult[0]);
   }
 
   @Test

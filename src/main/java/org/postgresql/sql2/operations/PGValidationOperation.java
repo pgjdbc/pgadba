@@ -23,6 +23,10 @@ public class PGValidationOperation implements Operation<Void> {
 
   @Override
   public Operation<Void> onError(Consumer<Throwable> errorHandler) {
+    if (this.errorHandler != null) {
+      throw new IllegalStateException("you are not allowed to call onError multiple times");
+    }
+
     this.errorHandler = errorHandler;
     return this;
   }
@@ -38,14 +42,12 @@ public class PGValidationOperation implements Operation<Void> {
       case NONE:
       case LOCAL:
         if (connection.isConnectionClosed()) {
-          PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID);
+          PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
           submission.getCompletionStage().toCompletableFuture().completeExceptionally(new IllegalStateException());
-          submission.setErrorHandler(errorHandler);
           return submission;
         } else {
-          PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID);
+          PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
           submission.getCompletionStage().toCompletableFuture().complete(null);
-          submission.setErrorHandler(errorHandler);
           return submission;
         }
       case SOCKET:
@@ -55,7 +57,7 @@ public class PGValidationOperation implements Operation<Void> {
       case SERVER:
         break;
       case COMPLETE:
-        PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID);
+        PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
         submission.setConnectionSubmission(false);
         submission.setSql("select 1");
         submission.setHolder(new ParameterHolder());
@@ -64,7 +66,6 @@ public class PGValidationOperation implements Operation<Void> {
             (a, v) -> {},
             (a, b) -> null,
             a -> null));
-        submission.setErrorHandler(errorHandler);
         connection.addSubmissionOnQue(submission);
         return submission;
     }

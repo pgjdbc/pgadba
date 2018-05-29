@@ -47,6 +47,10 @@ public class PGOutOperation<R> implements OutOperation<R> {
 
   @Override
   public OutOperation<R> onError(Consumer<Throwable> errorHandler) {
+    if (this.errorHandler != null) {
+      throw new IllegalStateException("you are not allowed to call onError multiple times");
+    }
+
     this.errorHandler = errorHandler;
     return this;
   }
@@ -82,11 +86,10 @@ public class PGOutOperation<R> implements OutOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.OUT_PARAMETER);
+    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.OUT_PARAMETER, errorHandler);
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(holder);
-    submission.setErrorHandler(errorHandler);
     submission.setOutParameterTypeMap(outParameterTypes);
     submission.setOutParameterProcessor(processor);
     connection.addSubmissionOnQue(submission);

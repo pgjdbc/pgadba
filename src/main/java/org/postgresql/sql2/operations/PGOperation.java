@@ -21,6 +21,10 @@ public class PGOperation implements Operation<Object> {
 
   @Override
   public Operation<Object> onError(Consumer<Throwable> errorHandler) {
+    if (this.errorHandler != null) {
+      throw new IllegalStateException("you are not allowed to call onError multiple times");
+    }
+
     this.errorHandler = errorHandler;
     return this;
   }
@@ -32,11 +36,10 @@ public class PGOperation implements Operation<Object> {
 
   @Override
   public Submission<Object> submit() {
-    PGSubmission<Object> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID);
+    PGSubmission<Object> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(new ParameterHolder());
-    submission.setErrorHandler(errorHandler);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

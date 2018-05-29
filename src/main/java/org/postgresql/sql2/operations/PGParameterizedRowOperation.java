@@ -34,6 +34,10 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
 
   @Override
   public ParameterizedRowOperation<R> onError(Consumer<Throwable> errorHandler) {
+    if (this.errorHandler != null) {
+      throw new IllegalStateException("you are not allowed to call onError multiple times");
+    }
+
     this.errorHandler = errorHandler;
     return this;
   }
@@ -80,12 +84,11 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.ROW);
+    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.ROW, errorHandler);
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(holder);
     submission.setCollector(collector);
-    submission.setErrorHandler(errorHandler);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

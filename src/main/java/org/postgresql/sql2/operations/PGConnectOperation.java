@@ -22,6 +22,10 @@ public class PGConnectOperation implements Operation<Void> {
 
   @Override
   public Operation<Void> onError(Consumer<Throwable> errorHandler) {
+    if (this.errorHandler != null) {
+      throw new IllegalStateException("you are not allowed to call onError multiple times");
+    }
+
     this.errorHandler = errorHandler;
     return this;
   }
@@ -34,9 +38,8 @@ public class PGConnectOperation implements Operation<Void> {
 
   @Override
   public Submission<Void> submit() {
-    PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID);
+    PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
     submission.setConnectionSubmission(true);
-    submission.setErrorHandler(errorHandler);
     submission.getCompletionStage().thenAccept(s -> {
       connection.setLifeCycleOpen();
     });

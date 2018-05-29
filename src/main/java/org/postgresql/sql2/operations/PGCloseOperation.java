@@ -18,6 +18,10 @@ public class PGCloseOperation implements Operation<Void> {
 
   @Override
   public Operation<Void> onError(Consumer<Throwable> errorHandler) {
+    if (this.errorHandler != null) {
+      throw new IllegalStateException("you are not allowed to call onError multiple times");
+    }
+
     this.errorHandler = errorHandler;
     return this;
   }
@@ -29,11 +33,10 @@ public class PGCloseOperation implements Operation<Void> {
 
   @Override
   public Submission<Void> submit() {
-    PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.CLOSE);
+    PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.CLOSE, errorHandler);
     submission.setConnectionSubmission(false);
     submission.setSql(null);
     submission.setHolder(null);
-    submission.setErrorHandler(errorHandler);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

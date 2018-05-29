@@ -72,7 +72,7 @@ public class PGArrayCountOperation<R> implements ArrayCountOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.ARRAY_COUNT);
+    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.ARRAY_COUNT, errorHandler);
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(holder);
@@ -82,6 +82,10 @@ public class PGArrayCountOperation<R> implements ArrayCountOperation<R> {
 
   @Override
   public ArrayCountOperation<R> onError(Consumer<Throwable> errorHandler) {
+    if (this.errorHandler != null) {
+      throw new IllegalStateException("you are not allowed to call onError multiple times");
+    }
+
     this.errorHandler = errorHandler;
     return this;
   }

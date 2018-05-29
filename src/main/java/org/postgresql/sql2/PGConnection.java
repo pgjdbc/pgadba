@@ -844,14 +844,22 @@ public class PGConnection implements Connection {
   /**
    * Provides an error handler for this {@link Operation}. If execution of this
    * {@link Operation} results in an error, before the Operation is completed,
-   * the handler is called with the {@link Throwable} as the argument.
+   * the handler is called with the {@link Throwable} as the argument. The type
+   * of the {@link Throwable} is implementation dependent.
    *
-   * @param handler
+   * @param errorHandler
    * @return this {@link Operation}
+   * @throws IllegalStateException if this method is called more than once on
+   * this operation
    */
   @Override
-  public OperationGroup<Object, Object> onError(Consumer<Throwable> handler) {
-    return null;
+  public OperationGroup<Object, Object> onError(Consumer<Throwable> errorHandler) {
+    if (this.errorHandler != null) {
+      throw new IllegalStateException("you are not allowed to call onError multiple times");
+    }
+
+    this.errorHandler = errorHandler;
+    return this;
   }
 
   /**
@@ -890,7 +898,7 @@ public class PGConnection implements Connection {
   public Submission<Object> submit() {
     accumulator = collector.supplier().get();
     memberTail = attachErrorHandler(follows(memberTail, executor));
-    return new PGSubmission<>(this::cancel, PGSubmission.Types.VOID);
+    return new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
   }
 
 

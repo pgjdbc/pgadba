@@ -35,6 +35,10 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
 
   @Override
   public ParameterizedCountOperation<R> onError(Consumer<Throwable> errorHandler) {
+    if (this.errorHandler != null) {
+      throw new IllegalStateException("you are not allowed to call onError multiple times");
+    }
+
     this.errorHandler = errorHandler;
     return this;
   }
@@ -75,11 +79,10 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.COUNT);
+    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.COUNT, errorHandler);
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(holder);
-    submission.setErrorHandler(errorHandler);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

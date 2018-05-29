@@ -23,6 +23,10 @@ public class PGTransactionOperation implements Operation<TransactionOutcome> {
 
   @Override
   public Operation<TransactionOutcome> onError(Consumer<Throwable> errorHandler) {
+    if (this.errorHandler != null) {
+      throw new IllegalStateException("you are not allowed to call onError multiple times");
+    }
+
     this.errorHandler = errorHandler;
     return this;
   }
@@ -34,7 +38,7 @@ public class PGTransactionOperation implements Operation<TransactionOutcome> {
 
   @Override
   public Submission<TransactionOutcome> submit() {
-    PGSubmission<TransactionOutcome> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.TRANSACTION);
+    PGSubmission<TransactionOutcome> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.TRANSACTION, errorHandler);
     submission.setConnectionSubmission(false);
     if(transaction.isRollbackOnly()) {
       submission.setSql("ROLLBACK TRANSACTION");
@@ -42,7 +46,6 @@ public class PGTransactionOperation implements Operation<TransactionOutcome> {
       submission.setSql("COMMIT TRANSACTION");
     }
     submission.setHolder(new ParameterHolder());
-    submission.setErrorHandler(errorHandler);
     connection.addSubmissionOnQue(submission);
     return submission;
   }
