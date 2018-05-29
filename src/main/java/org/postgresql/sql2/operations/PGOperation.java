@@ -9,7 +9,7 @@ import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import java.time.Duration;
 import java.util.function.Consumer;
 
-public class PGOperation implements Operation<Object> {
+public class PGOperation<S> implements Operation<S> {
   private final PGConnection connection;
   private final String sql;
   private Consumer<Throwable> errorHandler;
@@ -20,7 +20,7 @@ public class PGOperation implements Operation<Object> {
   }
 
   @Override
-  public Operation<Object> onError(Consumer<Throwable> errorHandler) {
+  public Operation<S> onError(Consumer<Throwable> errorHandler) {
     if (this.errorHandler != null) {
       throw new IllegalStateException("you are not allowed to call onError multiple times");
     }
@@ -30,13 +30,13 @@ public class PGOperation implements Operation<Object> {
   }
 
   @Override
-  public Operation<Object> timeout(Duration minTime) {
+  public Operation<S> timeout(Duration minTime) {
     return this;
   }
 
   @Override
-  public Submission<Object> submit() {
-    PGSubmission<Object> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
+  public Submission<S> submit() {
+    PGSubmission<S> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(new ParameterHolder());

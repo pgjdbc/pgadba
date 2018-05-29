@@ -27,18 +27,7 @@ import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.communication.FEFrame;
 import org.postgresql.sql2.communication.ProtocolV3;
-import org.postgresql.sql2.operations.PGArrayCountOperation;
-import org.postgresql.sql2.operations.PGCatchOperation;
-import org.postgresql.sql2.operations.PGCloseOperation;
-import org.postgresql.sql2.operations.PGConnectOperation;
-import org.postgresql.sql2.operations.PGCountOperation;
-import org.postgresql.sql2.operations.PGLocalOperation;
-import org.postgresql.sql2.operations.PGOperation;
-import org.postgresql.sql2.operations.PGOutOperation;
-import org.postgresql.sql2.operations.PGParameterizedRowOperation;
-import org.postgresql.sql2.operations.PGRowProcessorOperation;
-import org.postgresql.sql2.operations.PGTransactionOperation;
-import org.postgresql.sql2.operations.PGValidationOperation;
+import org.postgresql.sql2.operations.*;
 import org.postgresql.sql2.operations.helpers.PGTransaction;
 
 import java.time.Duration;
@@ -206,7 +195,15 @@ public class PGConnection implements Connection {
    */
   @Override
   public <S, T> OperationGroup<S, T> operationGroup() {
-    return null;
+    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
+      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
+    }
+
+    if(logger.isLoggable(Level.CONFIG)) {
+      logger.log(Level.CONFIG, "OperationGroup created for connection " + this);
+    }
+
+    return new PGOperationGroup<>(this);
   }
 
   /**
@@ -548,7 +545,7 @@ public class PGConnection implements Connection {
       logger.log(Level.CONFIG, "CatchOperation created for connection " + this);
     }
 
-    return new PGCatchOperation(this);
+    return new PGCatchOperation<>(this);
   }
 
   /**

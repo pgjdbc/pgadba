@@ -5,7 +5,7 @@ import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
 import org.postgresql.sql2.PGSubmission;
 
-public class PGCatchOperation implements PrimitiveOperation<Object> {
+public class PGCatchOperation<S> implements PrimitiveOperation<S> {
   private PGConnection connection;
 
   public PGCatchOperation(PGConnection connection) {
@@ -13,8 +13,8 @@ public class PGCatchOperation implements PrimitiveOperation<Object> {
   }
 
   @Override
-  public Submission<Object> submit() {
-    PGSubmission<Object> submission = new PGSubmission<>(this::cancel, null, null);
+  public Submission<S> submit() {
+    PGSubmission<S> submission = new PGSubmission<>(this::cancel, null, null);
     submission.setConnectionSubmission(false);
     connection.addSubmissionOnQue(submission);
     return submission;
