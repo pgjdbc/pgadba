@@ -119,7 +119,7 @@ public class ProtocolV3 {
 
         sendData(socketChannel);
 
-        if (outputQue.size() == 0 && waitToSendQue.size() != 0 && sub.getCompletionType() == PGSubmission.Types.CLOSE) {
+        if (outputQue.size() == 0 && waitToSendQue.size() == 0 && sub.getCompletionType() == PGSubmission.Types.CLOSE) {
           try {
             socketChannel.close();
             ((CompletableFuture) sub.getCompletionStage())
