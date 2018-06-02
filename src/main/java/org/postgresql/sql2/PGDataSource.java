@@ -19,13 +19,12 @@ import java.util.concurrent.TimeUnit;
 
 public class PGDataSource implements DataSource {
   private Queue<PGConnection> connections = new ConcurrentLinkedQueue<>();
-  private Executor executor;
   private boolean closed;
   private Map<ConnectionProperty, Object> properties;
 
   public PGDataSource(Map<ConnectionProperty, Object> properties) {
     this.properties = properties;
-    executor = new ThreadPoolExecutor(1, 2, 60, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
+    Executor executor = new ThreadPoolExecutor(1, 2, 60, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
     executor.execute(() -> {
       while (!closed) {
         for(PGConnection connection : connections) {
@@ -58,10 +57,6 @@ public class PGDataSource implements DataSource {
 
   public void registerConnection(PGConnection connection) {
     connections.add(connection);
-  }
-
-  public Executor getExecutor() {
-    return executor;
   }
 
   public Map<ConnectionProperty, Object> getProperties() {

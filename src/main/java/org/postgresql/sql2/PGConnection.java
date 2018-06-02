@@ -5,45 +5,35 @@
 package org.postgresql.sql2;
 
 
-import jdk.incubator.sql2.ArrayCountOperation;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.ConnectionProperty;
-import jdk.incubator.sql2.CountOperation;
 import jdk.incubator.sql2.DataSource;
-import jdk.incubator.sql2.LocalOperation;
-import jdk.incubator.sql2.MultiOperation;
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.OperationGroup;
-import jdk.incubator.sql2.OutOperation;
-import jdk.incubator.sql2.ParameterizedCountOperation;
-import jdk.incubator.sql2.ParameterizedRowOperation;
-import jdk.incubator.sql2.PrimitiveOperation;
-import jdk.incubator.sql2.RowProcessorOperation;
 import jdk.incubator.sql2.ShardingKey;
 import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.SqlSkippedException;
-import jdk.incubator.sql2.Submission;
 import jdk.incubator.sql2.Transaction;
-import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.communication.FEFrame;
 import org.postgresql.sql2.communication.ProtocolV3;
-import org.postgresql.sql2.operations.*;
+import org.postgresql.sql2.operations.PGCloseOperation;
+import org.postgresql.sql2.operations.PGConnectOperation;
+import org.postgresql.sql2.operations.PGOperationGroup;
+import org.postgresql.sql2.operations.PGValidationOperation;
 import org.postgresql.sql2.operations.helpers.PGTransaction;
 
-import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Flow;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collector;
 
-public class PGConnection implements Connection {
+public class PGConnection extends PGOperationGroup<Object, Object> implements Connection {
   protected static final CompletionStage<Object> ROOT = CompletableFuture.completedFuture(null);
 
   static final Collector DEFAULT_COLLECTOR = Collector.of(
@@ -54,7 +44,6 @@ public class PGConnection implements Connection {
 
   private Logger logger = Logger.getLogger(PGConnection.class.getName());
 
-  private Executor executor;
   private Map<ConnectionProperty, Object> properties;
 
   private boolean heldForMoreMember;
@@ -83,12 +72,10 @@ public class PGConnection implements Connection {
    */
   private CompletionStage<Object> memberTail = head;
 
-
-
-  public PGConnection(Executor executor, Map<ConnectionProperty, Object> properties) {
-    this.executor = executor;
+  public PGConnection(Map<ConnectionProperty, Object> properties) {
     this.properties = properties;
     this.protocol = new ProtocolV3(properties);
+    setConnection(this);
   }
 
   /**
@@ -383,521 +370,6 @@ public class PGConnection implements Connection {
 
     return this;
   }
-
-  /**
-   * Mark this {@link OperationGroup} as parallel. If this method is not called
-   * the {@link OperationGroup} is sequential. If an {@link OperationGroup} is
-   * parallel, member {@link Operation}s may be executed in any order including
-   * in parallel. If an {@link OperationGroup} is sequential, the default,
-   * member {@link Operation}s are executed strictly in the order they are
-   * submitted.
-   *
-   * Note: There is no covariant override of this method in {@link Connection}
-   * as there is only a small likelihood of needing it.
-   *
-   * @return this {@link OperationGroup}
-   * @throws IllegalStateException if this method has been submitted or any
-   * member {@link Operation}s have been created.
-   */
-  @Override
-  public OperationGroup<Object, Object> parallel() {
-    return null;
-  }
-
-  /**
-   * Mark this {@link OperationGroup} as independent. If this method is not
-   * called the {@link OperationGroup} is dependent, the default. If an
-   * {@link OperationGroup} is independent then failure of one member
-   * {@link Operation} does not affect the execution of other member
-   * {@link Operation}s. If an {@link OperationGroup} is dependent then failure
-   * of one member {@link Operation} will cause all member {@link Operation}s
-   * remaining in the queue to be completed exceptionally with a
-   * {@link SqlSkippedException} with the cause set to the original exception.
-   *
-   * Note: There is no covariant override of this method in {@link Connection}
-   * as there is only a small likelihood of needing it.
-   *
-   * @return this {@link OperationGroup}
-   * @throws IllegalStateException if this {@link OperationGroup} has been
-   * submitted or any member {@link Operation}s have been created
-   */
-  @Override
-  public OperationGroup<Object, Object> independent() {
-    return null;
-  }
-
-  /**
-   * Define a condition that determines whether the member {@link Operation}s of
-   * this {@link OperationGroup} are executed or not. If and when this
-   * {@link OperationGroup} is executed then if the condition argument is
-   * completed with {@link Boolean#TRUE} the member {@link Operation}s are
-   * executed. If {@link Boolean#FALSE} or if it is completed exceptionally the
-   * member {@link Operation}s are not executed but are removed from the queue.
-   * After all member {@link Operation}s have been removed from the queue this
-   * {@link OperationGroup} is completed with {@code null}.
-   *
-   * Note: There is no covariant override of this method in Connection as there
-   * is only a small likelihood of needing it.
-   *
-   * ISSUE: Should the member Operations be skipped or otherwise completed
-   * exceptionally?
-   *
-   * @param condition a {@link CompletionStage} the value of which determines whether
-   * this {@link OperationGroup} is executed or not
-   * @return this OperationGroup
-   * @throws IllegalStateException if this {@link OperationGroup} has been
-   * submitted or any member {@link Operation}s have been created
-   */
-  @Override
-  public OperationGroup<Object, Object> conditional(CompletionStage<Boolean> condition) {
-    return null;
-  }
-
-  /**
-   * Mark this {@link OperationGroup} as held. It can be executed but cannot be
-   * completed. A {@link OperationGroup} that is held remains in the queue even
-   * if all of its current member {@link Operation}s have completed. So long as
-   * the {@link OperationGroup} is held new member {@link Operation}s can be
-   * submitted. A {@link OperationGroup} that is held must be released before it
-   * can be completed and removed from the queue.
-   *
-   * Note: There is no covariant override of this method in Connection as there
-   * is only a small likelihood of needing it.
-   *
-   * ISSUE: Need a better name.
-   *
-   * @return a Submission
-   * @throws IllegalStateException if this {@link OperationGroup} has been
-   * submitted
-   */
-  @Override
-  public Submission<Object> submitHoldingForMoreMembers() {
-    this.heldForMoreMember = true;
-    return null;
-  }
-
-  /**
-   * Allow this {@link OperationGroup} to be completed and removed from the
-   * queue once all of its member {@link Operation}s have been completed. After
-   * this method is called no additional member {@link Operation}s can be
-   * submitted. Once all member {@link Operation}s have been removed from the
-   * queue this {@link OperationGroup} will be completed and removed from the
-   * queue.
-   *
-   * Calling this method when this {@link OperationGroup} is not held is a noop.
-   *
-   * Note: There is no covariant override of this method in Connection as there
-   * is only a small likelihood of needing it.
-   *
-   * ISSUE: Need a better name.
-   *
-   * @return this OperationGroup
-   * @throws IllegalStateException if this {@link OperationGroup} has been
-   * completed
-   */
-  @Override
-  public OperationGroup<Object, Object> releaseProhibitingMoreMembers() {
-    return null;
-  }
-
-  /**
-   * Provides a {@link Collector} to reduce the results of the member
-   * {@link Operation}s. The result of this {@link OperationGroup} is the result
-   * of calling finisher on the final accumulated result.If the
-   * {@link Collector} is {@link Collector.Characteristics#UNORDERED} the member
-   * {@link Operation} results may be accumulated out of order.If the
-   * {@link Collector} is {@link Collector.Characteristics#CONCURRENT} then the
-   * member {@link Operation} results may be split into subsets that are reduced
-   * separately and then combined. If this {@link OperationGroup} is sequential,
-   * the characteristics of the {@link Collector} only affect how the results of
-   * the member {@link Operation}s are collected; the member {@link Operation}s
-   * are executed sequentially regardless. If this {@link OperationGroup} is
-   * parallel the characteristics of the {@link Collector} may influence the
-   * execution order of the member {@link Operation}s.
-   *
-   * The default value is
-   * {@code Collector.of(()->null, (a,t)->{}, (l,r)->null, a->null)}.
-   *
-   * @param c the Collector. Not null.
-   * @return This OperationGroup
-   * @throws IllegalStateException if called more than once or if this
-   * {@link OperationGroup} has been submitted
-   */
-  @Override
-  public OperationGroup<Object, Object> collect(Collector<Object, ?, Object> c) {
-    return null;
-  }
-
-  /**
-   * Returns an Operation that is never skipped. Skipping stops with a catchOperation
-   * and the subsequent Operation is executed normally. The value of a
-   * catchOperation is always null.
-   *
-   * @return an unskippable Operation;
-   */
-  @Override
-  public PrimitiveOperation<Object> catchOperation() {
-    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
-    }
-
-    if(logger.isLoggable(Level.CONFIG)) {
-      logger.log(Level.CONFIG, "CatchOperation created for connection " + this);
-    }
-
-    return new PGCatchOperation<>(this);
-  }
-
-  /**
-   * Return a new {@link ArrayCountOperation}.
-   * <p>
-   * Usage Note: Frequently use of this method will require a type witness
-   * to enable correct type inferencing.
-   * <pre><code>
-   *   conn.<b>&lt;List&lt;Integer&gt;&gt;</b>arrayCountOperation(sql)
-   *     .set ...
-   *     .collect ...
-   *     .submit ...
-   * </code></pre>
-   *
-   * @param <R> the result type of the returned {@link ArrayCountOperation}
-   * @param sql SQL to be executed. Must return an update count.
-   * @return a new {@link ArrayCountOperation} that is a member of this
-   * {@link OperationGroup}
-   */
-  @Override
-  public <R> ArrayCountOperation<R> arrayCountOperation(String sql) {
-    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
-    }
-
-    if(logger.isLoggable(Level.CONFIG)) {
-      logger.log(Level.CONFIG, "ArrayCountOperation created for connection " + this);
-    }
-
-    return new PGArrayCountOperation<>(this, sql);
-  }
-
-  /**
-   * Return a new {@link CountOperation}.
-   *
-   * @param <R> the result type of the returned {@link CountOperation}
-   * @param sql SQL to be executed. Must return an update count.
-   * @return an new {@link CountOperation} that is a member of this
-   * {@link OperationGroup}
-   *
-   */
-  @Override
-  public <R> ParameterizedCountOperation<R> countOperation(String sql) {
-    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
-    }
-
-    if(logger.isLoggable(Level.CONFIG)) {
-      logger.log(Level.CONFIG, "CountOperation created for connection " + this);
-    }
-
-    return new PGCountOperation<>(this, sql);
-  }
-
-  /**
-   * Return a new {@link Operation} for a SQL that doesn't return any result,
-   * for example DDL.
-   *
-   * @param sql SQL for the {@link Operation}.
-   * @return a new {@link Operation} that is a member of this
-   * {@link OperationGroup}
-   */
-  @Override
-  public Operation<Object> operation(String sql) {
-    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
-    }
-
-    if(logger.isLoggable(Level.CONFIG)) {
-      logger.log(Level.CONFIG, "Operation created for connection " + this);
-    }
-
-    return new PGOperation(this, sql);
-  }
-
-  /**
-   * Return a new {@link OutOperation}. The SQL must return a set of zero or
-   * more out parameters or function results.
-   *
-   * @param <R> the result type of the returned {@link OutOperation}
-   * @param sql SQL for the {@link Operation}. Must return zero or more out
-   * parameters or function results.
-   * @return a new {@link OutOperation} that is a member of this
-   * {@link OperationGroup}
-   */
-  @Override
-  public <R> OutOperation<R> outOperation(String sql) {
-    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
-    }
-
-    if(logger.isLoggable(Level.CONFIG)) {
-      logger.log(Level.CONFIG, "OutOperation created for connection " + this);
-    }
-
-    return new PGOutOperation<R>(this, sql);
-  }
-
-  /**
-   * Return a {@link ParameterizedRowOperation}.
-   *
-   * @param <R> the type of the result of the returned {@link ParameterizedRowOperation}
-   * @param sql SQL for the {@link Operation}. Must return a row sequence.
-   * @return a new {@link ParameterizedRowOperation} that is a member of this
-   * {@link OperationGroup}
-   */
-  @Override
-  public <R> ParameterizedRowOperation<R> rowOperation(String sql) {
-    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
-    }
-
-    if(logger.isLoggable(Level.CONFIG)) {
-      logger.log(Level.CONFIG, "RowOperation created for connection " + this);
-    }
-
-    return new PGParameterizedRowOperation<>(this, sql);
-  }
-
-  /**
-   * Return a new {@link RowProcessorOperation} that is a member {@link Operation}
-   * of this {@link OperationGroup}.
-   *
-   * @param <R> the type of the result of the returned
-   * {@link RowProcessorOperation}
-   * @param sql SQL for the {@link Operation}. Must return a row sequence.
-   * @return a new {@link RowProcessorOperation} that is a member of this
-   * {@link OperationGroup}
-   * @throws IllegalStateException if the {@link OperationGroup} has been
-   * submitted and is not held
-   */
-  @Override
-  public <R> RowProcessorOperation<R> rowProcessorOperation(String sql) {
-    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
-    }
-
-    if(logger.isLoggable(Level.CONFIG)) {
-      logger.log(Level.CONFIG, "RowProcessorOperation created for connection " + this);
-    }
-
-    return new PGRowProcessorOperation<>(this, sql);
-  }
-
-  /**
-   * Return a new {@link MultiOperation} that is a member
-   * {@link Operation} of this {@link OperationGroup}.
-   *
-   * @param <R> the type of the result of the returned
-   * {@link MultiOperation}
-   * @param sql SQL for the {@link Operation}
-   * @return a new {@link MultiOperation} that is a member of this
-   * {@link OperationGroup}
-   * @throws IllegalStateException if the {@link OperationGroup} has been
-   * submitted and is not held
-   */
-  @Override
-  public <R> MultiOperation<R> multiOperation(String sql) {
-    return null;
-  }
-
-  /**
-   * Return an {@link Operation} that ends the database transaction.
-   * The transaction is ended with a commit unless the {@link Transaction} has
-   * been {@link Transaction#setRollbackOnly} in which
-   * case the transaction is ended with a rollback.
-   *
-   * The type argument of the containing {@link OperationGroup} must be
-   * a supertype of {@link TransactionOutcome}.
-   *
-   * @param trans the Transaction that determines whether the Operation does a
-   * database commit or a database rollback.
-   * @return an {@link Operation} that will end the database transaction.
-   * @throws IllegalStateException if this {@link OperationGroup} has been submitted and
-   * is not held or is parallel.
-   */
-  @Override
-  public Operation<TransactionOutcome> endTransactionOperation(Transaction trans) {
-    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
-    }
-
-    if(logger.isLoggable(Level.CONFIG)) {
-      logger.log(Level.CONFIG, "EndTransactionOperation created for connection " + this);
-    }
-
-    return new PGTransactionOperation(trans, this);
-  }
-
-  /**
-   * Return a {@link LocalOperation}.
-   *
-   * @return a LocalOperation
-   * @throws IllegalStateException if this OperationGroup has been submitted and
-   * is not held
-   */
-  @Override
-  public <R extends Object> LocalOperation<R> localOperation() {
-    if (!lifecycle.isOpen() || !lifecycle.isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
-    }
-
-    if(logger.isLoggable(Level.CONFIG)) {
-      logger.log(Level.CONFIG, "LocalOperation created for connection " + this);
-    }
-
-    return new PGLocalOperation<>(this);
-  }
-
-  /**
-   * Returns a Flow.Processor that subscribes to a sequence of Operations and
-   * produces a sequence of corresponding Submissions. The Operations must be
-   * members of this OperationGroup. Calling Subscription.onNext with any
-   * Operation that is not a member of this OperationGroup, that is was not
-   * created by calling one of the Operation factory methods on this
-   * OperationGroup, will cause the Subscription to be canceled and call
-   * Subscriber.onError with IllegalArgumentException. The method
-   * Subscription.onNext will call submit on each Operation it is passed and
-   * publish the resulting Submission. Since an Operation can only be submitted
-   * once, submitting an Operation and calling onNext with that submitted
-   * Operation will cause the Subscription to be canceled and Subscriber.onError
-   * to be called with IllegalStateException. The Processor does not retain
-   * Submissions to produce to a subsequently attached Subscriber.
-   *
-   * If there is no Subscriber to the Processor, the Processor will request
-   * Operations as appropriate. If there is a Subscriber to the Processor, the
-   * Processor will request Operations no faster than the Subscriber requests
-   * Submissions.
-   *
-   * Each call to this method returns a new Flow.processor. The Submissions
-   * published to each Processor are exactly those generated by calling submit
-   * on the Operations passed as arguments to onNext on the same Processor.
-   * Calling this method while there is an active Processor will throw
-   * IllegalStateException.
-   *
-   * Note: If any Operation is submitted directly, that is by calling submit
-   * rather than passing it to onNext, the Submission returned by the submit
-   * call will not be published.
-   *
-   * @return a Flow.Processor that accepts Operations and generates Submissions
-   * @throws IllegalStateException if there is an active Processor
-   */
-  @Override
-  public Flow.Processor<Operation<Object>, Submission<Object>> operationProcessor() {
-    return null;
-  }
-
-  /**
-   * Supply a {@link Logger} for the implementation of this
-   * {@link OperationGroup} to use to log significant events. Exactly what
-   * events are logged, at what Level the events are logged and with what
-   * parameters is implementation dependent. All member {@link Operation}s of
-   * this {@link OperationGroup} will use the same {@link Logger} except a
-   * member {@link OperationGroup} that is supplied with a different
-   * {@link Logger} uses that {@link Logger}.
-   *
-   * Supplying a {@link Logger} configured with a
-   * {@link java.util.logging.MemoryHandler} with the
-   * {@link java.util.logging.MemoryHandler#pushLevel} set to
-   * {@link java.util.logging.Level#WARNING} will result in no log output in
-   * normal operation. In the event of an error the actions leading up to the
-   * error will be logged.
-   *
-   * Implementation Note: Implementations are encouraged to log the creation of
-   * this {@link OperationGroup} set to {@link java.util.logging.Level#INFO}, the
-   * creation of member {@link Operation}s at the
-   * {@link java.util.logging.Level#CONFIG} level, and execution of member
-   * {@link Operation}s at the {@link java.util.logging.Level#FINE} level.
-   * Detailed information about the execution of member {@link Operation}s may
-   * be logged at the {@link java.util.logging.Level#FINER} and
-   * {@link java.util.logging.Level#FINEST} levels. Errors in the execution of
-   * user code should be logged at the {@link java.util.logging.Level#WARNING}
-   * Level. Errors in the implementation code should be logged at the
-   * {@link java.util.logging.Level#SEVERE} Level.
-   *
-   * @param logger used by the implementation to log significant events
-   * @return this {@link OperationGroup}
-   */
-  @Override
-  public OperationGroup<Object, Object> logger(Logger logger) {
-    if (logger == null) {
-      return this;
-    }
-    this.logger = logger;
-
-    if(logger.isLoggable(Level.INFO)) {
-      logger.log(Level.INFO, "logger for connection " + this + " updated to " + logger);
-    }
-
-    return this;
-  }
-
-  /**
-   * Provides an error handler for this {@link Operation}. If execution of this
-   * {@link Operation} results in an error, before the Operation is completed,
-   * the handler is called with the {@link Throwable} as the argument. The type
-   * of the {@link Throwable} is implementation dependent.
-   *
-   * @param errorHandler
-   * @return this {@link Operation}
-   * @throws IllegalStateException if this method is called more than once on
-   * this operation
-   */
-  @Override
-  public OperationGroup<Object, Object> onError(Consumer<Throwable> errorHandler) {
-    if (this.errorHandler != null) {
-      throw new IllegalStateException("you are not allowed to call onError multiple times");
-    }
-
-    this.errorHandler = errorHandler;
-    return this;
-  }
-
-  /**
-   * The minimum time before this {@link Operation} might be canceled
-   * automatically. The default value is forever. The time is
-   * counted from the beginning of Operation execution. The Operation will not
-   * be canceled before {@code minTime} after the beginning of execution.
-   * Some time at least {@code minTime} after the beginning of execution,
-   * an attempt will be made to cancel the {@link Operation} if it has not yet
-   * completed. Implementations are encouraged to attempt to cancel within a
-   * reasonable time, though what is reasonable is implementation dependent.
-   *
-   * @param minTime minimum time to wait before attempting to cancel
-   * @return this Operation
-   * @throws IllegalArgumentException if minTime &lt;= 0 seconds
-   * @throws IllegalStateException if this method is called more than once on
-   * this operation
-   */
-  @Override
-  public OperationGroup<Object, Object> timeout(Duration minTime) {
-    return null;
-  }
-
-  /**
-   * Add this {@link Operation} to the tail of the {@link Operation} collection
-   * of the {@link Connection} that created this {@link Operation}. An
-   * {@link Operation} can be submitted only once. Once an {@link Operation} is
-   * submitted it is immutable. Any attempt to modify a submitted
-   * {@link Operation} will throw {@link IllegalStateException}.
-   *
-   * @return a {@link Submission} for this {@link Operation}
-   * @throws IllegalStateException if this method is called more than once on
-   * this operation
-   */
-  @Override
-  public Submission<Object> submit() {
-    accumulator = collector.supplier().get();
-    memberTail = attachErrorHandler(follows(memberTail, executor));
-    return new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
-  }
-
 
   boolean cancel() {
     // todo set life cycle to canceled

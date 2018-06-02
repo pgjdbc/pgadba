@@ -17,11 +17,19 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
     private Logger logger = Logger.getLogger(PGConnection.class.getName());
     protected Consumer<Throwable> errorHandler = null;
 
+    public PGOperationGroup() {
+
+    }
+
     public PGOperationGroup(PGConnection connection) {
         this.connection = connection;
     }
 
-    @Override
+  public void setConnection(PGConnection connection) {
+    this.connection = connection;
+  }
+
+  @Override
     public OperationGroup<S, T> parallel() {
         //this is a no-op since the postgresql wire format doesn't allow parallel queries
         return this;

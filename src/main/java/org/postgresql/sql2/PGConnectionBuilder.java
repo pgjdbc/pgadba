@@ -10,10 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.Executor;
 
 public class PGConnectionBuilder implements Connection.Builder {
-  private Executor executor = null;
   private Map<ConnectionProperty, Object> properties = new HashMap<>();
   private PGDataSource dataSource;
 
@@ -42,9 +40,6 @@ public class PGConnectionBuilder implements Connection.Builder {
 
   @Override
   public Connection build() {
-    if(executor == null)
-      executor = dataSource.getExecutor();
-
     Map<ConnectionProperty, Object> props = parseURL((String)properties.get(AdbaConnectionProperty.URL), null);
 
     if(props != null) {
@@ -53,7 +48,7 @@ public class PGConnectionBuilder implements Connection.Builder {
       }
     }
 
-    PGConnection connection = new PGConnection(executor, properties);
+    PGConnection connection = new PGConnection(properties);
     dataSource.registerConnection(connection);
     return connection;
   }
