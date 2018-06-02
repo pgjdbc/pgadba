@@ -21,13 +21,13 @@ public class FutureQueryParameter implements QueryParameter {
   }
 
   private void resolveType() throws ExecutionException, InterruptedException {
-    if(type == null && value == null && valueHolder == null) {
+    if (type == null && value == null && valueHolder == null) {
       type = PGAdbaType.NULL;
-    } else if(type == null && valueHolder != null) {
+    } else if (type == null && valueHolder != null) {
       value = valueHolder.toCompletableFuture().get();
       valueHolder = null;
 
-      if(value == null) {
+      if (value == null) {
         type = PGAdbaType.NULL;
       } else {
         type = PGAdbaType.guessTypeFromClass(value.getClass());

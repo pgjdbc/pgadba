@@ -27,7 +27,7 @@ public class PGDataSource implements DataSource {
     Executor executor = new ThreadPoolExecutor(1, 2, 60, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
     executor.execute(() -> {
       while (!closed) {
-        for(PGConnection connection : connections) {
+        for (PGConnection connection : connections) {
           connection.visit();
         }
       }
@@ -49,7 +49,7 @@ public class PGDataSource implements DataSource {
 
   @Override
   public void close() {
-    for(PGConnection connection : connections) {
+    for (PGConnection connection : connections) {
       connection.close();
     }
     closed = true;

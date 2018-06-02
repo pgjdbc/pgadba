@@ -63,7 +63,8 @@ public class PGValidationOperation implements Operation<Void> {
         submission.setHolder(new ParameterHolder());
         submission.setCollector(Collector.of(
             () -> null,
-            (a, v) -> {},
+            (a, v) -> {
+            },
             (a, b) -> null,
             a -> null));
         connection.addSubmissionOnQue(submission);

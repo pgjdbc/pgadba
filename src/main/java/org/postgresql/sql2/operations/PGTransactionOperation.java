@@ -40,7 +40,7 @@ public class PGTransactionOperation implements Operation<TransactionOutcome> {
   public Submission<TransactionOutcome> submit() {
     PGSubmission<TransactionOutcome> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.TRANSACTION, errorHandler);
     submission.setConnectionSubmission(false);
-    if(transaction.isRollbackOnly()) {
+    if (transaction.isRollbackOnly()) {
       submission.setSql("ROLLBACK TRANSACTION");
     } else {
       submission.setSql("COMMIT TRANSACTION");

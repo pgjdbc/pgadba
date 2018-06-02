@@ -12,7 +12,7 @@ public class ValueQueryParameter implements QueryParameter {
   public ValueQueryParameter(Object value) {
     this.value = value;
 
-    if(value == null) {
+    if (value == null) {
       type = PGAdbaType.NULL;
     } else {
       type = PGAdbaType.guessTypeFromClass(value.getClass());
@@ -21,10 +21,10 @@ public class ValueQueryParameter implements QueryParameter {
 
   public ValueQueryParameter(Object value, SqlType type) {
     this.value = value;
-    if(type != null) {
+    if (type != null) {
       this.type = PGAdbaType.convert(type);
     } else {
-      if(value == null) {
+      if (value == null) {
         this.type = PGAdbaType.NULL;
       } else {
         this.type = PGAdbaType.guessTypeFromClass(value.getClass());

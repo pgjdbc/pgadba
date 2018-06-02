@@ -38,7 +38,8 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
 
   static final Collector DEFAULT_COLLECTOR = Collector.of(
       () -> null,
-      (a, v) -> {},
+      (a, v) -> {
+      },
       (a, b) -> null,
       a -> null);
 
@@ -46,7 +47,6 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
 
   private Map<ConnectionProperty, Object> properties;
 
-  private boolean heldForMoreMember;
   private ProtocolV3 protocol;
 
   private Object accumulator;
@@ -59,12 +59,12 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    * completed when this OperationGroup is no longer held. Completion of this
    * OperationGroup depends on held.
    */
-  private final CompletableFuture<Object> held = new CompletableFuture<>();;
+  private final CompletableFuture<Object> held = new CompletableFuture<>();
 
   /**
    * predecessor of all member Operations and the OperationGroup itself
    */
-  private final CompletableFuture head = new CompletableFuture();;
+  private final CompletableFuture head = new CompletableFuture();
 
   /**
    * The last CompletionStage of any submitted member Operation. Mutable until
@@ -88,12 +88,12 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    * {@link Lifecycle#NEW_INACTIVE} when the {@link Operation} is executed.
    * Otherwise the {@link Operation} will complete exceptionally with
    * {@link SqlException}.
-   *
+   * <p>
    * Note: It is highly recommended to use the {@link Connection#connect()} convenience
    * method or to use {@link DataSource#getConnection} which itself calls
    * {@link Connection#connect()}. Unless there is a specific need, do not call this method
    * directly.
-   *
+   * <p>
    * This method exists partially to clearly explain that while creating a
    * {@link Connection} is non-blocking, the act of connecting to the server may
    * block and so is executed asynchronously. We could write a bunch of text
@@ -104,11 +104,11 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    * @return an {@link Operation} that connects this {@link Connection} to a
    * server.
    * @throws IllegalStateException if this {@link Connection} is in a lifecycle
-   * state other than {@link Lifecycle#NEW}.
+   *                               state other than {@link Lifecycle#NEW}.
    */
   @Override
   public Operation<Void> connectOperation() {
-    if(lifecycle != Lifecycle.NEW) {
+    if (lifecycle != Lifecycle.NEW) {
       throw new IllegalStateException("only connections in state NEW are allowed to start connecting");
     }
 
@@ -124,7 +124,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    * completion.
    *
    * @param depth how completely to check that resources are available and
-   * operational. Not {@code null}.
+   *              operational. Not {@code null}.
    * @return an {@link Operation} that will validate this {@link Connection}
    * @throws IllegalStateException if this Connection is not active
    */
@@ -143,14 +143,14 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    * {@link Lifecycle#CLOSING}. If this {@link Connection} is closed executing
    * the returned {@link Operation} is a noop. When the queue is empty and all
    * resources released -&gt; {@link Lifecycle#CLOSED}.
-   *
+   * <p>
    * A close {@link Operation} is never skipped. Even when the
    * {@link Connection} is dependent, the default, and an {@link Operation}
    * completes exceptionally, a close {@link Operation} is still executed. If
    * the {@link Connection} is parallel, a close {@link Operation} is not
    * executed so long as there are other {@link Operation}s or the
    * {@link Connection} is held; for more {@link Operation}s.
-   *
+   * <p>
    * Note: It is highly recommended to use try with resources or the
    * {@link Connection#close()} convenience method. Unless there is a specific need, do not
    * call this method directly.
@@ -163,7 +163,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
     Lifecycle oldLifecycle = lifecycle;
     lifecycle = lifecycle.close();
 
-    for(ConnectionLifecycleListener listener : lifecycleListeners) {
+    for (ConnectionLifecycleListener listener : lifecycleListeners) {
       listener.lifecycleEvent(this, oldLifecycle, lifecycle);
     }
 
@@ -174,9 +174,9 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    * Create a new {@link OperationGroup} for this {@link Connection}.
    *
    * @param <S> the result type of the member {@link Operation}s of the returned
-   * {@link OperationGroup}
+   *            {@link OperationGroup}
    * @param <T> the result type of the collected results of the member
-   * {@link Operation}s
+   *            {@link Operation}s
    * @return a new {@link OperationGroup}.
    * @throws IllegalStateException if this Connection is not active
    */
@@ -186,7 +186,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
       throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
-    if(logger.isLoggable(Level.CONFIG)) {
+    if (logger.isLoggable(Level.CONFIG)) {
       logger.log(Level.CONFIG, "OperationGroup created for connection " + this);
     }
 
@@ -196,7 +196,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   /**
    * Returns a new {@link Transaction} that can be used as an argument to a
    * commit Operation.
-   *
+   * <p>
    * It is most likely an error to call this within an error handler, or any
    * handler as it is very likely that when the handler is executed the next
    * submitted endTransaction {@link Operation} will have been created with a different
@@ -219,11 +219,11 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    */
   @Override
   public Connection registerLifecycleListener(Connection.ConnectionLifecycleListener listener) {
-    if(!lifecycle.isActive()) {
+    if (!lifecycle.isActive()) {
       throw new IllegalStateException("connection not active");
     }
 
-    if(listener != null) {
+    if (listener != null) {
       lifecycleListeners.add(listener);
     }
 
@@ -242,11 +242,11 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    */
   @Override
   public Connection deregisterLifecycleListener(ConnectionLifecycleListener listener) {
-    if(!lifecycle.isActive()) {
+    if (!lifecycle.isActive()) {
       throw new IllegalStateException("connection not active");
     }
 
-    if(listener != null) {
+    if (listener != null) {
       lifecycleListeners.remove(listener);
     }
 
@@ -279,7 +279,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
     Lifecycle oldLifecycle = lifecycle;
     lifecycle = lifecycle.abort();
 
-    for(ConnectionLifecycleListener listener : lifecycleListeners) {
+    for (ConnectionLifecycleListener listener : lifecycleListeners) {
       listener.lifecycleEvent(this, oldLifecycle, lifecycle);
     }
 
@@ -304,7 +304,6 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   }
 
   /**
-   *
    * @return a {@link ShardingKey.Builder} for this {@link Connection}
    */
   @Override
@@ -327,7 +326,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
     Lifecycle oldLifecycle = lifecycle;
     this.lifecycle = lifecycle.activate();
 
-    for(ConnectionLifecycleListener listener : lifecycleListeners) {
+    for (ConnectionLifecycleListener listener : lifecycleListeners) {
       listener.lifecycleEvent(this, oldLifecycle, lifecycle);
     }
 
@@ -346,7 +345,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    * {@link Operation} will throw {@link IllegalStateException}. Local
    * {@link Connection} state not created by {@link Connection.Builder} may not
    * be preserved.
-   *
+   * <p>
    * Any implementation of a {@link Connection} pool is by default required to
    * call {@code deactivate} when putting a {@link Connection} into a pool. The
    * implementation is required to call {@code activate} when removing a
@@ -364,7 +363,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
     Lifecycle oldLifecycle = lifecycle;
     this.lifecycle = lifecycle.deactivate();
 
-    for(ConnectionLifecycleListener listener : lifecycleListeners) {
+    for (ConnectionLifecycleListener listener : lifecycleListeners) {
       listener.lifecycleEvent(this, oldLifecycle, lifecycle);
     }
 
@@ -381,11 +380,10 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
       return result.exceptionally(t -> {
         Throwable ex = unwrapException(t);
         errorHandler.accept(ex);
-        if (ex instanceof SqlSkippedException) throw (SqlSkippedException)ex;
+        if (ex instanceof SqlSkippedException) throw (SqlSkippedException) ex;
         else throw new SqlSkippedException("TODO", ex, null, -1, null, -1);
       });
-    }
-    else {
+    } else {
       return result;
     }
   }
@@ -396,8 +394,8 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
 
   protected CompletionStage<Object> follows(CompletionStage<?> predecessor, Executor executor) {
     head.complete(predecessor); // completing head allows members to execute
-    return held.thenCompose( h -> // when held completes memberTail holds the last member
-        memberTail.thenApplyAsync( t -> collector.finisher().apply(accumulator), executor));
+    return held.thenCompose(h -> // when held completes memberTail holds the last member
+        memberTail.thenApplyAsync(t -> collector.finisher().apply(accumulator), executor));
   }
 
   public void visit() {
@@ -420,7 +418,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
     Lifecycle oldLifecycle = lifecycle;
     this.lifecycle = lifecycle.connect();
 
-    for(ConnectionLifecycleListener listener : lifecycleListeners) {
+    for (ConnectionLifecycleListener listener : lifecycleListeners) {
       listener.lifecycleEvent(this, oldLifecycle, lifecycle);
     }
 

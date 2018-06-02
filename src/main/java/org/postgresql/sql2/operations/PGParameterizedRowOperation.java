@@ -21,7 +21,8 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
   private ParameterHolder holder;
   private Collector collector = Collector.of(
       () -> null,
-      (a, v) -> {},
+      (a, v) -> {
+      },
       (a, b) -> null,
       a -> null);
   private Consumer<Throwable> errorHandler;

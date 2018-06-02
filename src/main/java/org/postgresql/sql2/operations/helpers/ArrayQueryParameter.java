@@ -15,7 +15,7 @@ public class ArrayQueryParameter implements QueryParameter {
     this.values = values;
 
     Object value = firstNonNull(values);
-    if(value == null) {
+    if (value == null) {
       type = PGAdbaType.NULL;
     } else {
       type = PGAdbaType.guessTypeFromClass(value.getClass());
@@ -24,11 +24,11 @@ public class ArrayQueryParameter implements QueryParameter {
 
   public ArrayQueryParameter(List<?> values, SqlType type) {
     this.values = values;
-    if(type != null) {
+    if (type != null) {
       this.type = PGAdbaType.convert(type);
     } else {
       Object value = firstNonNull(values);
-      if(value == null) {
+      if (value == null) {
         this.type = PGAdbaType.NULL;
       } else {
         this.type = PGAdbaType.guessTypeFromClass(value.getClass());

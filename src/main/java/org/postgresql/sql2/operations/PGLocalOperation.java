@@ -10,7 +10,9 @@ import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 public class PGLocalOperation<T> implements LocalOperation<T> {
-  private static final Callable defaultAction = () -> {return null;};
+  private static final Callable defaultAction = () -> {
+    return null;
+  };
   private PGConnection connection;
   private Callable<T> action = defaultAction;
   private Consumer<Throwable> errorHandler;
@@ -21,7 +23,7 @@ public class PGLocalOperation<T> implements LocalOperation<T> {
 
   @Override
   public LocalOperation<T> onExecution(Callable<T> action) {
-    if(action != null) {
+    if (action != null) {
       this.action = action;
     }
     return this;

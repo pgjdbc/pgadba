@@ -10,7 +10,7 @@ public enum PGConnectionProperties implements ConnectionProperty {
   /**
    * The host name of the server. Defaults to localhost. To specify an IPv6 address your must enclose the host parameter
    * with square brackets, for example:
-   *
+   * <p>
    * jdbc:postgresql://[::1]:5740/accounting
    */
   HOST(String.class, "localhost", false),
@@ -55,16 +55,16 @@ public enum PGConnectionProperties implements ConnectionProperty {
   SSL_FACTORY_ARG(String.class, "", false),
 
   /**
-   *  Act like an older version of the driver to retain compatibility with older applications. At the moment this controls
-   *  two driver behaviours: the handling of binary data fields, and the handling of parameters set via setString().
-   *
-   *  Older versions of the driver used this property to also control the protocol used to connect to the backend. This
-   *  is now controlled by the protocolVersion property.
-   *
-   *  Information on binary data handling is detailed in Chapter 7, Storing Binary Data. To force the use of Large Objects
-   *  set the compatible property to 7.1.
-   *
-   *  When compatible is set to 7.4 or below, the default for the string type parameter is changed to unspecified.
+   * Act like an older version of the driver to retain compatibility with older applications. At the moment this controls
+   * two driver behaviours: the handling of binary data fields, and the handling of parameters set via setString().
+   * <p>
+   * Older versions of the driver used this property to also control the protocol used to connect to the backend. This
+   * is now controlled by the protocolVersion property.
+   * <p>
+   * Information on binary data handling is detailed in Chapter 7, Storing Binary Data. To force the use of Large Objects
+   * set the compatible property to 7.1.
+   * <p>
+   * When compatible is set to 7.4 or below, the default for the string type parameter is changed to unspecified.
    */
   COMPATIBLE(Float.class, 10.0, false),
 
@@ -126,13 +126,13 @@ public enum PGConnectionProperties implements ConnectionProperty {
   /**
    * A list of types to enable binary transfer. Either OID numbers or names.
    */
-  BINARY_TRANSFER_ENABLE(String[].class, new String[] {}, false),
+  BINARY_TRANSFER_ENABLE(String[].class, new String[]{}, false),
 
   /**
    * A list of types to disable binary transfer. Either OID numbers or names. Overrides values in the driver
    * default set and values set with binaryTransferEnable.
    */
-  BINARY_TRANSFER_DISABLE(String[].class, new String[] {}, false),
+  BINARY_TRANSFER_DISABLE(String[].class, new String[]{}, false),
 
   /**
    * Determine the number of PreparedStatement executions required before switching over to use server side prepared statements.
@@ -147,7 +147,7 @@ public enum PGConnectionProperties implements ConnectionProperty {
    * 256 different queries in prepareStatement() calls, the least recently used ones will be discarded. The cache allows
    * application to benefit from ?Server Prepared Statements? prepareThreshold even if the prepared statement is closed
    * after each execution. The value of 0 disables the cache.
-   *
+   * <p>
    * Each connection has its own statement cache.
    */
   PREPARED_STATEMENT_CACHE_QUERIES(Integer.class, 256, false),
@@ -245,25 +245,25 @@ public enum PGConnectionProperties implements ConnectionProperty {
    * Force either SSPI (Windows transparent single-sign-on) or GSSAPI (Kerberos, via JSSE) to be used when the server
    * requests Kerberos or SSPI authentication. Permissible values are auto (default, see below), sspi (force SSPI) or
    * gssapi (force GSSAPI-JSSE).
-   *
+   * <p>
    * If this parameter is auto, SSPI is attempted if the server requests SSPI authentication, the JDBC client is running
    * on Windows, and the Waffle libraries required for SSPI are on the CLASSPATH. Otherwise Kerberos/GSSAPI via JSSE
    * is used. Note that this behaviour does not exactly match that of libpq, which uses Windows' SSPI libraries for
    * Kerberos (GSSAPI) requests by default when on Windows.
-   *
+   * <p>
    * gssapi mode forces JSSE's GSSAPI to be used even if SSPI is available, matching the pre-9.4 behaviour.
-   *
+   * <p>
    * On non-Windows platforms or where SSPI is unavailable, forcing sspi mode will fail with a PSQLException.
    */
   GSS_LIB(String.class, "auto", false),
 
   /**
-   *  Specifies the name of the Windows SSPI service class that forms the service class part of the SPN. The default,
-   *  POSTGRES, is almost always correct.
-   *
-   *  See: SSPI authentication (Pg docs) Service Principal Names (MSDN), DsMakeSpn (MSDN) Configuring SSPI (Pg wiki).
-   *
-   *  This parameter is ignored on non-Windows platforms.
+   * Specifies the name of the Windows SSPI service class that forms the service class part of the SPN. The default,
+   * POSTGRES, is almost always correct.
+   * <p>
+   * See: SSPI authentication (Pg docs) Service Principal Names (MSDN), DsMakeSpn (MSDN) Configuring SSPI (Pg wiki).
+   * <p>
+   * This parameter is ignored on non-Windows platforms.
    */
   SSPI_SERVICE_CLASS(String.class, "POSTGRES", false),
 
@@ -388,8 +388,8 @@ public enum PGConnectionProperties implements ConnectionProperty {
   }
 
   public static PGConnectionProperties lookup(String name) {
-    for(PGConnectionProperties prop : values()) {
-      if(prop.toString().equalsIgnoreCase(name))
+    for (PGConnectionProperties prop : values()) {
+      if (prop.toString().equalsIgnoreCase(name))
         return prop;
     }
 

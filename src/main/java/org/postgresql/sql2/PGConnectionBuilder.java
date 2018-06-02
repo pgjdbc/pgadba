@@ -17,20 +17,20 @@ public class PGConnectionBuilder implements Connection.Builder {
 
   public PGConnectionBuilder(PGDataSource dataSource) {
     this.dataSource = dataSource;
-    for(PGConnectionProperties prop : PGConnectionProperties.values())
+    for (PGConnectionProperties prop : PGConnectionProperties.values())
       properties.put(prop, prop.defaultValue());
 
-    for(Map.Entry<ConnectionProperty, Object> prop : dataSource.getProperties().entrySet())
+    for (Map.Entry<ConnectionProperty, Object> prop : dataSource.getProperties().entrySet())
       properties.put(prop.getKey(), prop.getValue());
 
   }
 
   @Override
   public Connection.Builder property(ConnectionProperty p, Object v) {
-    if(!(p instanceof PGConnectionProperties))
+    if (!(p instanceof PGConnectionProperties))
       throw new PropertyException("Please make sure that the ConnectionProperty is of type PGConnectionProperties");
 
-    if(!(v.getClass().isAssignableFrom(p.range())))
+    if (!(v.getClass().isAssignableFrom(p.range())))
       throw new PropertyException("Please make sure that the ConnectionProperty is of type PGConnectionProperties");
 
     properties.put(p, v);
@@ -40,9 +40,9 @@ public class PGConnectionBuilder implements Connection.Builder {
 
   @Override
   public Connection build() {
-    Map<ConnectionProperty, Object> props = parseURL((String)properties.get(AdbaConnectionProperty.URL), null);
+    Map<ConnectionProperty, Object> props = parseURL((String) properties.get(AdbaConnectionProperty.URL), null);
 
-    if(props != null) {
+    if (props != null) {
       for (Map.Entry<ConnectionProperty, Object> prop : props.entrySet()) {
         properties.put(prop.getKey(), prop.getValue());
       }

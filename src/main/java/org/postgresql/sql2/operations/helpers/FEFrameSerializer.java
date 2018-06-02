@@ -23,13 +23,13 @@ public class FEFrameSerializer {
       os.write(cache.getNameForQuery(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
       os.write(0);
       os.write(BinaryHelper.writeShort(holder.size()));
-      for(QueryParameter qp : holder.parameters()) {
+      for (QueryParameter qp : holder.parameters()) {
         os.write(BinaryHelper.writeShort(qp.getParameterFormatCode()));
       }
       os.write(BinaryHelper.writeShort(holder.size()));
-      for(QueryParameter qp : holder.parameters()) {
+      for (QueryParameter qp : holder.parameters()) {
         byte[] paramData = qp.getParameter(index);
-        if(paramData.length == 0) { //handling the null special case
+        if (paramData.length == 0) { //handling the null special case
           os.write(BinaryHelper.writeInt(-1));
         } else {
           os.write(BinaryHelper.writeInt(paramData.length));
@@ -57,7 +57,7 @@ public class FEFrameSerializer {
       os.write(sql.getBytes(StandardCharsets.UTF_8));
       os.write(0);
       os.write(BinaryHelper.writeShort(holder.size()));
-      for(QueryParameter qp : holder.parameters()) {
+      for (QueryParameter qp : holder.parameters()) {
         os.write(BinaryHelper.writeInt(qp.getOID()));
       }
       return new FEFrame(os.toByteArray(), false);

@@ -24,19 +24,19 @@ public class FutureArrayQueryParameter implements QueryParameter {
   }
 
   private void resolveType() throws ExecutionException, InterruptedException {
-    if(type == null && values == null && valueHolder == null) {
+    if (type == null && values == null && valueHolder == null) {
       type = PGAdbaType.NULL;
-    } else if(type == null && valueHolder != null) {
+    } else if (type == null && valueHolder != null) {
       Object value = valueHolder.toCompletableFuture().get();
       valueHolder = null;
 
-      if(value == null) {
+      if (value == null) {
         type = PGAdbaType.NULL;
       } else {
         assignValues(value);
 
         Object firstNonNull = firstNonNull(values);
-        if(firstNonNull == null) {
+        if (firstNonNull == null) {
           type = PGAdbaType.NULL;
         } else {
           type = PGAdbaType.guessTypeFromClass(firstNonNull.getClass());
@@ -49,10 +49,10 @@ public class FutureArrayQueryParameter implements QueryParameter {
   }
 
   private void assignValues(Object value) {
-    if(List.class.isAssignableFrom(value.getClass())) {
-      values = (List<?>)value;
-    } else if(value.getClass().isArray()) {
-      values = Arrays.asList((Object[])value);
+    if (List.class.isAssignableFrom(value.getClass())) {
+      values = (List<?>) value;
+    } else if (value.getClass().isArray()) {
+      values = Arrays.asList((Object[]) value);
     } else {
       throw new IllegalArgumentException("the future didn't produce neither an array nor a list");
     }

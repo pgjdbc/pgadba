@@ -111,7 +111,7 @@ public class PGSubmission<T> implements Submission<T> {
     this.processor = processor;
   }
 
-  public Flow.Processor<Result.Row,? extends T> getProcessor() {
+  public Flow.Processor<Result.Row, ? extends T> getProcessor() {
     return processor;
   }
 
@@ -159,7 +159,7 @@ public class PGSubmission<T> implements Submission<T> {
     return outParameterTypeMap;
   }
 
-  public void setOutParameterProcessor(Function<Result.OutParameterMap,? extends T> outParameterProcessor) {
+  public void setOutParameterProcessor(Function<Result.OutParameterMap, ? extends T> outParameterProcessor) {
     this.outParameterProcessor = outParameterProcessor;
   }
 
@@ -171,7 +171,7 @@ public class PGSubmission<T> implements Submission<T> {
     return localAction;
   }
 
-  public Function<Result.OutParameterMap,? extends T> getOutParameterProcessor() {
+  public Function<Result.OutParameterMap, ? extends T> getOutParameterProcessor() {
     return outParameterProcessor;
   }
 

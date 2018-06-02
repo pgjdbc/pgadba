@@ -25,7 +25,7 @@ public class ParameterHolder {
   public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
     List<Integer> types = new ArrayList<>();
 
-    for(Map.Entry<Integer, QueryParameter> entry : parameterMap.entrySet()) {
+    for (Map.Entry<Integer, QueryParameter> entry : parameterMap.entrySet()) {
       types.add(entry.getValue().getOID());
     }
 
@@ -33,7 +33,7 @@ public class ParameterHolder {
   }
 
   public int numberOfQueryRepetitions() throws ExecutionException, InterruptedException {
-    if(parameterMap.size() == 0) {
+    if (parameterMap.size() == 0) {
       return 1;
     }
 
