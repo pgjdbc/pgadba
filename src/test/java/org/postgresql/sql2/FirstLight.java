@@ -7,9 +7,9 @@ import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.Transaction;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.postgresql.sql2.testUtil.ConnectUtil;
+import org.postgresql.sql2.util.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.CompletionStage;
@@ -26,8 +26,7 @@ import static org.junit.Assert.fail;
 public class FirstLight {
   public static final String TRIVIAL = "SELECT 1";
 
-  @ClassRule
-  public static PostgreSQLContainer postgres = new PostgreSQLContainer();
+  public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
 
   @BeforeClass
   public static void setup() throws InterruptedException, ExecutionException, TimeoutException {

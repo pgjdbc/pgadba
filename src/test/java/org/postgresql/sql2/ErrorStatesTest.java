@@ -5,9 +5,9 @@ import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.SqlException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.postgresql.sql2.testUtil.ConnectUtil;
+import org.postgresql.sql2.util.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.CompletionStage;
@@ -16,11 +16,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class ErrorStatesTest {
-  @ClassRule
-  public static PostgreSQLContainer postgres = new PostgreSQLContainer();
+  public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
 
   private static DataSource ds;
 
@@ -35,7 +37,6 @@ public class ErrorStatesTest {
   @AfterClass
   public static void tearDown() {
     ds.close();
-    postgres.close();
   }
 
   @Test

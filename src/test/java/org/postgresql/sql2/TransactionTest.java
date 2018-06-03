@@ -6,9 +6,9 @@ import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.postgresql.sql2.testUtil.ConnectUtil;
+import org.postgresql.sql2.util.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.CompletionStage;
@@ -21,8 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.postgresql.sql2.testUtil.CollectorUtils.singleCollector;
 
 public class TransactionTest {
-  @ClassRule
-  public static PostgreSQLContainer postgres = new PostgreSQLContainer();
+  public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
 
   private static DataSource ds;
 
@@ -37,7 +36,6 @@ public class TransactionTest {
   @AfterClass
   public static void tearDown() {
     ds.close();
-    postgres.close();
   }
 
   @Test

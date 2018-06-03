@@ -4,10 +4,10 @@ import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.postgresql.sql2.communication.packets.parts.PGAdbaType;
 import org.postgresql.sql2.testUtil.ConnectUtil;
+import org.postgresql.sql2.util.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.math.BigDecimal;
@@ -29,8 +29,7 @@ import static org.junit.Assert.assertTrue;
 import static org.postgresql.sql2.testUtil.CollectorUtils.singleCollector;
 
 public class BindParameterTypesTest {
-  @ClassRule
-  public static PostgreSQLContainer postgres = new PostgreSQLContainer();
+  public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
 
   private static DataSource ds;
 
@@ -42,7 +41,6 @@ public class BindParameterTypesTest {
   @AfterClass
   public static void tearDown() {
     ds.close();
-    postgres.close();
   }
 
   @Test

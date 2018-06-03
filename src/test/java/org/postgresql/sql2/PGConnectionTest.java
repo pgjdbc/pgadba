@@ -7,10 +7,10 @@ import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.Submission;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
+import org.postgresql.sql2.util.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.List;
@@ -31,8 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 public class PGConnectionTest {
-  @ClassRule
-  public static PostgreSQLContainer postgres = new PostgreSQLContainer();
+  public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
 
   private static DataSource ds;
 
@@ -47,7 +46,6 @@ public class PGConnectionTest {
   @AfterClass
   public static void tearDown() {
     ds.close();
-    postgres.close();
   }
 
   @Test

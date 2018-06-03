@@ -4,15 +4,14 @@ import jdk.incubator.sql2.AdbaConnectionProperty;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.DataSourceFactory;
-import org.junit.ClassRule;
 import org.junit.Test;
+import org.postgresql.sql2.util.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import static org.junit.Assert.assertNotNull;
 
 public class PGDataSourceTest {
-  @ClassRule
-  public static PostgreSQLContainer postgres = new PostgreSQLContainer();
+  public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
 
   @Test
   public void builder() throws Exception {
