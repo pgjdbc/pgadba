@@ -44,6 +44,10 @@ public class PGDataSource implements DataSource {
    */
   @Override
   public Connection.Builder builder() {
+    if (closed) {
+      throw new IllegalStateException("this datasource has already been closed");
+    }
+
     return new PGConnectionBuilder(this);
   }
 
