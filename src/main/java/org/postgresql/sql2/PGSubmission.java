@@ -196,4 +196,8 @@ public class PGSubmission<T> implements Submission<T> {
   public void addGroupSubmission(PGSubmission groupSubmission) {
     this.groupSubmission = groupSubmission;
   }
+
+  public PGSubmission getGroupSubmission() {
+    return groupSubmission;
+  }
 }

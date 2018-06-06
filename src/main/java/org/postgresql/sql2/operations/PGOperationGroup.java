@@ -212,7 +212,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       logger.log(Level.CONFIG, "LocalOperation created for connection " + this);
     }
 
-    return new PGLocalOperation<>(connection);
+    return new PGLocalOperation<>(connection, groupSubmission);
   }
 
   @Override

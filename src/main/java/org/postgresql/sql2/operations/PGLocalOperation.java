@@ -16,9 +16,11 @@ public class PGLocalOperation<T> implements LocalOperation<T> {
   private PGConnection connection;
   private Callable<T> action = defaultAction;
   private Consumer<Throwable> errorHandler;
+  private PGSubmission groupSubmission;
 
-  public PGLocalOperation(PGConnection connection) {
+  public PGLocalOperation(PGConnection connection, PGSubmission groupSubmission) {
     this.connection = connection;
+    this.groupSubmission = groupSubmission;
   }
 
   @Override
@@ -49,6 +51,7 @@ public class PGLocalOperation<T> implements LocalOperation<T> {
     PGSubmission<T> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.LOCAL, errorHandler);
     submission.setConnectionSubmission(false);
     submission.setLocalAction(action);
+    submission.addGroupSubmission(groupSubmission);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

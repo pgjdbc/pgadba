@@ -86,7 +86,11 @@ public class ProtocolV3 {
 
         if(sub.getCompletionType() == PGSubmission.Types.LOCAL) {
           try {
-            sub.getCompletionStage().toCompletableFuture().complete(sub.getLocalAction().call());
+            Object localResult = sub.getLocalAction().call();
+            if(sub.getGroupSubmission() != null) {
+              sub.getGroupSubmission().addGroupResult(localResult);
+            }
+            sub.getCompletionStage().toCompletableFuture().complete(localResult);
           } catch (Exception e) {
             sub.getCompletionStage().toCompletableFuture().completeExceptionally(e);
           }

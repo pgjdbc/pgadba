@@ -52,10 +52,38 @@ public class PGOperationGroupTest {
               (l, r) -> null,
               a -> a[0]))
           .submitHoldingForMoreMembers();
-      Submission s1 = operationGroup.rowOperation("select 1 as t")
+      operationGroup.rowOperation("select 1 as t")
           .collect(CollectorUtils.singleCollector(Integer.class)).submit();
-      Submission s2 = operationGroup.rowOperation("select 2 as t")
+      operationGroup.rowOperation("select 2 as t")
           .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+      operationGroup.releaseProhibitingMoreMembers();
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      assertEquals(Integer.valueOf(3), result);
+    }
+  }
+
+  @Test
+  public void groupOperationSumOfLocalOperations() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
+
+      Submission<Integer> sub = operationGroup
+          .collect(Collector.of(
+              () -> new Integer[] {0},
+              (a, r) -> {
+                a[0] += r;
+              },
+              (l, r) -> null,
+              a -> a[0]))
+          .submitHoldingForMoreMembers();
+      operationGroup.localOperation()
+          .onExecution(() -> 1)
+          .submit();
+      operationGroup.localOperation()
+          .onExecution(() -> 2)
+          .submit();
       operationGroup.releaseProhibitingMoreMembers();
 
       Integer result = sub.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
