@@ -6,17 +6,14 @@ import org.postgresql.sql2.PGConnection;
 import org.postgresql.sql2.PGSubmission;
 
 import java.time.Duration;
-import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 
 public class PGConnectOperation implements Operation<Void> {
   private Consumer<Throwable> errorHandler;
   private Duration minTime;
-  private CompletionStage<Void> memberTail;
   private PGConnection connection;
 
-  public PGConnectOperation(CompletionStage<Void> memberTail, PGConnection connection) {
-    this.memberTail = memberTail;
+  public PGConnectOperation(PGConnection connection) {
     this.connection = connection;
   }
 

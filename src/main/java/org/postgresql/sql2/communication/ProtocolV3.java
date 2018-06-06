@@ -91,6 +91,13 @@ public class ProtocolV3 {
             sub.getCompletionStage().toCompletableFuture().completeExceptionally(e);
           }
           submissions.poll();
+        } else if(sub.getCompletionType() == PGSubmission.Types.GROUP) {
+          try {
+            sub.getCompletionStage().toCompletableFuture().complete(sub.finish());
+          } catch (Exception e) {
+            sub.getCompletionStage().toCompletableFuture().completeExceptionally(e);
+          }
+          submissions.poll();
         } else if (!sub.isConnectionSubmission() && currentState == ProtocolV3States.States.IDLE
             && sub.getSendConsumed().compareAndSet(false, true)) {
           if (preparedStatementCache.sqlNotPreparedBefore(sub.getHolder(), sub.getSql())) {

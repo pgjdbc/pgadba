@@ -30,7 +30,8 @@ public class PGSubmission<T> implements Submission<T> {
     VOID,
     PROCESSOR,
     OUT_PARAMETER,
-    LOCAL;
+    LOCAL,
+    GROUP;
   }
 
   final private Supplier<Boolean> cancel;
@@ -50,6 +51,7 @@ public class PGSubmission<T> implements Submission<T> {
   private Callable<T> localAction;
 
   private List<Long> countResults = new ArrayList<>();
+  private PGSubmission groupSubmission;
 
   public PGSubmission(Supplier<Boolean> cancel, Types completionType, Consumer<Throwable> errorHandler) {
     this.cancel = cancel;
@@ -116,12 +118,24 @@ public class PGSubmission<T> implements Submission<T> {
   }
 
   public Object finish() {
-    return collector.finisher().apply(collectorHolder);
+    Object o = collector.finisher().apply(collectorHolder);
+    if(groupSubmission != null) {
+      groupSubmission.addGroupResult(o);
+    }
+    return o;
   }
 
   public void addRow(DataRow row) {
     try {
       collector.accumulator().accept(collectorHolder, row);
+    } catch (Throwable e) {
+      publicStage.completeExceptionally(e);
+    }
+  }
+
+  public void addGroupResult(Object result) {
+    try {
+      collector.accumulator().accept(collectorHolder, result);
     } catch (Throwable e) {
       publicStage.completeExceptionally(e);
     }
@@ -177,5 +191,9 @@ public class PGSubmission<T> implements Submission<T> {
 
   public Consumer<Throwable> getErrorHandler() {
     return errorHandler;
+  }
+
+  public void addGroupSubmission(PGSubmission groupSubmission) {
+    this.groupSubmission = groupSubmission;
   }
 }

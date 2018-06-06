@@ -1,7 +1,20 @@
 package org.postgresql.sql2.operations;
 
-import jdk.incubator.sql2.*;
+import jdk.incubator.sql2.ArrayCountOperation;
+import jdk.incubator.sql2.LocalOperation;
+import jdk.incubator.sql2.MultiOperation;
+import jdk.incubator.sql2.Operation;
+import jdk.incubator.sql2.OperationGroup;
+import jdk.incubator.sql2.OutOperation;
+import jdk.incubator.sql2.ParameterizedCountOperation;
+import jdk.incubator.sql2.ParameterizedRowOperation;
+import jdk.incubator.sql2.PrimitiveOperation;
+import jdk.incubator.sql2.RowProcessorOperation;
+import jdk.incubator.sql2.Submission;
+import jdk.incubator.sql2.Transaction;
+import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.PGConnection;
+import org.postgresql.sql2.PGSubmission;
 
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
@@ -13,10 +26,21 @@ import java.util.stream.Collector;
 
 public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
 
+  static final Collector DEFAULT_COLLECTOR = Collector.of(
+      () -> null,
+      (a, v) -> {
+      },
+      (a, b) -> null,
+      a -> null);
+
   private PGConnection connection;
   private Logger logger = Logger.getLogger(PGConnection.class.getName());
   protected Consumer<Throwable> errorHandler = null;
   private boolean held = true;
+
+  private Collector collector = DEFAULT_COLLECTOR;
+
+  private PGSubmission<T> groupSubmission;
 
   public PGOperationGroup() {
 
@@ -48,19 +72,25 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public Submission<T> submitHoldingForMoreMembers() {
-    held = true;
-    return null;
+    PGSubmission<T> sub = new PGSubmission<>(this::cancel, PGSubmission.Types.GROUP, errorHandler);
+    sub.setCollector(collector);
+
+    groupSubmission = sub;
+
+    return sub;
   }
 
   @Override
   public OperationGroup<S, T> releaseProhibitingMoreMembers() {
     held = false;
+    connection.addSubmissionOnQue(groupSubmission);
     return this;
   }
 
   @Override
   public OperationGroup<S, T> collect(Collector<S, ?, T> c) {
-    return null;
+    collector = c;
+    return this;
   }
 
   @Override
@@ -138,7 +168,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       logger.log(Level.CONFIG, "RowOperation created for connection " + this);
     }
 
-    return new PGParameterizedRowOperation<>(connection, sql);
+    return new PGParameterizedRowOperation<>(connection, sql, groupSubmission);
   }
 
   @Override
@@ -223,5 +253,10 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
   @Override
   public Submission<T> submit() {
     return null;
+  }
+
+  private boolean cancel() {
+    // todo set life cycle to canceled
+    return true;
   }
 }

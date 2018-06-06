@@ -14,7 +14,6 @@ import jdk.incubator.sql2.ShardingKey;
 import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.SqlSkippedException;
 import jdk.incubator.sql2.Transaction;
-import org.postgresql.sql2.communication.FEFrame;
 import org.postgresql.sql2.communication.ProtocolV3;
 import org.postgresql.sql2.operations.PGCloseOperation;
 import org.postgresql.sql2.operations.PGConnectOperation;
@@ -27,7 +26,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -56,21 +54,9 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   private ConcurrentLinkedQueue<ConnectionLifecycleListener> lifecycleListeners = new ConcurrentLinkedQueue<>();
 
   /**
-   * completed when this OperationGroup is no longer held. Completion of this
-   * OperationGroup depends on held.
-   */
-  private final CompletableFuture<Object> held = new CompletableFuture<>();
-
-  /**
    * predecessor of all member Operations and the OperationGroup itself
    */
   private final CompletableFuture head = new CompletableFuture();
-
-  /**
-   * The last CompletionStage of any submitted member Operation. Mutable until
-   * not isHeld().
-   */
-  private CompletionStage<Object> memberTail = head;
 
   public PGConnection(Map<ConnectionProperty, Object> properties) {
     this.properties = properties;
@@ -112,7 +98,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
       throw new IllegalStateException("only connections in state NEW are allowed to start connecting");
     }
 
-    return new PGConnectOperation((CompletionStage) memberTail, this);
+    return new PGConnectOperation(this);
   }
 
   /**
@@ -370,11 +356,6 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
     return this;
   }
 
-  boolean cancel() {
-    // todo set life cycle to canceled
-    return true;
-  }
-
   protected CompletionStage<Object> attachErrorHandler(CompletionStage<Object> result) {
     if (errorHandler != null) {
       return result.exceptionally(t -> {
@@ -392,18 +373,8 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
     return ex instanceof CompletionException ? ex.getCause() : ex;
   }
 
-  protected CompletionStage<Object> follows(CompletionStage<?> predecessor, Executor executor) {
-    head.complete(predecessor); // completing head allows members to execute
-    return held.thenCompose(h -> // when held completes memberTail holds the last member
-        memberTail.thenApplyAsync(t -> collector.finisher().apply(accumulator), executor));
-  }
-
   public void visit() {
     protocol.visit();
-  }
-
-  public void queFrame(FEFrame frame) {
-    protocol.queFrame(frame);
   }
 
   public void addSubmissionOnQue(PGSubmission submission) {
