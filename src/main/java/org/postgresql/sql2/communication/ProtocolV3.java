@@ -298,8 +298,11 @@ public class ProtocolV3 {
         submissions.poll();
         break;
       case OUT_PARAMETER:
+        if(sub.getGroupSubmission() != null) {
+          sub.getGroupSubmission().addGroupResult(sub.getOutParameterValueHolder());
+        }
         ((CompletableFuture) sub.getCompletionStage())
-            .complete(null);
+            .complete(sub.getOutParameterValueHolder());
         submissions.poll();
         break;
     }

@@ -52,6 +52,7 @@ public class PGSubmission<T> implements Submission<T> {
 
   private List<Long> countResults = new ArrayList<>();
   private PGSubmission groupSubmission;
+  private T outParameterValueHolder;
 
   public PGSubmission(Supplier<Boolean> cancel, Types completionType, Consumer<Throwable> errorHandler) {
     this.cancel = cancel;
@@ -146,7 +147,7 @@ public class PGSubmission<T> implements Submission<T> {
   }
 
   public void applyOutRow(DataRow row) {
-    outParameterProcessor.apply(row);
+    outParameterValueHolder = outParameterProcessor.apply(row);
   }
 
   public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
@@ -199,5 +200,9 @@ public class PGSubmission<T> implements Submission<T> {
 
   public PGSubmission getGroupSubmission() {
     return groupSubmission;
+  }
+
+  public T getOutParameterValueHolder() {
+    return outParameterValueHolder;
   }
 }

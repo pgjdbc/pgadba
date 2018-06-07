@@ -368,4 +368,28 @@ public class PGConnectionTest {
       conn.operation("DROP FUNCTION get_test").submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
     }
   }
+
+  @Test
+  public void outParameterTestReturnedValue() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      conn.operation("CREATE OR REPLACE FUNCTION outParameterTestReturnedValue(OUT x integer, OUT y integer)\n" +
+          "AS $$\n" +
+          "BEGIN\n" +
+          "   x := 1;\n" +
+          "   y := 2;\n" +
+          "END;\n" +
+          "$$  LANGUAGE plpgsql").submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      Integer result = conn.<Integer>outOperation("select * from outParameterTestReturnedValue() as result")
+          .outParameter("$1", AdbaType.INTEGER)
+          .outParameter("$2", AdbaType.INTEGER)
+          .apply((r) -> r.get("x", Integer.class) + r.get("y", Integer.class))
+          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      conn.operation("DROP FUNCTION outParameterTestReturnedValue").submit()
+          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      assertEquals(Integer.valueOf(3), result);
+    }
+  }
 }

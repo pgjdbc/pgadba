@@ -155,7 +155,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       logger.log(Level.CONFIG, "OutOperation created for connection " + this);
     }
 
-    return new PGOutOperation<R>(connection, sql);
+    return new PGOutOperation<R>(connection, sql, groupSubmission);
   }
 
   @Override

@@ -24,12 +24,14 @@ public class PGOutOperation<R> implements OutOperation<R> {
   private Consumer<Throwable> errorHandler;
   private Function<Result.OutParameterMap, ? extends R> processor;
   private Map<String, SqlType> outParameterTypes;
+  private PGSubmission groupSubmission;
 
-  public PGOutOperation(PGConnection connection, String sql) {
+  public PGOutOperation(PGConnection connection, String sql, PGSubmission groupSubmission) {
     this.connection = connection;
     this.sql = sql;
     this.holder = new ParameterHolder();
     this.outParameterTypes = new HashMap<>();
+    this.groupSubmission = groupSubmission;
   }
 
   @Override
@@ -92,6 +94,7 @@ public class PGOutOperation<R> implements OutOperation<R> {
     submission.setHolder(holder);
     submission.setOutParameterTypeMap(outParameterTypes);
     submission.setOutParameterProcessor(processor);
+    submission.addGroupSubmission(groupSubmission);
     connection.addSubmissionOnQue(submission);
     return submission;
   }
