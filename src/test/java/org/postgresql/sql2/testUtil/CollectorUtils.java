@@ -12,4 +12,12 @@ public class CollectorUtils {
         (l, r) -> null,
         a -> a[0]);
   }
+
+  public static Collector<Integer, Integer[], Integer> summingCollector() {
+    return Collector.of(
+        () -> new Integer[] {0},
+        (a, r) -> a[0] += r,
+        (l, r) -> null,
+        a -> a[0]);
+  }
 }

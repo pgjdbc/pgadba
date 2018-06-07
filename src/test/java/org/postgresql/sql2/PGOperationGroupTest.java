@@ -10,13 +10,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
-import org.postgresql.sql2.util.DatabaseHolder;
+import org.postgresql.sql2.testUtil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collector;
 
 import static org.junit.Assert.assertEquals;
 
@@ -45,13 +44,7 @@ public class PGOperationGroupTest {
       OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
 
       Submission<Integer> sub = operationGroup
-          .collect(Collector.of(
-              () -> new Integer[] {0},
-              (a, r) -> {
-                a[0] += r;
-              },
-              (l, r) -> null,
-              a -> a[0]))
+          .collect(CollectorUtils.summingCollector())
           .submitHoldingForMoreMembers();
       operationGroup.rowOperation("select 1 as t")
           .collect(CollectorUtils.singleCollector(Integer.class)).submit();
@@ -71,13 +64,7 @@ public class PGOperationGroupTest {
       OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
 
       Submission<Integer> sub = operationGroup
-          .collect(Collector.of(
-              () -> new Integer[] {0},
-              (a, r) -> {
-                a[0] += r;
-              },
-              (l, r) -> null,
-              a -> a[0]))
+          .collect(CollectorUtils.summingCollector())
           .submitHoldingForMoreMembers();
       operationGroup.localOperation()
           .onExecution(() -> 1)
@@ -106,13 +93,7 @@ public class PGOperationGroupTest {
       OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
 
       Submission<Integer> sub = operationGroup
-          .collect(Collector.of(
-              () -> new Integer[] {0},
-              (a, r) -> {
-                a[0] += r;
-              },
-              (l, r) -> null,
-              a -> a[0]))
+          .collect(CollectorUtils.summingCollector())
           .submitHoldingForMoreMembers();
 
       operationGroup.outOperation("select * from groupOperationSumOfOutParameterOperations(1) as result")

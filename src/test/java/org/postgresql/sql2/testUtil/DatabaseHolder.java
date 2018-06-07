@@ -1,4 +1,4 @@
-package org.postgresql.sql2.util;
+package org.postgresql.sql2.testUtil;
 
 import org.testcontainers.containers.PostgreSQLContainer;
 

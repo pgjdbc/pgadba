@@ -5,7 +5,7 @@ import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.DataSourceFactory;
 import org.junit.Test;
-import org.postgresql.sql2.util.DatabaseHolder;
+import org.postgresql.sql2.testUtil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.ExecutionException;

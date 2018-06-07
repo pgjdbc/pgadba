@@ -6,7 +6,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.postgresql.sql2.testUtil.ConnectUtil;
-import org.postgresql.sql2.util.DatabaseHolder;
+import org.postgresql.sql2.testUtil.DatabaseHolder;
 import org.postgresql.sql2.util.TestLogHandler;
 import org.testcontainers.containers.PostgreSQLContainer;
 
