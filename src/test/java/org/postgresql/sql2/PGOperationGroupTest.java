@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
+import org.postgresql.sql2.testUtil.SimpleRowProcessor;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.ExecutionException;
@@ -106,6 +107,26 @@ public class PGOperationGroupTest {
           .apply((r) -> r.get("y", Integer.class)).submit()
           .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
 
+      operationGroup.releaseProhibitingMoreMembers();
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      assertEquals(Integer.valueOf(3), result);
+    }
+  }
+
+  @Test
+  public void groupOperationSumOfRowProcessorOperations() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
+
+      Submission<Integer> sub = operationGroup
+          .collect(CollectorUtils.summingCollector())
+          .submitHoldingForMoreMembers();
+      operationGroup.rowProcessorOperation("select 1 as t")
+          .rowProcessor(new SimpleRowProcessor()).submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      operationGroup.rowProcessorOperation("select 2 as t")
+          .rowProcessor(new SimpleRowProcessor()).submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
       operationGroup.releaseProhibitingMoreMembers();
 
       Integer result = sub.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);

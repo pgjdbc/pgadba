@@ -13,24 +13,59 @@ import org.postgresql.sql2.operations.helpers.ValueQueryParameter;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
+import java.util.concurrent.SubmissionPublisher;
 import java.util.function.Consumer;
 
 public class PGRowProcessorOperation<R> implements RowProcessorOperation<R> {
   private PGConnection connection;
   private String sql;
   private ParameterHolder holder;
-  private Flow.Processor<Result.Row, ? extends R> processor;
   private Consumer<Throwable> errorHandler;
+  private Flow.Subscriber<R> subscriber;
+  private SubmissionPublisher<Result.Row> publisher = new SubmissionPublisher<>();
+  private R lastValue;
+  private PGSubmission<R> submission;
+  private PGSubmission groupSubmission;
 
-  public PGRowProcessorOperation(PGConnection connection, String sql) {
+  public PGRowProcessorOperation(PGConnection connection, String sql, PGSubmission groupSubmission) {
     this.connection = connection;
     this.sql = sql;
     this.holder = new ParameterHolder();
+    this.groupSubmission = groupSubmission;
+
+    subscriber = new Flow.Subscriber<>() {
+      private Flow.Subscription subscription;
+      @Override
+      public void onSubscribe(Flow.Subscription subscription) {
+        this.subscription = subscription;
+        subscription.request(1);
+      }
+
+      @Override
+      public void onNext(R item) {
+        lastValue = item;
+        subscription.request(1);
+      }
+
+      @Override
+      public void onError(Throwable throwable) {
+        submission.getCompletionStage().toCompletableFuture().completeExceptionally(throwable);
+      }
+
+      @Override
+      public void onComplete() {
+        if(submission.getGroupSubmission() != null) {
+          submission.getGroupSubmission().addGroupResult(lastValue);
+        }
+        submission.getCompletionStage().toCompletableFuture().complete(lastValue);
+      }
+    };
   }
 
   @Override
   public RowProcessorOperation<R> rowProcessor(Flow.Processor<Result.Row, ? extends R> processor) {
-    this.processor = processor;
+    publisher.subscribe(processor);
+    processor.subscribe(subscriber);
     return this;
   }
 
@@ -80,11 +115,12 @@ public class PGRowProcessorOperation<R> implements RowProcessorOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.PROCESSOR, errorHandler);
+    submission = new PGSubmission<>(this::cancel, PGSubmission.Types.PROCESSOR, errorHandler);
     submission.setConnectionSubmission(false);
     submission.setSql(sql);
     submission.setHolder(holder);
-    submission.setProcessor(processor);
+    submission.setPublisher(publisher);
+    submission.addGroupSubmission(groupSubmission);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

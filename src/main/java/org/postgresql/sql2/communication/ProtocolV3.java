@@ -293,8 +293,7 @@ public class ProtocolV3 {
         submissions.poll();
         break;
       case PROCESSOR:
-        ((CompletableFuture) sub.getCompletionStage())
-            .complete(null);
+        sub.finish();
         submissions.poll();
         break;
       case OUT_PARAMETER:

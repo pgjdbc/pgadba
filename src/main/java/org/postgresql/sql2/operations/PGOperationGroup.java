@@ -181,7 +181,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       logger.log(Level.CONFIG, "RowProcessorOperation created for connection " + this);
     }
 
-    return new PGRowProcessorOperation<>(connection, sql);
+    return new PGRowProcessorOperation<>(connection, sql, groupSubmission);
   }
 
   @Override

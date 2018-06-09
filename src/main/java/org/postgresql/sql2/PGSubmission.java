@@ -13,7 +13,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Flow;
+import java.util.concurrent.SubmissionPublisher;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -44,7 +44,7 @@ public class PGSubmission<T> implements Submission<T> {
 
   private Collector collector;
   private Object collectorHolder;
-  private Flow.Processor<Result.Row, ? extends T> processor;
+  private SubmissionPublisher<Result.Row> publisher;
   private Consumer<Throwable> errorHandler;
   private Map<String, SqlType> outParameterTypeMap;
   private Function<Result.OutParameterMap, ? extends T> outParameterProcessor;
@@ -110,18 +110,24 @@ public class PGSubmission<T> implements Submission<T> {
     collectorHolder = collector.supplier().get();
   }
 
-  public void setProcessor(Flow.Processor<Result.Row, ? extends T> processor) {
-    this.processor = processor;
+  public void setPublisher(SubmissionPublisher<Result.Row> publisher) {
+    this.publisher = publisher;
   }
 
-  public Flow.Processor<Result.Row, ? extends T> getProcessor() {
-    return processor;
+  public SubmissionPublisher<Result.Row> getPublisher() {
+    return publisher;
   }
 
   public Object finish() {
-    Object o = collector.finisher().apply(collectorHolder);
-    if(groupSubmission != null) {
-      groupSubmission.addGroupResult(o);
+    Object o = null;
+    if(collector != null) {
+      o = collector.finisher().apply(collectorHolder);
+      if(groupSubmission != null) {
+        groupSubmission.addGroupResult(o);
+      }
+    }
+    if(publisher != null) {
+      publisher.close();
     }
     return o;
   }
@@ -143,7 +149,10 @@ public class PGSubmission<T> implements Submission<T> {
   }
 
   public void processRow(DataRow row) {
-    processor.onNext(row);
+    publisher.offer(row, (subscriber, rowItem) -> {
+      subscriber.onError(new IllegalStateException("failed to offer item to subscriber"));
+      return false;
+    });
   }
 
   public void applyOutRow(DataRow row) {

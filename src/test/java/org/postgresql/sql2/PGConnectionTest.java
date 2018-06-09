@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
+import org.postgresql.sql2.testUtil.SimpleRowProcessor;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.List;
@@ -311,37 +312,74 @@ public class PGConnectionTest {
     try (Connection conn = ds.getConnection()) {
       //First do a normal query so that the connection has time to get established
       conn.rowProcessorOperation("select 321 as t")
-          .rowProcessor(new Flow.Processor<Result.Row, String>() {
+          .rowProcessor(new Flow.Processor<Result.Row, Integer>() {
             Flow.Subscription publisherSubscription;
 
             final ExecutorService executor = Executors.newFixedThreadPool(4);
             Flow.Subscription subscription;
-            ConcurrentLinkedQueue<String> dataItems;
+            ConcurrentLinkedQueue<Flow.Subscriber<? super Integer>> subscribers = new ConcurrentLinkedQueue<>();
 
             @Override
-            public void subscribe(Flow.Subscriber<? super String> subscriber) {
+            public void subscribe(Flow.Subscriber<? super Integer> subscriber) {
+              subscribers.add(subscriber);
+              subscriber.onSubscribe(new Flow.Subscription() {
+                @Override
+                public void request(long n) {
+
+                }
+
+                @Override
+                public void cancel() {
+
+                }
+              });
             }
 
             @Override
             public void onSubscribe(Flow.Subscription subscription) {
+              this.subscription = subscription;
+              subscription.request(1);
             }
 
             @Override
             public void onNext(Result.Row item) {
               result[0] = item.get("t", Integer.class);
+              subscription.request(1);
+
+              for(Flow.Subscriber<? super Integer> s : subscribers) {
+                s.onNext(result[0]);
+              }
             }
 
             @Override
             public void onComplete() {
+              for(Flow.Subscriber<? super Integer> s : subscribers) {
+                s.onComplete();
+              }
             }
 
             @Override
             public void onError(Throwable t) {
+              for(Flow.Subscriber<? super Integer> s : subscribers) {
+                s.onError(t);
+              }
             }
           })
           .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
 
       assertEquals(Integer.valueOf(321), result[0]);
+    }
+  }
+
+  @Test
+  public void rowProcessorOperationReturnedValue() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      //First do a normal query so that the connection has time to get established
+      Integer result = conn.<Integer>rowProcessorOperation("select 321 as t")
+          .rowProcessor(new SimpleRowProcessor())
+          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+
+      assertEquals(Integer.valueOf(321), result);
     }
   }
 
