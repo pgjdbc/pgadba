@@ -3,7 +3,7 @@ package org.postgresql.sql2.operations;
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
-import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.submissions.BaseSubmission;
 
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -35,8 +35,7 @@ public class PGConnectOperation implements Operation<Void> {
 
   @Override
   public Submission<Void> submit() {
-    PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
-    submission.setConnectionSubmission(true);
+    BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.CONNECT, errorHandler, null, null);
     submission.getCompletionStage().thenAccept(s -> {
       connection.setLifeCycleOpen();
     });

@@ -14,7 +14,7 @@ import jdk.incubator.sql2.Submission;
 import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.PGConnection;
-import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.submissions.BaseSubmission;
 
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
@@ -40,7 +40,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
 
   private Collector collector = DEFAULT_COLLECTOR;
 
-  private PGSubmission<T> groupSubmission;
+  private BaseSubmission<T> groupSubmission;
 
   public PGOperationGroup() {
 
@@ -72,7 +72,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public Submission<T> submitHoldingForMoreMembers() {
-    PGSubmission<T> sub = new PGSubmission<>(this::cancel, PGSubmission.Types.GROUP, errorHandler);
+    BaseSubmission<T> sub = new BaseSubmission<>(this::cancel, BaseSubmission.Types.GROUP, errorHandler, null, null);
     sub.setCollector(collector);
 
     groupSubmission = sub;

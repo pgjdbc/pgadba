@@ -4,7 +4,7 @@ import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
-import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.submissions.BaseSubmission;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
 import java.time.Duration;
@@ -42,11 +42,11 @@ public class PGValidationOperation implements Operation<Void> {
       case NONE:
       case LOCAL:
         if (connection.isConnectionClosed()) {
-          PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
+          BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.VOID, errorHandler, null, null);
           submission.getCompletionStage().toCompletableFuture().completeExceptionally(new IllegalStateException());
           return submission;
         } else {
-          PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
+          BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.VOID, errorHandler, null, null);
           submission.getCompletionStage().toCompletableFuture().complete(null);
           return submission;
         }
@@ -57,10 +57,8 @@ public class PGValidationOperation implements Operation<Void> {
       case SERVER:
         break;
       case COMPLETE:
-        PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.VOID, errorHandler);
-        submission.setConnectionSubmission(false);
+        BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.VOID, errorHandler, new ParameterHolder(), null);
         submission.setSql("select 1");
-        submission.setHolder(new ParameterHolder());
         submission.setCollector(Collector.of(
             () -> null,
             (a, v) -> {

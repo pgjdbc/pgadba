@@ -5,7 +5,7 @@ import jdk.incubator.sql2.Submission;
 import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.PGConnection;
-import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.submissions.BaseSubmission;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
 import java.time.Duration;
@@ -38,14 +38,12 @@ public class PGTransactionOperation implements Operation<TransactionOutcome> {
 
   @Override
   public Submission<TransactionOutcome> submit() {
-    PGSubmission<TransactionOutcome> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.TRANSACTION, errorHandler);
-    submission.setConnectionSubmission(false);
+    BaseSubmission<TransactionOutcome> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.TRANSACTION, errorHandler, new ParameterHolder(), null);
     if (transaction.isRollbackOnly()) {
       submission.setSql("ROLLBACK TRANSACTION");
     } else {
       submission.setSql("COMMIT TRANSACTION");
     }
-    submission.setHolder(new ParameterHolder());
     connection.addSubmissionOnQue(submission);
     return submission;
   }

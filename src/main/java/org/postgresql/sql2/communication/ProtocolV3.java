@@ -72,7 +72,7 @@ public class ProtocolV3 {
     PGSubmission sub = submissions.peek();
     if (sub != null) {
       try {
-        if (sub.isConnectionSubmission() && sub.getSendConsumed().compareAndSet(false, true)) {
+        if (sub.getCompletionType() == PGSubmission.Types.CONNECT && sub.getSendConsumed().compareAndSet(false, true)) {
           socketChannel.configureBlocking(false);
           socketChannel.connect(new InetSocketAddress((String) properties.get(PGConnectionProperties.HOST),
               (Integer) properties.get(PGConnectionProperties.PORT)));
@@ -85,15 +85,7 @@ public class ProtocolV3 {
         }
 
         if(sub.getCompletionType() == PGSubmission.Types.LOCAL) {
-          try {
-            Object localResult = sub.getLocalAction().call();
-            if(sub.getGroupSubmission() != null) {
-              sub.getGroupSubmission().addGroupResult(localResult);
-            }
-            sub.getCompletionStage().toCompletableFuture().complete(localResult);
-          } catch (Exception e) {
-            sub.getCompletionStage().toCompletableFuture().completeExceptionally(e);
-          }
+          sub.finish();
           submissions.poll();
         } else if(sub.getCompletionType() == PGSubmission.Types.GROUP) {
           try {
@@ -102,7 +94,7 @@ public class ProtocolV3 {
             sub.getCompletionStage().toCompletableFuture().completeExceptionally(e);
           }
           submissions.poll();
-        } else if (!sub.isConnectionSubmission() && currentState == ProtocolV3States.States.IDLE
+        } else if (sub.getCompletionType() != PGSubmission.Types.CONNECT && currentState == ProtocolV3States.States.IDLE
             && sub.getSendConsumed().compareAndSet(false, true)) {
           if (preparedStatementCache.sqlNotPreparedBefore(sub.getHolder(), sub.getSql())) {
             queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
@@ -220,13 +212,7 @@ public class ProtocolV3 {
     String portalName = sentSqlNameQue.peek();
     DataRow row = new DataRow(packet.getPayload(), preparedStatementCache.getDescription(portalName), rowNumber++);
     PGSubmission sub = submissions.peek();
-    if (sub.getCompletionType() == PGSubmission.Types.PROCESSOR) {
-      sub.processRow(row);
-    } else if (sub.getCompletionType() == PGSubmission.Types.OUT_PARAMETER) {
-      sub.applyOutRow(row);
-    } else {
-      sub.addRow(row);
-    }
+    sub.addRow(row);
   }
 
   private void doCommandComplete(BEFrame packet) {
@@ -297,11 +283,7 @@ public class ProtocolV3 {
         submissions.poll();
         break;
       case OUT_PARAMETER:
-        if(sub.getGroupSubmission() != null) {
-          sub.getGroupSubmission().addGroupResult(sub.getOutParameterValueHolder());
-        }
-        ((CompletableFuture) sub.getCompletionStage())
-            .complete(sub.getOutParameterValueHolder());
+        sub.finish();
         submissions.poll();
         break;
     }

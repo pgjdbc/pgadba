@@ -6,6 +6,7 @@ import jdk.incubator.sql2.SqlType;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
 import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.submissions.BaseSubmission;
 import org.postgresql.sql2.operations.helpers.ArrayQueryParameter;
 import org.postgresql.sql2.operations.helpers.FutureArrayQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
@@ -72,10 +73,8 @@ public class PGArrayCountOperation<R> implements ArrayCountOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.ARRAY_COUNT, errorHandler);
-    submission.setConnectionSubmission(false);
+    PGSubmission<R> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.ARRAY_COUNT, errorHandler, holder, null);
     submission.setSql(sql);
-    submission.setHolder(holder);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

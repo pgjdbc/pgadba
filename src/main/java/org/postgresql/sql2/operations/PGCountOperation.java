@@ -6,7 +6,7 @@ import jdk.incubator.sql2.RowOperation;
 import jdk.incubator.sql2.SqlType;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
-import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.submissions.BaseSubmission;
 import org.postgresql.sql2.operations.helpers.FutureQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.operations.helpers.ValueQueryParameter;
@@ -79,10 +79,8 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.COUNT, errorHandler);
-    submission.setConnectionSubmission(false);
+    BaseSubmission<R> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.COUNT, errorHandler, holder, null);
     submission.setSql(sql);
-    submission.setHolder(holder);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

@@ -3,7 +3,7 @@ package org.postgresql.sql2.operations;
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
-import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.submissions.BaseSubmission;
 
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -33,10 +33,8 @@ public class PGCloseOperation implements Operation<Void> {
 
   @Override
   public Submission<Void> submit() {
-    PGSubmission<Void> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.CLOSE, errorHandler);
-    submission.setConnectionSubmission(false);
+    BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.CLOSE, errorHandler, null, null);
     submission.setSql(null);
-    submission.setHolder(null);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

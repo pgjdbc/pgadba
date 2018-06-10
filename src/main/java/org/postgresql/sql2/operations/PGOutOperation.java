@@ -9,6 +9,8 @@ import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.operations.helpers.FutureQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.operations.helpers.ValueQueryParameter;
+import org.postgresql.sql2.submissions.BaseSubmission;
+import org.postgresql.sql2.submissions.OutSubmission;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -24,9 +26,9 @@ public class PGOutOperation<R> implements OutOperation<R> {
   private Consumer<Throwable> errorHandler;
   private Function<Result.OutParameterMap, ? extends R> processor;
   private Map<String, SqlType> outParameterTypes;
-  private PGSubmission groupSubmission;
+  private BaseSubmission groupSubmission;
 
-  public PGOutOperation(PGConnection connection, String sql, PGSubmission groupSubmission) {
+  public PGOutOperation(PGConnection connection, String sql, BaseSubmission groupSubmission) {
     this.connection = connection;
     this.sql = sql;
     this.holder = new ParameterHolder();
@@ -88,13 +90,7 @@ public class PGOutOperation<R> implements OutOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new PGSubmission<>(this::cancel, PGSubmission.Types.OUT_PARAMETER, errorHandler);
-    submission.setConnectionSubmission(false);
-    submission.setSql(sql);
-    submission.setHolder(holder);
-    submission.setOutParameterTypeMap(outParameterTypes);
-    submission.setOutParameterProcessor(processor);
-    submission.addGroupSubmission(groupSubmission);
+    PGSubmission<R> submission = new OutSubmission<>(this::cancel, errorHandler, sql, outParameterTypes, processor, groupSubmission, holder);
     connection.addSubmissionOnQue(submission);
     return submission;
   }
