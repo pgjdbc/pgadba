@@ -37,7 +37,7 @@ public interface PGSubmission<T> extends Submission<T> {
 
   void setCollector(Collector collector);
 
-  Object finish();
+  Object finish(Object finishObject);
 
   void addRow(DataRow row);
 

@@ -71,7 +71,7 @@ public class OutSubmission<T> implements PGSubmission<T> {
   }
 
   @Override
-  public Object finish() {
+  public Object finish(Object finishObject) {
     if(groupSubmission != null) {
       groupSubmission.addGroupResult(outParameterValueHolder);
     }

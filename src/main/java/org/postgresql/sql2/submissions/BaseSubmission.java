@@ -76,7 +76,7 @@ public class BaseSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
     collectorHolder = collector.supplier().get();
   }
 
-  public Object finish() {
+  public Object finish(Object finishObject) {
     Object o = null;
     if(collector != null) {
       o = collector.finisher().apply(collectorHolder);

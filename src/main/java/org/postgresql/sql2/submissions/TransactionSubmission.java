@@ -1,7 +1,8 @@
 package org.postgresql.sql2.submissions;
 
-import jdk.incubator.sql2.Result;
+import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.communication.packets.CommandComplete;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
@@ -9,34 +10,27 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.SubmissionPublisher;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-public class ProcessorSubmission<T> implements PGSubmission<T> {
+public class TransactionSubmission implements PGSubmission<TransactionOutcome> {
   final private Supplier<Boolean> cancel;
-  private CompletableFuture<T> publicStage;
-  private Consumer<Throwable> errorHandler;
+  private CompletableFuture<TransactionOutcome> publicStage;
   private String sql;
-  private ParameterHolder holder;
-  private SubmissionPublisher<Result.Row> publisher;
-  private PGSubmission groupSubmission;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
+  private Consumer<Throwable> errorHandler;
+  private ParameterHolder holder = new ParameterHolder();
 
-  public ProcessorSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, String sql,
-                             SubmissionPublisher<Result.Row> publisher, ParameterHolder holder, BaseSubmission groupSubmission) {
+  public TransactionSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
-    this.sql = sql;
-    this.publisher = publisher;
-    this.holder = holder;
-    this.groupSubmission = groupSubmission;
   }
 
   @Override
   public void setSql(String sql) {
+    this.sql = sql;
   }
 
   @Override
@@ -56,7 +50,7 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
 
   @Override
   public Types getCompletionType() {
-    return PGSubmission.Types.PROCESSOR;
+    return Types.TRANSACTION;
   }
 
   @Override
@@ -66,16 +60,23 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
 
   @Override
   public Object finish(Object finishObject) {
-    publisher.close();
+    CommandComplete.Types type = (CommandComplete.Types)finishObject;
+    if(type == CommandComplete.Types.ROLLBACK) {
+      ((CompletableFuture<TransactionOutcome>) getCompletionStage())
+          .complete(TransactionOutcome.ROLLBACK);
+    } else if(type == CommandComplete.Types.COMMIT) {
+      ((CompletableFuture<TransactionOutcome>) getCompletionStage())
+          .complete(TransactionOutcome.COMMIT);
+    } else {
+      ((CompletableFuture<TransactionOutcome>) getCompletionStage())
+          .complete(TransactionOutcome.UNKNOWN);
+    }
     return null;
   }
 
   @Override
   public void addRow(DataRow row) {
-    publisher.offer(row, (subscriber, rowItem) -> {
-      subscriber.onError(new IllegalStateException("failed to offer item to subscriber"));
-      return false;
-    });
+
   }
 
   @Override
@@ -85,7 +86,7 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
 
   @Override
   public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
-    return holder.getParamTypes();
+    return null;
   }
 
   @Override
@@ -105,7 +106,7 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
 
   @Override
   public PGSubmission getGroupSubmission() {
-    return groupSubmission;
+    return null;
   }
 
   @Override
@@ -114,7 +115,7 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
   }
 
   @Override
-  public CompletionStage<T> getCompletionStage() {
+  public CompletionStage<TransactionOutcome> getCompletionStage() {
     if (publicStage == null)
       publicStage = new CompletableFuture<>();
     return publicStage;

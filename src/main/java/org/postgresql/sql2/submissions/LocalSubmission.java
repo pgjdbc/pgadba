@@ -59,7 +59,7 @@ public class LocalSubmission<T> implements PGSubmission<T> {
   }
 
   @Override
-  public Object finish() {
+  public Object finish(Object finishObject) {
     try {
       T localResult = localAction.call();
       if(groupSubmission != null) {

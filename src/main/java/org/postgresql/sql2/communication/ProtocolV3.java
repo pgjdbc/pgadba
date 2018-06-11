@@ -3,7 +3,6 @@ package org.postgresql.sql2.communication;
 import jdk.incubator.sql2.ConnectionProperty;
 import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.Submission;
-import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
@@ -85,11 +84,11 @@ public class ProtocolV3 {
         }
 
         if(sub.getCompletionType() == PGSubmission.Types.LOCAL) {
-          sub.finish();
+          sub.finish(null);
           submissions.poll();
         } else if(sub.getCompletionType() == PGSubmission.Types.GROUP) {
           try {
-            sub.getCompletionStage().toCompletableFuture().complete(sub.finish());
+            sub.getCompletionStage().toCompletableFuture().complete(sub.finish(null));
           } catch (Exception e) {
             sub.getCompletionStage().toCompletableFuture().completeExceptionally(e);
           }
@@ -126,7 +125,7 @@ public class ProtocolV3 {
           try {
             socketChannel.close();
             ((CompletableFuture) sub.getCompletionStage())
-                .complete(sub.finish());
+                .complete(sub.finish(null));
           } catch (IOException e) {
             ((CompletableFuture) sub.getCompletionStage())
                 .completeExceptionally(e);
@@ -225,21 +224,20 @@ public class ProtocolV3 {
 
     switch (sub.getCompletionType()) {
       case COUNT:
-        ((CompletableFuture) sub.getCompletionStage())
-            .complete(new PGCount(cc.getNumberOfRowsAffected()));
+        sub.finish(new PGCount(cc.getNumberOfRowsAffected()));
         submissions.poll();
         break;
       case ROW:
         sentSqlNameQue.poll();
         ((CompletableFuture) sub.getCompletionStage())
-            .complete(sub.finish());
+            .complete(sub.finish(null));
         submissions.poll();
         break;
       case CLOSE:
         try {
           socketChannel.close();
           ((CompletableFuture) sub.getCompletionStage())
-              .complete(sub.finish());
+              .complete(sub.finish(null));
         } catch (IOException e) {
           ((CompletableFuture) sub.getCompletionStage())
               .completeExceptionally(e);
@@ -247,16 +245,7 @@ public class ProtocolV3 {
         submissions.poll();
         break;
       case TRANSACTION:
-        if(cc.getType() == CommandComplete.Types.ROLLBACK) {
-          ((CompletableFuture) sub.getCompletionStage())
-              .complete(TransactionOutcome.ROLLBACK);
-        } else if(cc.getType() == CommandComplete.Types.COMMIT) {
-          ((CompletableFuture) sub.getCompletionStage())
-              .complete(TransactionOutcome.COMMIT);
-        } else {
-          ((CompletableFuture) sub.getCompletionStage())
-              .complete(TransactionOutcome.UNKNOWN);
-        }
+        sub.finish(cc.getType());
         submissions.poll();
         break;
       case ARRAY_COUNT:
@@ -279,11 +268,11 @@ public class ProtocolV3 {
         submissions.poll();
         break;
       case PROCESSOR:
-        sub.finish();
+        sub.finish(null);
         submissions.poll();
         break;
       case OUT_PARAMETER:
-        sub.finish();
+        sub.finish(null);
         submissions.poll();
         break;
     }

@@ -1,42 +1,36 @@
 package org.postgresql.sql2.submissions;
 
-import jdk.incubator.sql2.Result;
 import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
+import org.postgresql.sql2.util.PGCount;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.SubmissionPublisher;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-public class ProcessorSubmission<T> implements PGSubmission<T> {
+public class CountSubmission<T> implements PGSubmission<T> {
   final private Supplier<Boolean> cancel;
   private CompletableFuture<T> publicStage;
-  private Consumer<Throwable> errorHandler;
   private String sql;
-  private ParameterHolder holder;
-  private SubmissionPublisher<Result.Row> publisher;
-  private PGSubmission groupSubmission;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
+  private Consumer<Throwable> errorHandler;
+  private ParameterHolder holder;
 
-  public ProcessorSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, String sql,
-                             SubmissionPublisher<Result.Row> publisher, ParameterHolder holder, BaseSubmission groupSubmission) {
+  public CountSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
-    this.sql = sql;
-    this.publisher = publisher;
     this.holder = holder;
-    this.groupSubmission = groupSubmission;
   }
 
   @Override
   public void setSql(String sql) {
+    this.sql = sql;
   }
 
   @Override
@@ -56,7 +50,7 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
 
   @Override
   public Types getCompletionType() {
-    return PGSubmission.Types.PROCESSOR;
+    return Types.COUNT;
   }
 
   @Override
@@ -66,16 +60,14 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
 
   @Override
   public Object finish(Object finishObject) {
-    publisher.close();
+    ((CompletableFuture<PGCount>) getCompletionStage())
+        .complete((PGCount)finishObject);
     return null;
   }
 
   @Override
   public void addRow(DataRow row) {
-    publisher.offer(row, (subscriber, rowItem) -> {
-      subscriber.onError(new IllegalStateException("failed to offer item to subscriber"));
-      return false;
-    });
+
   }
 
   @Override
@@ -105,7 +97,7 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
 
   @Override
   public PGSubmission getGroupSubmission() {
-    return groupSubmission;
+    return null;
   }
 
   @Override
