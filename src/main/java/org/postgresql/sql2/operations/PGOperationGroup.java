@@ -14,7 +14,7 @@ import jdk.incubator.sql2.Submission;
 import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
 import org.postgresql.sql2.PGConnection;
-import org.postgresql.sql2.submissions.BaseSubmission;
+import org.postgresql.sql2.submissions.GroupSubmission;
 
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
@@ -40,7 +40,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
 
   private Collector collector = DEFAULT_COLLECTOR;
 
-  private BaseSubmission<T> groupSubmission;
+  private GroupSubmission<T> groupSubmission;
 
   public PGOperationGroup() {
 
@@ -72,7 +72,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public Submission<T> submitHoldingForMoreMembers() {
-    BaseSubmission<T> sub = new BaseSubmission<>(this::cancel, BaseSubmission.Types.GROUP, errorHandler, null, null);
+    GroupSubmission<T> sub = new GroupSubmission<>(this::cancel, errorHandler);
     sub.setCollector(collector);
 
     groupSubmission = sub;
@@ -103,7 +103,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       logger.log(Level.CONFIG, "CatchOperation created for connection " + this);
     }
 
-    return new PGCatchOperation<S>(connection);
+    return new PGCatchOperation<>(connection);
   }
 
   @Override
@@ -155,7 +155,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       logger.log(Level.CONFIG, "OutOperation created for connection " + this);
     }
 
-    return new PGOutOperation<R>(connection, sql, groupSubmission);
+    return new PGOutOperation<>(connection, sql, groupSubmission);
   }
 
   @Override

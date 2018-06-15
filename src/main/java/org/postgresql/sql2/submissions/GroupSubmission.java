@@ -1,9 +1,9 @@
 package org.postgresql.sql2.submissions;
 
+import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -13,28 +13,92 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-public class BaseSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
+public class GroupSubmission<T> implements PGSubmission<T> {
   final private Supplier<Boolean> cancel;
   private CompletableFuture<T> publicStage;
-  private String sql;
+  private Consumer<Throwable> errorHandler;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
-  private ParameterHolder holder;
-  private org.postgresql.sql2.PGSubmission.Types completionType;
-
   private Collector collector;
   private Object collectorHolder;
-  private Consumer<Throwable> errorHandler;
 
-  private List<Long> countResults = new ArrayList<>();
-  private GroupSubmission groupSubmission;
-
-  public BaseSubmission(Supplier<Boolean> cancel, Types completionType, Consumer<Throwable> errorHandler, ParameterHolder holder,
-                        GroupSubmission groupSubmission) {
+  public GroupSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler) {
     this.cancel = cancel;
-    this.completionType = completionType;
     this.errorHandler = errorHandler;
-    this.holder = holder;
-    this.groupSubmission = groupSubmission;
+  }
+
+  @Override
+  public void setSql(String sql) {
+
+  }
+
+  @Override
+  public String getSql() {
+    return null;
+  }
+
+  @Override
+  public AtomicBoolean getSendConsumed() {
+    return sendConsumed;
+  }
+
+  @Override
+  public ParameterHolder getHolder() {
+    return null;
+  }
+
+  @Override
+  public Types getCompletionType() {
+    return Types.GROUP;
+  }
+
+  @Override
+  public void setCollector(Collector collector) {
+    this.collector = collector;
+
+    collectorHolder = collector.supplier().get();
+  }
+
+  @Override
+  public Object finish(Object finishObject) {
+    Object o = null;
+    if(collector != null) {
+      o = collector.finisher().apply(collectorHolder);
+    }
+    return o;
+
+  }
+
+  @Override
+  public void addRow(DataRow row) {
+
+  }
+
+  public void addGroupResult(Object result) {
+    try {
+      collector.accumulator().accept(collectorHolder, result);
+    } catch (Throwable e) {
+      publicStage.completeExceptionally(e);
+    }
+  }
+
+  @Override
+  public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
+    return null;
+  }
+
+  @Override
+  public int numberOfQueryRepetitions() throws ExecutionException, InterruptedException {
+    return 1;
+  }
+
+  @Override
+  public List<Long> countResult() {
+    return null;
+  }
+
+  @Override
+  public Consumer<Throwable> getErrorHandler() {
+    return errorHandler;
   }
 
   @Override
@@ -47,70 +111,5 @@ public class BaseSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
     if (publicStage == null)
       publicStage = new CompletableFuture<>();
     return publicStage;
-  }
-
-  public void setSql(String sql) {
-    this.sql = sql;
-  }
-
-  public String getSql() {
-    return sql;
-  }
-
-  public AtomicBoolean getSendConsumed() {
-    return sendConsumed;
-  }
-
-  public ParameterHolder getHolder() {
-    return holder;
-  }
-
-  public org.postgresql.sql2.PGSubmission.Types getCompletionType() {
-    return completionType;
-  }
-
-  public void setCollector(Collector collector) {
-    this.collector = collector;
-
-    collectorHolder = collector.supplier().get();
-  }
-
-  public Object finish(Object finishObject) {
-    Object o = null;
-    if(collector != null) {
-      o = collector.finisher().apply(collectorHolder);
-      if(groupSubmission != null) {
-        groupSubmission.addGroupResult(o);
-      }
-    }
-    return o;
-  }
-
-  public void addRow(DataRow row) {
-    try {
-      collector.accumulator().accept(collectorHolder, row);
-    } catch (Throwable e) {
-      publicStage.completeExceptionally(e);
-    }
-  }
-
-  public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
-    return holder.getParamTypes();
-  }
-
-  public int numberOfQueryRepetitions() throws ExecutionException, InterruptedException {
-    if (completionType == org.postgresql.sql2.PGSubmission.Types.ARRAY_COUNT) {
-      return holder.numberOfQueryRepetitions();
-    } else {
-      return 1;
-    }
-  }
-
-  public List<Long> countResult() {
-    return countResults;
-  }
-
-  public Consumer<Throwable> getErrorHandler() {
-    return errorHandler;
   }
 }

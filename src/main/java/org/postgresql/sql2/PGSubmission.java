@@ -41,8 +41,6 @@ public interface PGSubmission<T> extends Submission<T> {
 
   void addRow(DataRow row);
 
-  void addGroupResult(Object result);
-
   List<Integer> getParamTypes() throws ExecutionException, InterruptedException;
 
   int numberOfQueryRepetitions() throws ExecutionException, InterruptedException;
@@ -50,6 +48,4 @@ public interface PGSubmission<T> extends Submission<T> {
   List<Long> countResult();
 
   Consumer<Throwable> getErrorHandler();
-
-  PGSubmission getGroupSubmission();
 }

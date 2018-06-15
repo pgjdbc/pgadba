@@ -80,11 +80,6 @@ public class TransactionSubmission implements PGSubmission<TransactionOutcome> {
   }
 
   @Override
-  public void addGroupResult(Object result) {
-
-  }
-
-  @Override
   public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
     return null;
   }
@@ -102,11 +97,6 @@ public class TransactionSubmission implements PGSubmission<TransactionOutcome> {
   @Override
   public Consumer<Throwable> getErrorHandler() {
     return errorHandler;
-  }
-
-  @Override
-  public PGSubmission getGroupSubmission() {
-    return null;
   }
 
   @Override

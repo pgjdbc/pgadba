@@ -9,7 +9,7 @@ import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.operations.helpers.FutureQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.operations.helpers.ValueQueryParameter;
-import org.postgresql.sql2.submissions.BaseSubmission;
+import org.postgresql.sql2.submissions.GroupSubmission;
 import org.postgresql.sql2.submissions.ProcessorSubmission;
 
 import java.time.Duration;
@@ -27,9 +27,9 @@ public class PGRowProcessorOperation<R> implements RowProcessorOperation<R> {
   private SubmissionPublisher<Result.Row> publisher = new SubmissionPublisher<>();
   private R lastValue;
   private PGSubmission<R> submission;
-  private BaseSubmission groupSubmission;
+  private GroupSubmission groupSubmission;
 
-  public PGRowProcessorOperation(PGConnection connection, String sql, BaseSubmission groupSubmission) {
+  public PGRowProcessorOperation(PGConnection connection, String sql, GroupSubmission groupSubmission) {
     this.connection = connection;
     this.sql = sql;
     this.holder = new ParameterHolder();
@@ -56,8 +56,8 @@ public class PGRowProcessorOperation<R> implements RowProcessorOperation<R> {
 
       @Override
       public void onComplete() {
-        if(submission.getGroupSubmission() != null) {
-          submission.getGroupSubmission().addGroupResult(lastValue);
+        if(groupSubmission != null) {
+          groupSubmission.addGroupResult(lastValue);
         }
         submission.getCompletionStage().toCompletableFuture().complete(lastValue);
       }

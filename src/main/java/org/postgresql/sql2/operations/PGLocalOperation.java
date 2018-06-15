@@ -4,7 +4,7 @@ import jdk.incubator.sql2.LocalOperation;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
 import org.postgresql.sql2.PGSubmission;
-import org.postgresql.sql2.submissions.BaseSubmission;
+import org.postgresql.sql2.submissions.GroupSubmission;
 import org.postgresql.sql2.submissions.LocalSubmission;
 
 import java.time.Duration;
@@ -18,9 +18,9 @@ public class PGLocalOperation<T> implements LocalOperation<T> {
   private PGConnection connection;
   private Callable<T> action = defaultAction;
   private Consumer<Throwable> errorHandler;
-  private BaseSubmission groupSubmission;
+  private GroupSubmission groupSubmission;
 
-  public PGLocalOperation(PGConnection connection, BaseSubmission groupSubmission) {
+  public PGLocalOperation(PGConnection connection, GroupSubmission groupSubmission) {
     this.connection = connection;
     this.groupSubmission = groupSubmission;
   }

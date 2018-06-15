@@ -23,14 +23,14 @@ public class OutSubmission<T> implements PGSubmission<T> {
   private Consumer<Throwable> errorHandler;
   private String sql;
   private ParameterHolder holder;
-  private PGSubmission groupSubmission;
+  private GroupSubmission groupSubmission;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
   private Function<Result.OutParameterMap, ? extends T> outParameterProcessor;
   private T outParameterValueHolder;
   private Map<String, SqlType> outParameterTypeMap;
 
   public OutSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, String sql, Map<String, SqlType> outParameterTypes,
-                       Function<Result.OutParameterMap, ? extends T> processor, BaseSubmission groupSubmission, ParameterHolder holder) {
+                       Function<Result.OutParameterMap, ? extends T> processor, GroupSubmission groupSubmission, ParameterHolder holder) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.sql = sql;
@@ -86,11 +86,6 @@ public class OutSubmission<T> implements PGSubmission<T> {
   }
 
   @Override
-  public void addGroupResult(Object result) {
-
-  }
-
-  @Override
   public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
     return holder.getParamTypes();
   }
@@ -108,11 +103,6 @@ public class OutSubmission<T> implements PGSubmission<T> {
   @Override
   public Consumer<Throwable> getErrorHandler() {
     return errorHandler;
-  }
-
-  @Override
-  public PGSubmission getGroupSubmission() {
-    return groupSubmission;
   }
 
   @Override

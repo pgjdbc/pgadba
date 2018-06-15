@@ -19,9 +19,9 @@ public class LocalSubmission<T> implements PGSubmission<T> {
   private CompletableFuture<T> publicStage;
   private Consumer<Throwable> errorHandler;
   private Callable<T> localAction;
-  private PGSubmission groupSubmission;
+  private GroupSubmission groupSubmission;
 
-  public LocalSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, Callable<T> localAction, BaseSubmission groupSubmission) {
+  public LocalSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, Callable<T> localAction, GroupSubmission groupSubmission) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.localAction = localAction;
@@ -78,11 +78,6 @@ public class LocalSubmission<T> implements PGSubmission<T> {
   }
 
   @Override
-  public void addGroupResult(Object result) {
-
-  }
-
-  @Override
   public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
     return null;
   }
@@ -100,11 +95,6 @@ public class LocalSubmission<T> implements PGSubmission<T> {
   @Override
   public Consumer<Throwable> getErrorHandler() {
     return errorHandler;
-  }
-
-  @Override
-  public PGSubmission getGroupSubmission() {
-    return groupSubmission;
   }
 
   @Override

@@ -22,11 +22,11 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
   private String sql;
   private ParameterHolder holder;
   private SubmissionPublisher<Result.Row> publisher;
-  private PGSubmission groupSubmission;
+  private GroupSubmission groupSubmission;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
 
   public ProcessorSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, String sql,
-                             SubmissionPublisher<Result.Row> publisher, ParameterHolder holder, BaseSubmission groupSubmission) {
+                             SubmissionPublisher<Result.Row> publisher, ParameterHolder holder, GroupSubmission groupSubmission) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.sql = sql;
@@ -79,11 +79,6 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
   }
 
   @Override
-  public void addGroupResult(Object result) {
-
-  }
-
-  @Override
   public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
     return holder.getParamTypes();
   }
@@ -101,11 +96,6 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
   @Override
   public Consumer<Throwable> getErrorHandler() {
     return errorHandler;
-  }
-
-  @Override
-  public PGSubmission getGroupSubmission() {
-    return groupSubmission;
   }
 
   @Override

@@ -71,11 +71,6 @@ public class CountSubmission<T> implements PGSubmission<T> {
   }
 
   @Override
-  public void addGroupResult(Object result) {
-
-  }
-
-  @Override
   public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
     return holder.getParamTypes();
   }
@@ -93,11 +88,6 @@ public class CountSubmission<T> implements PGSubmission<T> {
   @Override
   public Consumer<Throwable> getErrorHandler() {
     return errorHandler;
-  }
-
-  @Override
-  public PGSubmission getGroupSubmission() {
-    return null;
   }
 
   @Override

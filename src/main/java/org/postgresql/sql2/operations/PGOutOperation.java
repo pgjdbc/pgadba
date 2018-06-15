@@ -9,7 +9,7 @@ import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.operations.helpers.FutureQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.operations.helpers.ValueQueryParameter;
-import org.postgresql.sql2.submissions.BaseSubmission;
+import org.postgresql.sql2.submissions.GroupSubmission;
 import org.postgresql.sql2.submissions.OutSubmission;
 
 import java.time.Duration;
@@ -26,9 +26,9 @@ public class PGOutOperation<R> implements OutOperation<R> {
   private Consumer<Throwable> errorHandler;
   private Function<Result.OutParameterMap, ? extends R> processor;
   private Map<String, SqlType> outParameterTypes;
-  private BaseSubmission groupSubmission;
+  private GroupSubmission groupSubmission;
 
-  public PGOutOperation(PGConnection connection, String sql, BaseSubmission groupSubmission) {
+  public PGOutOperation(PGConnection connection, String sql, GroupSubmission groupSubmission) {
     this.connection = connection;
     this.sql = sql;
     this.holder = new ParameterHolder();
