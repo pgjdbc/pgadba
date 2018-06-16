@@ -45,7 +45,5 @@ public interface PGSubmission<T> extends Submission<T> {
 
   int numberOfQueryRepetitions() throws ExecutionException, InterruptedException;
 
-  List<Long> countResult();
-
   Consumer<Throwable> getErrorHandler();
 }

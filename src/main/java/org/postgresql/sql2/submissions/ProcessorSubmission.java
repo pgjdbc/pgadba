@@ -89,11 +89,6 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
   }
 
   @Override
-  public List<Long> countResult() {
-    return null;
-  }
-
-  @Override
   public Consumer<Throwable> getErrorHandler() {
     return errorHandler;
   }

@@ -12,6 +12,7 @@ import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
 import org.postgresql.sql2.testUtil.SimpleRowProcessor;
+import org.postgresql.sql2.util.PGCount;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.List;
@@ -119,7 +120,7 @@ public class PGConnectionTest {
       Submission<Object> drop = conn.operation("drop table tabForInsert")
           .submit();
 
-      assertArrayEquals(new Integer[]{1, 1, 1}, arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
+      assertArrayEquals(new PGCount[]{new PGCount(1), new PGCount(1), new PGCount(1)}, arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
       assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
       assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
@@ -141,7 +142,7 @@ public class PGConnectionTest {
           .submit();
 
       assertNull(noReturn.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
-      assertArrayEquals(new Integer[]{1, 1, 1}, arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
+      assertArrayEquals(new PGCount[]{new PGCount(1), new PGCount(1), new PGCount(1)}, arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
       assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
       assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
     }

@@ -106,10 +106,6 @@ public class BaseSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
     }
   }
 
-  public List<Long> countResult() {
-    return countResults;
-  }
-
   public Consumer<Throwable> getErrorHandler() {
     return errorHandler;
   }

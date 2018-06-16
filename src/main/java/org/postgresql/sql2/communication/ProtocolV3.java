@@ -28,7 +28,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
 
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.DETAIL;
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.HINT;
@@ -249,17 +248,9 @@ public class ProtocolV3 {
         submissions.poll();
         break;
       case ARRAY_COUNT:
-        sub.countResult().add(cc.getNumberOfRowsAffected());
-        try {
-          if(sub.countResult().size() == sub.numberOfQueryRepetitions()) {
-            ((CompletableFuture) sub.getCompletionStage())
-                .complete(sub.countResult());
-            submissions.poll();
-          }
-        } catch (ExecutionException e) {
-          e.printStackTrace();
-        } catch (InterruptedException e) {
-          e.printStackTrace();
+        boolean allCollected = (Boolean)sub.finish(cc.getNumberOfRowsAffected());
+        if(allCollected) {
+          submissions.poll();
         }
         break;
       case VOID:
