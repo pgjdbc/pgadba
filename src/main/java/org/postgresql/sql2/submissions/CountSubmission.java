@@ -21,11 +21,13 @@ public class CountSubmission<T> implements PGSubmission<T> {
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
   private Consumer<Throwable> errorHandler;
   private ParameterHolder holder;
+  private PGSubmission returningRowSubmission;
 
-  public CountSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder) {
+  public CountSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder, PGSubmission returningRowSubmission) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.holder = holder;
+    this.returningRowSubmission = returningRowSubmission;
   }
 
   @Override
@@ -62,12 +64,19 @@ public class CountSubmission<T> implements PGSubmission<T> {
   public Object finish(Object finishObject) {
     ((CompletableFuture<PGCount>) getCompletionStage())
         .complete((PGCount)finishObject);
+
+    if(returningRowSubmission != null) {
+      Object endResult = returningRowSubmission.finish(null);
+      returningRowSubmission.getCompletionStage().toCompletableFuture().complete(endResult);
+    }
     return null;
   }
 
   @Override
   public void addRow(DataRow row) {
-
+    if(returningRowSubmission != null) {
+      returningRowSubmission.addRow(row);
+    }
   }
 
   @Override

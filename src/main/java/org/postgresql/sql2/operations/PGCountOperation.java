@@ -22,6 +22,7 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
   private String sql;
   private ParameterHolder holder;
   private Consumer<Throwable> errorHandler;
+  private PGSubmission returningRowSubmission;
 
   public PGCountOperation(PGConnection connection, String sql) {
     this.connection = connection;
@@ -31,7 +32,7 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
 
   @Override
   public RowOperation<R> returning(String... keys) {
-    return null;
+    return new PGRowOperation<>(this, keys);
   }
 
   @Override
@@ -80,7 +81,7 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new CountSubmission<>(this::cancel, errorHandler, holder);
+    PGSubmission<R> submission = new CountSubmission<>(this::cancel, errorHandler, holder, returningRowSubmission);
     submission.setSql(sql);
     connection.addSubmissionOnQue(submission);
     return submission;
@@ -89,5 +90,9 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
   private boolean cancel() {
     // todo set life cycle to canceled
     return true;
+  }
+
+  public <T> void addReturningRowSubmission(PGSubmission<T> submission) {
+    returningRowSubmission = submission;
   }
 }
