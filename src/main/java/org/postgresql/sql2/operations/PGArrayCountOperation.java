@@ -23,6 +23,7 @@ public class PGArrayCountOperation<R> implements ArrayCountOperation<R> {
   private final String sql;
   private ParameterHolder holder;
   private Consumer<Throwable> errorHandler;
+  private Collector collector;
 
   public PGArrayCountOperation(PGConnection connection, String sql) {
     this.connection = connection;
@@ -68,12 +69,16 @@ public class PGArrayCountOperation<R> implements ArrayCountOperation<R> {
 
   @Override
   public <A, S extends R> ArrayCountOperation<R> collect(Collector<? super Result.Count, A, S> c) {
+    this.collector = c;
     return this;
   }
 
   @Override
   public Submission<R> submit() {
     PGSubmission<R> submission = new ArrayCountSubmission<>(this::cancel, errorHandler, holder, sql);
+    if(collector != null) {
+      submission.setCollector(collector);
+    }
     connection.addSubmissionOnQue(submission);
     return submission;
   }

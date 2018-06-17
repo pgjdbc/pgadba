@@ -12,10 +12,8 @@ import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
 import org.postgresql.sql2.testUtil.SimpleRowProcessor;
-import org.postgresql.sql2.util.PGCount;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -28,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static junit.framework.TestCase.fail;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -66,6 +63,8 @@ public class PGConnectionTest {
       ((CompletableFuture) sub.getCompletionStage()).join();
       fail("table 'tab' doesn't exist, so an exception should be thrown");
     } catch (CompletionException e) {
+      assertEquals("jdk.incubator.sql2.SqlException: Severity: ERROR\n" +
+          "Message: relation \"tab\" does not exist", e.getMessage());
     }
   }
 
@@ -102,48 +101,6 @@ public class PGConnectionTest {
           .submit();
 
       assertEquals(Long.valueOf(1), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
-      assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
-    }
-  }
-
-  @Test
-  public void multiInsertWithATable() throws ExecutionException, InterruptedException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      conn.countOperation("create table tabForInsert(id int)")
-          .submit();
-      Submission<List<Integer>> arrayCount = conn.<List<Integer>>arrayCountOperation("insert into tabForInsert(id) values ($1)")
-          .set("$1", new Integer[]{1, 2, 3}, AdbaType.NUMERIC)
-          .submit();
-      Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
-          .collect(CollectorUtils.singleCollector(Long.class))
-          .submit();
-      Submission<Object> drop = conn.operation("drop table tabForInsert")
-          .submit();
-
-      assertArrayEquals(new PGCount[]{new PGCount(1), new PGCount(1), new PGCount(1)}, arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
-      assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
-      assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
-    }
-  }
-
-  @Test
-  public void multiInsertFutureWithATable() throws ExecutionException, InterruptedException, TimeoutException {
-    CompletableFuture<Integer[]> f = CompletableFuture.supplyAsync(() -> new Integer[]{1, 2, 3});
-    try (Connection conn = ds.getConnection()) {
-      Submission<Object> noReturn = conn.operation("create table tabForInsert(id int)")
-          .submit();
-      Submission<List<Integer>> arrayCount = conn.<List<Integer>>arrayCountOperation("insert into tabForInsert(id) values ($1)")
-          .set("$1", f, AdbaType.NUMERIC)
-          .submit();
-      Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
-          .collect(CollectorUtils.singleCollector(Long.class))
-          .submit();
-      Submission<Object> drop = conn.operation("drop table tabForInsert")
-          .submit();
-
-      assertNull(noReturn.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
-      assertArrayEquals(new PGCount[]{new PGCount(1), new PGCount(1), new PGCount(1)}, arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
-      assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
       assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
@@ -294,7 +251,7 @@ public class PGConnectionTest {
   }
 
   @Test
-  public void localOperationExceptional() throws InterruptedException, ExecutionException, TimeoutException {
+  public void localOperationExceptional() {
     try (Connection conn = ds.getConnection()) {
       //First do a normal query so that the connection has time to get established
       conn.<Integer>localOperation().onExecution(() -> {
