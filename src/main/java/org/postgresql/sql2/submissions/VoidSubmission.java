@@ -18,7 +18,6 @@ public class VoidSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
   private String sql;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
   private ParameterHolder holder;
-  private Types completionType;
 
   private Collector collector;
   private Object collectorHolder;
@@ -26,10 +25,9 @@ public class VoidSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
 
   private GroupSubmission groupSubmission;
 
-  public VoidSubmission(Supplier<Boolean> cancel, Types completionType, Consumer<Throwable> errorHandler, ParameterHolder holder,
+  public VoidSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder,
                         GroupSubmission groupSubmission, String sql) {
     this.cancel = cancel;
-    this.completionType = completionType;
     this.errorHandler = errorHandler;
     this.holder = holder;
     this.groupSubmission = groupSubmission;
@@ -61,7 +59,7 @@ public class VoidSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
   }
 
   public Types getCompletionType() {
-    return completionType;
+    return Types.VOID;
   }
 
   public void setCollector(Collector collector) {
@@ -93,12 +91,8 @@ public class VoidSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
     return holder.getParamTypes();
   }
 
-  public int numberOfQueryRepetitions() throws ExecutionException, InterruptedException {
-    if (completionType == Types.ARRAY_COUNT) {
-      return holder.numberOfQueryRepetitions();
-    } else {
-      return 1;
-    }
+  public int numberOfQueryRepetitions() {
+    return 1;
   }
 
   public Consumer<Throwable> getErrorHandler() {

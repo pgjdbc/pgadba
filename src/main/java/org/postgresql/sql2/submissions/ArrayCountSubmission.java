@@ -32,7 +32,6 @@ public class ArrayCountSubmission<T> implements PGSubmission<T> {
   private Object collectorHolder = defaultCollector.supplier().get();
   private Consumer<Throwable> errorHandler;
 
-  private List<Result.Count> countResults = new ArrayList<>();
   private int numResults = 0;
 
   public ArrayCountSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder, String sql) {
