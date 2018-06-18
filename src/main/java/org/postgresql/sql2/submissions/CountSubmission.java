@@ -22,14 +22,16 @@ public class CountSubmission<T> implements PGSubmission<T> {
   private Consumer<Throwable> errorHandler;
   private ParameterHolder holder;
   private PGSubmission returningRowSubmission;
+  private GroupSubmission groupSubmission;
 
   public CountSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder,
-                         PGSubmission returningRowSubmission, String sql) {
+                         PGSubmission returningRowSubmission, String sql, GroupSubmission groupSubmission) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.holder = holder;
     this.returningRowSubmission = returningRowSubmission;
     this.sql = sql;
+    this.groupSubmission = groupSubmission;
   }
 
   @Override
@@ -65,6 +67,9 @@ public class CountSubmission<T> implements PGSubmission<T> {
     if(returningRowSubmission != null) {
       Object endResult = returningRowSubmission.finish(null);
       returningRowSubmission.getCompletionStage().toCompletableFuture().complete(endResult);
+    }
+    if(groupSubmission != null) {
+      groupSubmission.addGroupResult(finishObject);
     }
     return null;
   }

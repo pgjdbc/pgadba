@@ -11,6 +11,7 @@ import org.postgresql.sql2.operations.helpers.FutureQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.operations.helpers.ValueQueryParameter;
 import org.postgresql.sql2.submissions.CountSubmission;
+import org.postgresql.sql2.submissions.GroupSubmission;
 
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
@@ -23,11 +24,13 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
   private ParameterHolder holder;
   private Consumer<Throwable> errorHandler;
   private PGSubmission returningRowSubmission;
+  private GroupSubmission groupSubmission;
 
-  public PGCountOperation(PGConnection connection, String sql) {
+  public PGCountOperation(PGConnection connection, String sql, GroupSubmission groupSubmission) {
     this.connection = connection;
     this.sql = sql;
     this.holder = new ParameterHolder();
+    this.groupSubmission = groupSubmission;
   }
 
   @Override
@@ -81,7 +84,7 @@ public class PGCountOperation<R> implements ParameterizedCountOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new CountSubmission<>(this::cancel, errorHandler, holder, returningRowSubmission, sql);
+    PGSubmission<R> submission = new CountSubmission<>(this::cancel, errorHandler, holder, returningRowSubmission, sql, groupSubmission);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

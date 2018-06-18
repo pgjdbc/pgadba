@@ -129,7 +129,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       logger.log(Level.CONFIG, "CountOperation created for connection " + this);
     }
 
-    return new PGCountOperation<>(connection, sql);
+    return new PGCountOperation<>(connection, sql, groupSubmission);
   }
 
   @Override

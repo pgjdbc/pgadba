@@ -12,12 +12,13 @@ import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
 import org.postgresql.sql2.testUtil.SimpleRowProcessor;
+import org.postgresql.sql2.util.PGCount;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 
 public class PGOperationGroupTest {
@@ -53,7 +54,7 @@ public class PGOperationGroupTest {
           .collect(CollectorUtils.singleCollector(Integer.class)).submit();
       operationGroup.releaseProhibitingMoreMembers();
 
-      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
       assertEquals(Integer.valueOf(3), result);
     }
   }
@@ -75,7 +76,7 @@ public class PGOperationGroupTest {
           .submit();
       operationGroup.releaseProhibitingMoreMembers();
 
-      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
       assertEquals(Integer.valueOf(3), result);
     }
   }
@@ -89,7 +90,7 @@ public class PGOperationGroupTest {
           "BEGIN\n" +
           "   y := x;\n" +
           "END;\n" +
-          "$$  LANGUAGE plpgsql").submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+          "$$  LANGUAGE plpgsql").submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
 
       OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
 
@@ -100,16 +101,16 @@ public class PGOperationGroupTest {
       operationGroup.outOperation("select * from groupOperationSumOfOutParameterOperations(1) as result")
           .outParameter("$1", AdbaType.INTEGER)
           .apply((r) -> r.get("y", Integer.class)).submit()
-          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+          .getCompletionStage().toCompletableFuture().get(10, SECONDS);
 
       operationGroup.outOperation("select * from groupOperationSumOfOutParameterOperations(2) as result")
           .outParameter("$1", AdbaType.INTEGER)
           .apply((r) -> r.get("y", Integer.class)).submit()
-          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+          .getCompletionStage().toCompletableFuture().get(10, SECONDS);
 
       operationGroup.releaseProhibitingMoreMembers();
 
-      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
       assertEquals(Integer.valueOf(3), result);
     }
   }
@@ -124,13 +125,36 @@ public class PGOperationGroupTest {
           .collect(CollectorUtils.summingCollector())
           .submitHoldingForMoreMembers();
       operationGroup.rowProcessorOperation("select 1 as t")
-          .rowProcessor(new SimpleRowProcessor()).submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+          .rowProcessor(new SimpleRowProcessor()).submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
       operationGroup.rowProcessorOperation("select 2 as t")
-          .rowProcessor(new SimpleRowProcessor()).submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+          .rowProcessor(new SimpleRowProcessor()).submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
       operationGroup.releaseProhibitingMoreMembers();
 
-      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
       assertEquals(Integer.valueOf(3), result);
+    }
+  }
+
+  @Test
+  public void groupOperationSumOfCountOperations() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<PGCount, Integer> operationGroup = conn.operationGroup();
+      conn.operation("create table goCount(id int)").submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
+
+      Submission<Integer> sub = operationGroup
+          .collect(CollectorUtils.summingCountCollector())
+          .submitHoldingForMoreMembers();
+      operationGroup.countOperation("insert into goCount(id) values(3)")
+          .submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      operationGroup.countOperation("insert into goCount(id) values(6)")
+          .submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      operationGroup.releaseProhibitingMoreMembers();
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      assertEquals(Integer.valueOf(2), result);
+
+      conn.operation("drop table goCount").submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
     }
   }
 }

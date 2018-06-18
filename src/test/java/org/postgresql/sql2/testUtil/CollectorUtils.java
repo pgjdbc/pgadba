@@ -1,6 +1,7 @@
 package org.postgresql.sql2.testUtil;
 
 import jdk.incubator.sql2.Result;
+import org.postgresql.sql2.util.PGCount;
 
 import java.util.stream.Collector;
 
@@ -17,6 +18,14 @@ public class CollectorUtils {
     return Collector.of(
         () -> new Integer[] {0},
         (a, r) -> a[0] += r,
+        (l, r) -> null,
+        a -> a[0]);
+  }
+
+  public static Collector<PGCount, ?, Integer> summingCountCollector() {
+    return Collector.of(
+        () -> new Integer[] {0},
+        (a, r) -> a[0] += (int)r.getCount(),
         (l, r) -> null,
         a -> a[0]);
   }
