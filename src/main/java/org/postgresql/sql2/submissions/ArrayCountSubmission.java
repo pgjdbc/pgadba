@@ -43,11 +43,6 @@ public class ArrayCountSubmission<T> implements PGSubmission<T> {
   }
 
   @Override
-  public void setSql(String sql) {
-
-  }
-
-  @Override
   public String getSql() {
     return sql;
   }

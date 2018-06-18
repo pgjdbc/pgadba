@@ -23,13 +23,9 @@ public class TransactionSubmission implements PGSubmission<TransactionOutcome> {
   private Consumer<Throwable> errorHandler;
   private ParameterHolder holder = new ParameterHolder();
 
-  public TransactionSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler) {
+  public TransactionSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, String sql) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
-  }
-
-  @Override
-  public void setSql(String sql) {
     this.sql = sql;
   }
 

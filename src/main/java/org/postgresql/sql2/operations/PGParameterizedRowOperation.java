@@ -5,11 +5,13 @@ import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.SqlType;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
+import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.operations.helpers.FutureQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.operations.helpers.ValueQueryParameter;
 import org.postgresql.sql2.submissions.BaseSubmission;
 import org.postgresql.sql2.submissions.GroupSubmission;
+import org.postgresql.sql2.submissions.RowSubmission;
 
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
@@ -88,8 +90,7 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
 
   @Override
   public Submission<R> submit() {
-    BaseSubmission<R> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.ROW, errorHandler, holder, groupSubmission);
-    submission.setSql(sql);
+    PGSubmission<R> submission = new RowSubmission<>(this::cancel, BaseSubmission.Types.ROW, errorHandler, holder, groupSubmission, sql);
     submission.setCollector(collector);
     connection.addSubmissionOnQue(submission);
 

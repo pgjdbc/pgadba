@@ -3,8 +3,10 @@ package org.postgresql.sql2.operations;
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
-import org.postgresql.sql2.submissions.BaseSubmission;
+import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
+import org.postgresql.sql2.submissions.BaseSubmission;
+import org.postgresql.sql2.submissions.VoidSubmission;
 
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -36,8 +38,8 @@ public class PGOperation<S> implements Operation<S> {
 
   @Override
   public Submission<S> submit() {
-    BaseSubmission<S> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.VOID, errorHandler, new ParameterHolder(), null);
-    submission.setSql(sql);
+    PGSubmission<S> submission = new VoidSubmission<>(this::cancel, BaseSubmission.Types.VOID, errorHandler, new ParameterHolder(),
+        null, sql);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

@@ -60,7 +60,7 @@ public class PGRowOperation<T> implements RowOperation<T> {
 
   @Override
   public Submission<T> submit() {
-    PGSubmission<T> submission = new BaseSubmission<>(this::cancel, PGSubmission.Types.ROW, errorHandler, null, null);
+    PGSubmission<T> submission = new BaseSubmission<>(this::cancel, PGSubmission.Types.ROW, errorHandler, null, null, null);
     submission.setCollector(collector);
     parentOperation.addReturningRowSubmission(submission);
     return submission;

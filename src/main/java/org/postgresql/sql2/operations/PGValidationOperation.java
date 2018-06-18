@@ -42,11 +42,11 @@ public class PGValidationOperation implements Operation<Void> {
       case NONE:
       case LOCAL:
         if (connection.isConnectionClosed()) {
-          BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.VOID, errorHandler, null, null);
+          BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.VOID, errorHandler, null, null, null);
           submission.getCompletionStage().toCompletableFuture().completeExceptionally(new IllegalStateException());
           return submission;
         } else {
-          BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.VOID, errorHandler, null, null);
+          BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.VOID, errorHandler, null, null, null);
           submission.getCompletionStage().toCompletableFuture().complete(null);
           return submission;
         }
@@ -57,8 +57,7 @@ public class PGValidationOperation implements Operation<Void> {
       case SERVER:
         break;
       case COMPLETE:
-        BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.VOID, errorHandler, new ParameterHolder(), null);
-        submission.setSql("select 1");
+        BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.VOID, errorHandler, new ParameterHolder(), null, "select 1");
         submission.setCollector(Collector.of(
             () -> null,
             (a, v) -> {

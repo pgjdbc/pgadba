@@ -38,12 +38,13 @@ public class PGTransactionOperation implements Operation<TransactionOutcome> {
 
   @Override
   public Submission<TransactionOutcome> submit() {
-    PGSubmission<TransactionOutcome> submission = new TransactionSubmission(this::cancel, errorHandler);
+    String sql;
     if (transaction.isRollbackOnly()) {
-      submission.setSql("ROLLBACK TRANSACTION");
+      sql = "ROLLBACK TRANSACTION";
     } else {
-      submission.setSql("COMMIT TRANSACTION");
+      sql = "COMMIT TRANSACTION";
     }
+    PGSubmission<TransactionOutcome> submission = new TransactionSubmission(this::cancel, errorHandler, sql);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

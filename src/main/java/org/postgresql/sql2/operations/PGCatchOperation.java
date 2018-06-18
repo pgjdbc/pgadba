@@ -14,7 +14,7 @@ public class PGCatchOperation<S> implements PrimitiveOperation<S> {
 
   @Override
   public Submission<S> submit() {
-    BaseSubmission<S> submission = new BaseSubmission<>(this::cancel, null, null, null, null);
+    BaseSubmission<S> submission = new BaseSubmission<>(this::cancel, null, null, null, null, null);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

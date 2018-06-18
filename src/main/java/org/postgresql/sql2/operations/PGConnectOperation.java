@@ -35,7 +35,7 @@ public class PGConnectOperation implements Operation<Void> {
 
   @Override
   public Submission<Void> submit() {
-    BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.CONNECT, errorHandler, null, null);
+    BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.CONNECT, errorHandler, null, null, null);
     submission.getCompletionStage().thenAccept(s -> {
       connection.setLifeCycleOpen();
     });

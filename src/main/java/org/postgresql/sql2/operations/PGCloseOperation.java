@@ -33,8 +33,7 @@ public class PGCloseOperation implements Operation<Void> {
 
   @Override
   public Submission<Void> submit() {
-    BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.CLOSE, errorHandler, null, null);
-    submission.setSql(null);
+    BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.CLOSE, errorHandler, null, null, null);
     connection.addSubmissionOnQue(submission);
     return submission;
   }

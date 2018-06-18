@@ -228,8 +228,7 @@ public class ProtocolV3 {
         break;
       case ROW:
         sentSqlNameQue.poll();
-        ((CompletableFuture) sub.getCompletionStage())
-            .complete(sub.finish(null));
+        sub.finish(null);
         submissions.poll();
         break;
       case CLOSE:

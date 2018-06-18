@@ -3,7 +3,6 @@ package org.postgresql.sql2.submissions;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -25,16 +24,16 @@ public class BaseSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
   private Object collectorHolder;
   private Consumer<Throwable> errorHandler;
 
-  private List<Long> countResults = new ArrayList<>();
   private GroupSubmission groupSubmission;
 
   public BaseSubmission(Supplier<Boolean> cancel, Types completionType, Consumer<Throwable> errorHandler, ParameterHolder holder,
-                        GroupSubmission groupSubmission) {
+                        GroupSubmission groupSubmission, String sql) {
     this.cancel = cancel;
     this.completionType = completionType;
     this.errorHandler = errorHandler;
     this.holder = holder;
     this.groupSubmission = groupSubmission;
+    this.sql = sql;
   }
 
   @Override
@@ -47,10 +46,6 @@ public class BaseSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
     if (publicStage == null)
       publicStage = new CompletableFuture<>();
     return publicStage;
-  }
-
-  public void setSql(String sql) {
-    this.sql = sql;
   }
 
   public String getSql() {

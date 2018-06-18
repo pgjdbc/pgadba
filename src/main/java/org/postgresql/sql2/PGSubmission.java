@@ -25,8 +25,6 @@ public interface PGSubmission<T> extends Submission<T> {
     GROUP;
   }
 
-  void setSql(String sql);
-
   String getSql();
 
   AtomicBoolean getSendConsumed();
