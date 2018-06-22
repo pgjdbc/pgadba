@@ -15,6 +15,8 @@ import org.postgresql.sql2.testUtil.SimpleRowProcessor;
 import org.postgresql.sql2.util.PGCount;
 import org.testcontainers.containers.PostgreSQLContainer;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -155,6 +157,31 @@ public class PGOperationGroupTest {
       assertEquals(Integer.valueOf(2), result);
 
       conn.operation("drop table goCount").submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
+    }
+  }
+
+  @Test
+  public void groupOperationSumOfArrayCountOperations() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<List<PGCount>, Integer> operationGroup = conn.operationGroup();
+      conn.operation("create table goACount(id int)").submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
+
+      Submission<Integer> sub = operationGroup
+          .collect(CollectorUtils.summingCountListCollector())
+          .submitHoldingForMoreMembers();
+      operationGroup.arrayCountOperation("insert into goACount(id) values($1)")
+          .set("$1", Arrays.asList(1, 2, 3), AdbaType.INTEGER)
+          .submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      operationGroup.arrayCountOperation("insert into goACount(id) values($1)")
+          .set("$1", Arrays.asList(4, 5, 6), AdbaType.INTEGER)
+          .submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      operationGroup.releaseProhibitingMoreMembers();
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      assertEquals(Integer.valueOf(6), result);
+
+      conn.operation("drop table goACount").submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
     }
   }
 }

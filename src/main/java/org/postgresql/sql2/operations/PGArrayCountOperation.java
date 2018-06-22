@@ -10,6 +10,7 @@ import org.postgresql.sql2.operations.helpers.ArrayQueryParameter;
 import org.postgresql.sql2.operations.helpers.FutureArrayQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.submissions.ArrayCountSubmission;
+import org.postgresql.sql2.submissions.GroupSubmission;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -24,11 +25,13 @@ public class PGArrayCountOperation<R> implements ArrayCountOperation<R> {
   private ParameterHolder holder;
   private Consumer<Throwable> errorHandler;
   private Collector collector;
+  private GroupSubmission groupSubmission;
 
-  public PGArrayCountOperation(PGConnection connection, String sql) {
+  public PGArrayCountOperation(PGConnection connection, String sql, GroupSubmission groupSubmission) {
     this.connection = connection;
     this.sql = sql;
     this.holder = new ParameterHolder();
+    this.groupSubmission = groupSubmission;
   }
 
   @Override
@@ -75,7 +78,7 @@ public class PGArrayCountOperation<R> implements ArrayCountOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new ArrayCountSubmission<>(this::cancel, errorHandler, holder, sql);
+    PGSubmission<R> submission = new ArrayCountSubmission<>(this::cancel, errorHandler, holder, sql, groupSubmission);
     if(collector != null) {
       submission.setCollector(collector);
     }

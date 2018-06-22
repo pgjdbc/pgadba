@@ -31,14 +31,16 @@ public class ArrayCountSubmission<T> implements PGSubmission<T> {
   private Collector collector = defaultCollector;
   private Object collectorHolder = defaultCollector.supplier().get();
   private Consumer<Throwable> errorHandler;
+  private GroupSubmission groupSubmission;
 
   private int numResults = 0;
 
-  public ArrayCountSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder, String sql) {
+  public ArrayCountSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder, String sql, GroupSubmission groupSubmission) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.holder = holder;
     this.sql = sql;
+    this.groupSubmission = groupSubmission;
   }
 
   @Override
@@ -74,8 +76,12 @@ public class ArrayCountSubmission<T> implements PGSubmission<T> {
     numResults++;
     try {
       if(numResults == numberOfQueryRepetitions()) {
+        Object endObject = collector.finisher().apply(collectorHolder);
         ((CompletableFuture) getCompletionStage())
-            .complete(collector.finisher().apply(collectorHolder));
+            .complete(endObject);
+        if(groupSubmission != null) {
+          groupSubmission.addGroupResult(endObject);
+        }
         return true;
       }
     } catch (ExecutionException e) {

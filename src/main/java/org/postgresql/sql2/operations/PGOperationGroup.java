@@ -116,7 +116,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       logger.log(Level.CONFIG, "ArrayCountOperation created for connection " + this);
     }
 
-    return new PGArrayCountOperation<>(connection, sql);
+    return new PGArrayCountOperation<>(connection, sql, groupSubmission);
   }
 
   @Override
