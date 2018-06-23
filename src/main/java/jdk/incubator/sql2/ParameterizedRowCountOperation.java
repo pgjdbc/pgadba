@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c)  2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,11 +31,11 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * A {@link ParameterizedCountOperation} is a {@link ParameterizedOperation} that returns a count.
+ * A {@link ParameterizedRowCountOperation} is a {@link ParameterizedOperation} that returns a count.
  *
  * @param <T> the type of the result of this {@link Operation}
  */
-public interface ParameterizedCountOperation<T> extends ParameterizedOperation<T>, CountOperation<T> {
+public interface ParameterizedRowCountOperation<T> extends ParameterizedOperation<T>, RowCountOperation<T> {
   
   /**
    * Returns a {@link RowOperation} to process the auto-generated keys, if any, returned
@@ -45,7 +45,7 @@ public interface ParameterizedCountOperation<T> extends ParameterizedOperation<T
    * {@link Operation} is submitted. If it has not submitting this {@link Operation} will
    * result throw {@link IllegalStateException}.
    * 
-   * ISSUE: Should this be in {@link CountOperation}?
+   * ISSUE: Should this be in {@link RowCountOperation}?
    * 
    * @param keys the names of the returned columns or null.
    * @return A RowOperation that will process the auto-generated keys
@@ -57,24 +57,24 @@ public interface ParameterizedCountOperation<T> extends ParameterizedOperation<T
   // Covariant overrides
   
   @Override
-  public ParameterizedCountOperation<T> onError(Consumer<Throwable> handler);
+  public ParameterizedRowCountOperation<T> onError(Consumer<Throwable> handler);
   
   @Override
-  ParameterizedCountOperation<T> apply(Function<Result.Count, ? extends T> processor);
+  ParameterizedRowCountOperation<T> apply(Function<Result.RowCount, ? extends T> processor);
   
   @Override
-  public ParameterizedCountOperation<T> set(String id, Object value);
+  public ParameterizedRowCountOperation<T> set(String id, Object value);
 
   @Override
-  public ParameterizedCountOperation<T> set(String id, Object value, SqlType type);
+  public ParameterizedRowCountOperation<T> set(String id, Object value, SqlType type);
 
   @Override
-  public ParameterizedCountOperation<T> set(String id, CompletionStage<?> source);
+  public ParameterizedRowCountOperation<T> set(String id, CompletionStage<?> source);
 
   @Override
-  public ParameterizedCountOperation<T> set(String id, CompletionStage<?> source, SqlType type);
+  public ParameterizedRowCountOperation<T> set(String id, CompletionStage<?> source, SqlType type);
 
   @Override
-  public ParameterizedCountOperation<T> timeout(Duration minTime);
+  public ParameterizedRowCountOperation<T> timeout(Duration minTime);
 
 }

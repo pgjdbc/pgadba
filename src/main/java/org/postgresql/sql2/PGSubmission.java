@@ -22,7 +22,8 @@ public interface PGSubmission<T> extends Submission<T> {
     PROCESSOR,
     OUT_PARAMETER,
     LOCAL,
-    GROUP;
+    GROUP,
+    CATCH;
   }
 
   String getSql();

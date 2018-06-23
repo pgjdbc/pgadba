@@ -44,9 +44,9 @@ public class ArrayCountOperationTest {
   @Test
   public void multiInsertWithATable() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      conn.countOperation("create table tabForInsert(id int)")
+      conn.rowCountOperation("create table tabForInsert(id int)")
           .submit();
-      Submission<List<Integer>> arrayCount = conn.<List<Integer>>arrayCountOperation("insert into tabForInsert(id) values ($1)")
+      Submission<List<Integer>> arrayCount = conn.<List<Integer>>arrayRowCountOperation("insert into tabForInsert(id) values ($1)")
           .set("$1", new Integer[]{1, 2, 3}, AdbaType.NUMERIC)
           .submit();
       Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
@@ -67,7 +67,7 @@ public class ArrayCountOperationTest {
     try (Connection conn = ds.getConnection()) {
       Submission<Object> noReturn = conn.operation("create table tabForInsert(id int)")
           .submit();
-      Submission<List<Integer>> arrayCount = conn.<List<Integer>>arrayCountOperation("insert into tabForInsert(id) values ($1)")
+      Submission<List<Integer>> arrayCount = conn.<List<Integer>>arrayRowCountOperation("insert into tabForInsert(id) values ($1)")
           .set("$1", f, AdbaType.NUMERIC)
           .submit();
       Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
@@ -87,9 +87,9 @@ public class ArrayCountOperationTest {
   @Test
   public void multiInsertWithCustomCollector() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      conn.countOperation("create table secondTabForInsert(id int)")
+      conn.rowCountOperation("create table secondTabForInsert(id int)")
           .submit();
-      Submission<List<Long>> arrayCount = conn.<List<Long>>arrayCountOperation("insert into secondTabForInsert(id) values ($1)")
+      Submission<List<Long>> arrayCount = conn.<List<Long>>arrayRowCountOperation("insert into secondTabForInsert(id) values ($1)")
           .set("$1", new Integer[]{1, 2, 3}, AdbaType.NUMERIC)
           .collect(Collector.of(
               () -> new ArrayList<Long>(),

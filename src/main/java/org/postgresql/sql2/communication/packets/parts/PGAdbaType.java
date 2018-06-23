@@ -273,6 +273,11 @@ public enum PGAdbaType implements SqlType {
     return oid;
   }
 
+  @Override
+  public <T> Class<T> getJavaType() {
+    return null;
+  }
+
   public Function<Object, byte[]> getByteGenerator() {
     return byteGenerator;
   }

@@ -1,15 +1,15 @@
 package org.postgresql.sql2.operations;
 
-import jdk.incubator.sql2.ArrayCountOperation;
+import jdk.incubator.sql2.ArrayRowCountOperation;
 import jdk.incubator.sql2.LocalOperation;
 import jdk.incubator.sql2.MultiOperation;
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.OperationGroup;
 import jdk.incubator.sql2.OutOperation;
-import jdk.incubator.sql2.ParameterizedCountOperation;
+import jdk.incubator.sql2.ParameterizedRowCountOperation;
 import jdk.incubator.sql2.ParameterizedRowOperation;
+import jdk.incubator.sql2.ParameterizedRowPublisherOperation;
 import jdk.incubator.sql2.PrimitiveOperation;
-import jdk.incubator.sql2.RowProcessorOperation;
 import jdk.incubator.sql2.Submission;
 import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
@@ -18,7 +18,6 @@ import org.postgresql.sql2.submissions.GroupSubmission;
 
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Flow;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -81,10 +80,10 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
   }
 
   @Override
-  public OperationGroup<S, T> releaseProhibitingMoreMembers() {
+  public Submission<T> releaseProhibitingMoreMembers() {
     held = false;
     connection.addSubmissionOnQue(groupSubmission);
-    return this;
+    return groupSubmission;
   }
 
   @Override
@@ -107,7 +106,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
   }
 
   @Override
-  public <R extends S> ArrayCountOperation<R> arrayCountOperation(String sql) {
+  public <R extends S> ArrayRowCountOperation<R> arrayRowCountOperation(String sql) {
     if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle() + " and not open for new work");
     }
@@ -116,11 +115,11 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       logger.log(Level.CONFIG, "ArrayCountOperation created for connection " + this);
     }
 
-    return new PGArrayCountOperation<>(connection, sql, groupSubmission);
+    return new PGArrayRowCountOperation<>(connection, sql, groupSubmission);
   }
 
   @Override
-  public <R extends S> ParameterizedCountOperation<R> countOperation(String sql) {
+  public <R extends S> ParameterizedRowCountOperation<R> rowCountOperation(String sql) {
     if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle() + " and not open for new work");
     }
@@ -129,7 +128,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       logger.log(Level.CONFIG, "CountOperation created for connection " + this);
     }
 
-    return new PGCountOperation<>(connection, sql, groupSubmission);
+    return new PGRowCountOperation<>(connection, sql, groupSubmission);
   }
 
   @Override
@@ -172,16 +171,16 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
   }
 
   @Override
-  public <R extends S> RowProcessorOperation<R> rowProcessorOperation(String sql) {
+  public <R extends S> ParameterizedRowPublisherOperation<R> rowPublisherOperation(String sql) {
     if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle() + " and not open for new work");
     }
 
     if (logger.isLoggable(Level.CONFIG)) {
-      logger.log(Level.CONFIG, "RowProcessorOperation created for connection " + this);
+      logger.log(Level.CONFIG, "ParameterizedRowPublisherOperation created for connection " + this);
     }
 
-    return new PGRowProcessorOperation<>(connection, sql, groupSubmission);
+    return new PGRowPublisherOperation<>(connection, sql, groupSubmission);
   }
 
   @Override
@@ -213,11 +212,6 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
     }
 
     return new PGLocalOperation<>(connection, groupSubmission);
-  }
-
-  @Override
-  public <R extends S> Flow.Processor<Operation<R>, Submission<R>> operationProcessor() {
-    return null;
   }
 
   @Override

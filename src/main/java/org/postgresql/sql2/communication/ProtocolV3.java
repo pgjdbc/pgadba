@@ -82,7 +82,7 @@ public class ProtocolV3 {
           sentStartPacket = true;
         }
 
-        if(sub.getCompletionType() == PGSubmission.Types.LOCAL) {
+        if(sub.getCompletionType() == PGSubmission.Types.LOCAL || sub.getCompletionType() == PGSubmission.Types.CATCH) {
           sub.finish(null);
           submissions.poll();
         } else if(sub.getCompletionType() == PGSubmission.Types.GROUP) {

@@ -297,6 +297,11 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
     return null;
   }
 
+  @Override
+  public Connection requestHook(Consumer<Long> request) {
+    return this;
+  }
+
   /**
    * Make this {@link Connection} ready for use. A newly created
    * {@link Connection} is active. Calling this method on a {@link Connection}

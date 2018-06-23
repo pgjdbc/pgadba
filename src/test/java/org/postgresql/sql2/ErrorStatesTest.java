@@ -90,7 +90,7 @@ public class ErrorStatesTest {
   public void testCountOperationOnError() throws InterruptedException, TimeoutException {
     final boolean[] onErrorResult = new boolean[] {false};
     try (Connection conn = ds.getConnection()) {
-      conn.countOperation("select select")
+      conn.rowCountOperation("select select")
           .onError(t -> onErrorResult[0] = true)
           .submit()
           .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
@@ -116,7 +116,7 @@ public class ErrorStatesTest {
   public void testRowProcessorOperationOnError() throws InterruptedException, TimeoutException {
     final boolean[] onErrorResult = new boolean[] {false};
     try (Connection conn = ds.getConnection()) {
-      conn.rowProcessorOperation("select select")
+      conn.rowPublisherOperation("select select")
           .onError(t -> onErrorResult[0] = true)
           .submit()
           .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
@@ -131,7 +131,7 @@ public class ErrorStatesTest {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100 as t")
           .collect(Collector.of(
               () -> new int[1],
-              (a, r) -> a[0] = r.get("notused", Integer.class),
+              (a, r) -> a[0] = r.at("notused").get(Integer.class),
               (l, r) -> null,
               a -> a[0])
           )
@@ -153,7 +153,7 @@ public class ErrorStatesTest {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100 as t")
           .collect(Collector.of(
               () -> new int[1],
-              (a, r) -> a[0] = r.get("T", Integer.class),
+              (a, r) -> a[0] = r.at("T").get(Integer.class),
               (l, r) -> null,
               a -> a[0])
           )
@@ -170,7 +170,7 @@ public class ErrorStatesTest {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100 as T")
           .collect(Collector.of(
               () -> new int[1],
-              (a, r) -> a[0] = r.get("t", Integer.class),
+              (a, r) -> a[0] = r.at("t").get(Integer.class),
               (l, r) -> null,
               a -> a[0])
           )

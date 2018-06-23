@@ -24,7 +24,7 @@ public class PGOutOperation<R> implements OutOperation<R> {
   private final String sql;
   private ParameterHolder holder;
   private Consumer<Throwable> errorHandler;
-  private Function<Result.OutParameterMap, ? extends R> processor;
+  private Function<Result.OutColumn, ? extends R> processor;
   private Map<String, SqlType> outParameterTypes;
   private GroupSubmission groupSubmission;
 
@@ -44,7 +44,7 @@ public class PGOutOperation<R> implements OutOperation<R> {
   }
 
   @Override
-  public OutOperation<R> apply(Function<Result.OutParameterMap, ? extends R> processor) {
+  public OutOperation<R> apply(Function<Result.OutColumn, ? extends R> processor) {
     this.processor = processor;
     return this;
   }

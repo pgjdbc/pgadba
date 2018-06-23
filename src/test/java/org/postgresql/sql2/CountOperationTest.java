@@ -3,7 +3,7 @@ package org.postgresql.sql2;
 import jdk.incubator.sql2.AdbaType;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
-import jdk.incubator.sql2.ParameterizedCountOperation;
+import jdk.incubator.sql2.ParameterizedRowCountOperation;
 import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.Submission;
 import org.junit.AfterClass;
@@ -46,7 +46,7 @@ public class CountOperationTest {
     String sql = "insert into tab(id, name, answer) values ($1, $2, $3)";
     Submission sub;
     try (Connection conn = ds.getConnection()) {
-      sub = conn.countOperation(sql)
+      sub = conn.rowCountOperation(sql)
           .set("$1", 1, AdbaType.NUMERIC)
           .set("$2", "Deep Thought", AdbaType.VARCHAR)
           .set("$3", 42, AdbaType.NUMERIC)
@@ -66,7 +66,7 @@ public class CountOperationTest {
     try (Connection conn = ds.getConnection()) {
       conn.operation("create table tabForInsert(id int)")
           .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
-      conn.countOperation("insert into tabForInsert(id) values ($1)")
+      conn.rowCountOperation("insert into tabForInsert(id) values ($1)")
           .set("$1", 1, AdbaType.NUMERIC)
           .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
       Long count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
@@ -84,7 +84,7 @@ public class CountOperationTest {
     try (Connection conn = ds.getConnection()) {
       conn.operation("create table tabForInsert(id int)")
           .submit();
-      conn.countOperation("insert into tabForInsert(id) values ($1)")
+      conn.rowCountOperation("insert into tabForInsert(id) values ($1)")
           .set("$1", 1, AdbaType.NUMERIC)
           .submit();
       Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
@@ -105,7 +105,7 @@ public class CountOperationTest {
     try (Connection conn = ds.getConnection()) {
       conn.closeOperation()
           .submit();
-      conn.countOperation(sql)
+      conn.rowCountOperation(sql)
           .set("$1", 1, AdbaType.NUMERIC)
           .set("$2", "Deep Thought", AdbaType.VARCHAR)
           .set("$3", 42, AdbaType.NUMERIC)
@@ -122,7 +122,7 @@ public class CountOperationTest {
     String sql = "insert into tab(id, name, answer) values ($1, $2, $3)";
     try (Connection conn = ds.getConnection()) {
       conn.deactivate();
-      conn.countOperation(sql)
+      conn.rowCountOperation(sql)
           .set("$1", 1, AdbaType.NUMERIC)
           .set("$2", "Deep Thought", AdbaType.VARCHAR)
           .set("$3", 42, AdbaType.NUMERIC)
@@ -139,7 +139,7 @@ public class CountOperationTest {
     try (Connection conn = ds.getConnection()) {
       conn.operation("create table table1(i int)")
           .submit();
-      CompletionStage<Result.Count> idF = conn.<Result.Count>countOperation("insert into table1(i) values(1)")
+      CompletionStage<Result.RowCount> idF = conn.<Result.RowCount>rowCountOperation("insert into table1(i) values(1)")
           .submit()
           .getCompletionStage();
 
@@ -153,7 +153,7 @@ public class CountOperationTest {
     try (Connection conn = ds.getConnection()) {
       conn.operation("create table tabWithKey(t serial primary key)")
           .submit();
-      ParameterizedCountOperation countOp = conn.countOperation("insert into tabWithKey(t) values ($1) returning t")
+      ParameterizedRowCountOperation countOp = conn.rowCountOperation("insert into tabWithKey(t) values ($1) returning t")
           .set("$1", 1, AdbaType.NUMERIC);
       Submission rowSub = countOp
           .returning("t")

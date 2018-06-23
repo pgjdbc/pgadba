@@ -16,23 +16,21 @@ import java.util.function.Consumer;
 import java.util.stream.Collector;
 
 public class PGRowOperation<T> implements RowOperation<T> {
-  private final static Collector<Result.Row, List<Map<String, Object>>, List<Map<String, Object>>> defaultCollector = Collector.of(
+  private final static Collector<Result.RowColumn, List<Map<String, Object>>, List<Map<String, Object>>> defaultCollector = Collector.of(
       () -> new ArrayList<>(),
       (a, v) -> {
         Map<String, Object> row = new HashMap<>();
-        for(String column : v.getIdentifiers()) {
-          row.put(column, v.get(column, Object.class));
-        }
+        v.forEach(column -> row.put(column.identifier(), v.get(Object.class)));
         a.add(row);
       },
       (a, b) -> null,
       a -> a);
 
-  private PGCountOperation parentOperation;
+  private PGRowCountOperation parentOperation;
   private Consumer<Throwable> errorHandler;
   private Collector collector = defaultCollector;
 
-  public PGRowOperation(PGCountOperation parentOperation, String... keys) {
+  public PGRowOperation(PGRowCountOperation parentOperation, String... keys) {
     this.parentOperation = parentOperation;
   }
 
@@ -42,7 +40,7 @@ public class PGRowOperation<T> implements RowOperation<T> {
   }
 
   @Override
-  public <A, S extends T> RowOperation<T> collect(Collector<? super Result.Row, A, S> c) {
+  public <A, S extends T> RowOperation<T> collect(Collector<? super Result.RowColumn, A, S> c) {
     this.collector = c;
     return this;
   }

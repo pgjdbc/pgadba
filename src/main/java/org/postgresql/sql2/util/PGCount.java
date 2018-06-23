@@ -4,7 +4,7 @@ import jdk.incubator.sql2.Result;
 
 import java.util.Objects;
 
-public class PGCount implements Result.Count {
+public class PGCount implements Result.RowCount {
   private long count;
 
   public PGCount(long count) {

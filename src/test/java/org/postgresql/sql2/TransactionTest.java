@@ -42,11 +42,11 @@ public class TransactionTest {
   public void insertAndRollback() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       Transaction transaction = conn.transaction();
-      conn.countOperation("start transaction")
+      conn.operation("start transaction")
           .submit();
-      conn.countOperation("create table tab(i int)")
+      conn.operation("create table tab(i int)")
           .submit();
-      conn.countOperation("insert into tab(i) values(123)")
+      conn.rowCountOperation("insert into tab(i) values(123)")
           .submit();
       transaction.setRollbackOnly();
       CompletionStage<TransactionOutcome> roll = conn.commitMaybeRollback(transaction);
@@ -73,11 +73,11 @@ public class TransactionTest {
   public void insertAndCommit() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       Transaction transaction = conn.transaction();
-      conn.countOperation("start transaction")
+      conn.operation("start transaction")
           .submit();
-      conn.countOperation("create table tab(i int)")
+      conn.operation("create table tab(i int)")
           .submit();
-      conn.countOperation("insert into tab(i) values(123)")
+      conn.rowCountOperation("insert into tab(i) values(123)")
           .submit();
       CompletionStage<TransactionOutcome> roll = conn.commitMaybeRollback(transaction);
 
@@ -90,7 +90,7 @@ public class TransactionTest {
 
       assertEquals(Long.valueOf(1), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
 
-      conn.countOperation("drop table tab")
+      conn.rowCountOperation("drop table tab")
           .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
     }
   }

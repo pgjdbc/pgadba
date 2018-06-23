@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 
 public class ArrayCountSubmission<T> implements PGSubmission<T> {
-  final static private Collector<Result.Count, List<Result.Count>, List<Result.Count>> defaultCollector = Collector.of(
+  final static private Collector<Result.RowCount, List<Result.RowCount>, List<Result.RowCount>> defaultCollector = Collector.of(
       () -> new ArrayList<>(),
       (a, r) -> a.add(r),
       (l, r) -> null,

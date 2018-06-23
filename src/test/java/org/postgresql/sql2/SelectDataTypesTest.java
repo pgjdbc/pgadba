@@ -255,11 +255,11 @@ public class SelectDataTypesTest {
   @Test
   public void selectEnum() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      conn.countOperation("CREATE TYPE happiness AS ENUM ('happy', 'very happy', 'ecstatic');").submit();
+      conn.rowCountOperation("CREATE TYPE happiness AS ENUM ('happy', 'very happy', 'ecstatic');").submit();
       CompletionStage<String[]> idF = conn.<String[]>rowOperation("SELECT unnest(enum_range(NULL::happiness)) as t")
           .collect(Collector.of(
               () -> new String[3],
-              (a, r) -> a[(int) r.rowNumber()] = r.get("t", String.class),
+              (a, r) -> a[(int) r.rowNumber()] = r.at("t").get(String.class),
               (l, r) -> null,
               a -> a)
           )

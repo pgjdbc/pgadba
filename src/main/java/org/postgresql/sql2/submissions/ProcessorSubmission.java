@@ -21,12 +21,12 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
   private Consumer<Throwable> errorHandler;
   private String sql;
   private ParameterHolder holder;
-  private SubmissionPublisher<Result.Row> publisher;
+  private SubmissionPublisher<Result.RowColumn> publisher;
   private GroupSubmission groupSubmission;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
 
   public ProcessorSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, String sql,
-                             SubmissionPublisher<Result.Row> publisher, ParameterHolder holder, GroupSubmission groupSubmission) {
+                             SubmissionPublisher<Result.RowColumn> publisher, ParameterHolder holder, GroupSubmission groupSubmission) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.sql = sql;

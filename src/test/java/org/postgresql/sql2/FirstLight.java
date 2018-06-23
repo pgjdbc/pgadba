@@ -62,14 +62,14 @@ public class FirstLight {
       assertNotNull(conn);
       conn.<Void>rowOperation(TRIVIAL)
           .collect(Collector.of(() -> null,
-              (a, r) -> assertEquals(Integer.valueOf(1), r.get("1", Integer.class)),
+              (a, r) -> assertEquals(Integer.valueOf(1), r.at("1").get(Integer.class)),
               (x, y) -> null))
           .submit();
       conn.<Integer>rowOperation("select * from emp")
-          .collect(Collector.<Result.Row, int[], Integer>of(
+          .collect(Collector.<Result.RowColumn, int[], Integer>of(
               () -> new int[1],
-              (int[] a, Result.Row r) -> {
-                a[0] = a[0]+r.get("sal", Integer.class);
+              (int[] a, Result.RowColumn r) -> {
+                a[0] = a[0]+r.at("sal").get(Integer.class);
               },
               (l, r) -> l,
               a -> (Integer)a[0]))
@@ -82,7 +82,7 @@ public class FirstLight {
           .collect(Collector.of(
               () -> null,
               (a, r) -> {
-                System.out.println("salary: $" + r.get("sal", Integer.class));
+                System.out.println("salary: $" + r.at("sal").get(Integer.class));
               },
               (l, r) -> null))
           .submit();
@@ -99,7 +99,7 @@ public class FirstLight {
          Connection conn = ds.getConnection(t -> fail("ERROR: " + t.toString()))) {
       conn.<Void>rowOperation(TRIVIAL)
           .collect(Collector.of(() -> null,
-              (a, r) -> assertEquals(Integer.valueOf(1), r.get("1", Integer.class)),
+              (a, r) -> assertEquals(Integer.valueOf(1), r.at("1").get(Integer.class)),
               (x, y) -> null))
           .onError( t -> { fail(t.toString()); })
           .submit();
@@ -111,7 +111,7 @@ public class FirstLight {
           .set("$1", 7782)
           .collect(Collector.of(
               () -> null,
-              (a, r) -> assertEquals(Integer.valueOf(1), r.get("sal", Integer.class)),
+              (a, r) -> assertEquals(Integer.valueOf(1), r.at("sal").get(Integer.class)),
               (l, r) -> null))
           .onError( t -> { fail(t.getMessage()); } )
           .submit();
@@ -132,14 +132,14 @@ public class FirstLight {
           .set("$1", "CLARK", AdbaType.VARCHAR)
           .collect(Collector.of(
               () -> new int[1],
-              (a, r) -> {a[0] = r.get("empno", Integer.class); },
+              (a, r) -> {a[0] = r.at("empno").get(Integer.class); },
               (l, r) -> null,
               a -> a[0])
           )
           .submit()
           .getCompletionStage();
       idF.thenAccept( id -> { assertEquals(Integer.valueOf(1), id); } );
-      conn.<Long>countOperation("update emp set deptno = $1 where empno = $2")
+      conn.<Long>rowCountOperation("update emp set deptno = $1 where empno = $2")
           .set("$1", 50, AdbaType.INTEGER)
           .set("$2", idF, AdbaType.INTEGER)
           .apply(c -> {

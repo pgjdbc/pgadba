@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c)  2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,32 +26,31 @@
 package jdk.incubator.sql2;
 
 /**
- * An object that is used to identify a generic SQL type, called a JDBC type or
- * a vendor specific data type.
- *
- * @since 1.8
+ * Remove dependence on java.sql.
  */
 public interface SqlType {
 
-    /**
-     * Returns the {@code SQLType} name that represents a SQL data type.
-     *
-     * @return The name of this {@code SQLType}.
-     */
+  /**
+   *
+   * @return
+   */
   public String getName();
 
-    /**
-     * Returns the name of the vendor that supports this data type. The value
-     * returned typically is the package name for this vendor.
-     *
-     * @return The name of the vendor for this data type
-     */
+  /**
+   *
+   * @return
+   */
   public String getVendor();
 
-    /**
-     * Returns the vendor specific type number for the data type.
-     *
-     * @return An Integer representing the vendor specific data type
-     */
+  /**
+   *
+   * @return
+   */
   public Integer getVendorTypeNumber();
+  
+  /**
+   * 
+   * @return Java type
+   */
+  public <T> Class<T> getJavaType();
 }

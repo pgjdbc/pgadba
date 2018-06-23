@@ -7,7 +7,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 public class ConnectUtil {
   public static DataSource openDB(PostgreSQLContainer postgres) {
-    return DataSourceFactory.forName("org.postgresql.sql2.PGDataSourceFactory")
+    return DataSourceFactory.newFactory("org.postgresql.sql2.PGDataSourceFactory")
         .builder()
         .url("jdbc:postgresql://" + postgres.getContainerIpAddress() + ":" + postgres.getMappedPort(5432) +
             "/" + postgres.getDatabaseName())

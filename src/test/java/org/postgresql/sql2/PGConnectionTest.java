@@ -3,7 +3,6 @@ package org.postgresql.sql2;
 import jdk.incubator.sql2.AdbaType;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
-import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.Submission;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -11,20 +10,16 @@ import org.junit.Test;
 import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
-import org.postgresql.sql2.testUtil.SimpleRowProcessor;
+import org.postgresql.sql2.testUtil.SimpleRowSubscriber;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class PGConnectionTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
@@ -153,76 +148,12 @@ public class PGConnectionTest {
   }
 
   @Test
-  public void rowProcessorOperation() throws InterruptedException, ExecutionException, TimeoutException {
-    final Integer[] result = {null};
+  public void rowPublisherOperation() throws InterruptedException, ExecutionException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
+      CompletableFuture<Integer> result1 = new CompletableFuture<>();
       //First do a normal query so that the connection has time to get established
-      conn.rowProcessorOperation("select 321 as t")
-          .rowProcessor(new Flow.Processor<Result.Row, Integer>() {
-            Flow.Subscription publisherSubscription;
-
-            final ExecutorService executor = Executors.newFixedThreadPool(4);
-            Flow.Subscription subscription;
-            ConcurrentLinkedQueue<Flow.Subscriber<? super Integer>> subscribers = new ConcurrentLinkedQueue<>();
-
-            @Override
-            public void subscribe(Flow.Subscriber<? super Integer> subscriber) {
-              subscribers.add(subscriber);
-              subscriber.onSubscribe(new Flow.Subscription() {
-                @Override
-                public void request(long n) {
-
-                }
-
-                @Override
-                public void cancel() {
-
-                }
-              });
-            }
-
-            @Override
-            public void onSubscribe(Flow.Subscription subscription) {
-              this.subscription = subscription;
-              subscription.request(1);
-            }
-
-            @Override
-            public void onNext(Result.Row item) {
-              result[0] = item.get("t", Integer.class);
-              subscription.request(1);
-
-              for(Flow.Subscriber<? super Integer> s : subscribers) {
-                s.onNext(result[0]);
-              }
-            }
-
-            @Override
-            public void onComplete() {
-              for(Flow.Subscriber<? super Integer> s : subscribers) {
-                s.onComplete();
-              }
-            }
-
-            @Override
-            public void onError(Throwable t) {
-              for(Flow.Subscriber<? super Integer> s : subscribers) {
-                s.onError(t);
-              }
-            }
-          })
-          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
-
-      assertEquals(Integer.valueOf(321), result[0]);
-    }
-  }
-
-  @Test
-  public void rowProcessorOperationReturnedValue() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      //First do a normal query so that the connection has time to get established
-      Integer result = conn.<Integer>rowProcessorOperation("select 321 as t")
-          .rowProcessor(new SimpleRowProcessor())
+      Integer result = conn.<Integer>rowPublisherOperation("select 321 as t")
+          .subscribe(new SimpleRowSubscriber(result1), result1)
           .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
 
       assertEquals(Integer.valueOf(321), result);
@@ -244,8 +175,8 @@ public class PGConnectionTest {
           .outParameter("$1", AdbaType.INTEGER)
           .outParameter("$2", AdbaType.INTEGER)
           .apply((r) -> {
-            assertEquals(Integer.valueOf(1), r.get("x", Integer.class));
-            assertEquals(Integer.valueOf(2), r.get("y", Integer.class));
+            assertEquals(Integer.valueOf(1), r.at("x").get(Integer.class));
+            assertEquals(Integer.valueOf(2), r.at("y").get(Integer.class));
             return null;
           }).submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
 
@@ -267,7 +198,7 @@ public class PGConnectionTest {
       Integer result = conn.<Integer>outOperation("select * from outParameterTestReturnedValue() as result")
           .outParameter("$1", AdbaType.INTEGER)
           .outParameter("$2", AdbaType.INTEGER)
-          .apply((r) -> r.get("x", Integer.class) + r.get("y", Integer.class))
+          .apply((r) -> r.at("x").get(Integer.class) + r.at("y").get(Integer.class))
           .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
 
       conn.operation("DROP FUNCTION outParameterTestReturnedValue").submit()

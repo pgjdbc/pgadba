@@ -20,7 +20,7 @@ public class PGDataSourceTest {
 
   @Test
   public void builder() throws Exception {
-    DataSource ds = DataSourceFactory.forName("org.postgresql.sql2.PGDataSourceFactory")
+    DataSource ds = DataSourceFactory.newFactory("org.postgresql.sql2.PGDataSourceFactory")
         .builder()
         .url("jdbc:postgresql://" + postgres.getContainerIpAddress() + ":" + postgres.getMappedPort(5432) +
             "/" + postgres.getDatabaseName())
@@ -37,7 +37,7 @@ public class PGDataSourceTest {
 
   @Test
   public void close() throws InterruptedException, ExecutionException, TimeoutException {
-    DataSource ds = DataSourceFactory.forName("org.postgresql.sql2.PGDataSourceFactory")
+    DataSource ds = DataSourceFactory.newFactory("org.postgresql.sql2.PGDataSourceFactory")
         .builder()
         .url("jdbc:postgresql://" + postgres.getContainerIpAddress() + ":" + postgres.getMappedPort(5432) +
             "/" + postgres.getDatabaseName())

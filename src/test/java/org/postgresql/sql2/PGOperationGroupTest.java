@@ -11,12 +11,13 @@ import org.junit.Test;
 import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
-import org.postgresql.sql2.testUtil.SimpleRowProcessor;
+import org.postgresql.sql2.testUtil.SimpleRowSubscriber;
 import org.postgresql.sql2.util.PGCount;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -102,12 +103,12 @@ public class PGOperationGroupTest {
 
       operationGroup.outOperation("select * from groupOperationSumOfOutParameterOperations(1) as result")
           .outParameter("$1", AdbaType.INTEGER)
-          .apply((r) -> r.get("y", Integer.class)).submit()
+          .apply((r) -> r.at("y").get(Integer.class)).submit()
           .getCompletionStage().toCompletableFuture().get(10, SECONDS);
 
       operationGroup.outOperation("select * from groupOperationSumOfOutParameterOperations(2) as result")
           .outParameter("$1", AdbaType.INTEGER)
-          .apply((r) -> r.get("y", Integer.class)).submit()
+          .apply((r) -> r.at("y").get(Integer.class)).submit()
           .getCompletionStage().toCompletableFuture().get(10, SECONDS);
 
       operationGroup.releaseProhibitingMoreMembers();
@@ -118,18 +119,20 @@ public class PGOperationGroupTest {
   }
 
   @Test
-  public void groupOperationSumOfRowProcessorOperations() throws InterruptedException, ExecutionException, TimeoutException {
+  public void groupOperationSumOfRowPublisherOperations() throws InterruptedException, ExecutionException, TimeoutException {
 
     try (Connection conn = ds.getConnection()) {
       OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
+      CompletableFuture<Integer> result1 = new CompletableFuture<>();
+      CompletableFuture<Integer> result2 = new CompletableFuture<>();
 
       Submission<Integer> sub = operationGroup
           .collect(CollectorUtils.summingCollector())
           .submitHoldingForMoreMembers();
-      operationGroup.rowProcessorOperation("select 1 as t")
-          .rowProcessor(new SimpleRowProcessor()).submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
-      operationGroup.rowProcessorOperation("select 2 as t")
-          .rowProcessor(new SimpleRowProcessor()).submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      operationGroup.rowPublisherOperation("select 1 as t")
+          .subscribe(new SimpleRowSubscriber(result1), result1).submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      operationGroup.rowPublisherOperation("select 2 as t")
+          .subscribe(new SimpleRowSubscriber(result2), result2).submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
       operationGroup.releaseProhibitingMoreMembers();
 
       Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
@@ -147,9 +150,9 @@ public class PGOperationGroupTest {
       Submission<Integer> sub = operationGroup
           .collect(CollectorUtils.summingCountCollector())
           .submitHoldingForMoreMembers();
-      operationGroup.countOperation("insert into goCount(id) values(3)")
+      operationGroup.rowCountOperation("insert into goCount(id) values(3)")
           .submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
-      operationGroup.countOperation("insert into goCount(id) values(6)")
+      operationGroup.rowCountOperation("insert into goCount(id) values(6)")
           .submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
       operationGroup.releaseProhibitingMoreMembers();
 
@@ -170,10 +173,10 @@ public class PGOperationGroupTest {
       Submission<Integer> sub = operationGroup
           .collect(CollectorUtils.summingCountListCollector())
           .submitHoldingForMoreMembers();
-      operationGroup.arrayCountOperation("insert into goACount(id) values($1)")
+      operationGroup.arrayRowCountOperation("insert into goACount(id) values($1)")
           .set("$1", Arrays.asList(1, 2, 3), AdbaType.INTEGER)
           .submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
-      operationGroup.arrayCountOperation("insert into goACount(id) values($1)")
+      operationGroup.arrayRowCountOperation("insert into goACount(id) values($1)")
           .set("$1", Arrays.asList(4, 5, 6), AdbaType.INTEGER)
           .submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
       operationGroup.releaseProhibitingMoreMembers();

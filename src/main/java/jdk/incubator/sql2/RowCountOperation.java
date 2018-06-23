@@ -1,5 +1,5 @@
 /*
- * Copyright (c)  2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c)  2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,22 +34,22 @@ import java.util.function.Function;
  * @param <T> the type of the result of the {@link Operation}
  * @see ParameterizedCountOperation
  */
-public interface CountOperation<T> extends Operation<T> {
+public interface RowCountOperation<T> extends Operation<T> {
 
   /**
    * Sets the result processor for this {@link Operation}.
    * 
    * @param function processes the count produced by executing this
    * {@link Operation} and returns the result
-   * @return this {@link CountOperation}
+   * @return this {@link RowCountOperation}
    * @throws IllegalStateException if this method has been called previously
    */
-  public CountOperation<T> apply(Function<Result.Count, ? extends T> function);
+  public RowCountOperation<T> apply(Function<Result.RowCount, ? extends T> function);
 
   @Override
-  public CountOperation<T> onError(Consumer<Throwable> handler);
+  public RowCountOperation<T> onError(Consumer<Throwable> handler);
 
   @Override
-  public CountOperation<T> timeout(Duration minTime);
+  public RowCountOperation<T> timeout(Duration minTime);
   
 }
