@@ -8,6 +8,7 @@ import jdk.incubator.sql2.Submission;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.postgresql.sql2.operations.helpers.PGTransaction;
 import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeoutException;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class PGOperationGroupTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
@@ -185,6 +187,240 @@ public class PGOperationGroupTest {
       assertEquals(Integer.valueOf(6), result);
 
       conn.operation("drop table goACount").submit().getCompletionStage().toCompletableFuture().get(10, SECONDS);
+    }
+  }
+
+  @Test
+  public void tryToAddCatchOperationAfterProhibit() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
+
+      Submission<Integer> sub = operationGroup
+          .collect(CollectorUtils.summingCollector())
+          .submitHoldingForMoreMembers();
+      operationGroup.rowOperation("select 1 as t")
+          .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+      operationGroup.releaseProhibitingMoreMembers();
+
+      try {
+        operationGroup.catchOperation()
+            .submit();
+        fail("an IllegalStateException should have been thrown");
+      } catch (IllegalStateException e) {
+        assertEquals("It's not permitted to add more operations after an OperationGroup has been released", e.getMessage());
+      }
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      assertEquals(Integer.valueOf(1), result);
+    }
+  }
+
+  @Test
+  public void tryToAddArrayRowCountOperationAfterProhibit() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
+
+      Submission<Integer> sub = operationGroup
+          .collect(CollectorUtils.summingCollector())
+          .submitHoldingForMoreMembers();
+      operationGroup.rowOperation("select 1 as t")
+          .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+      operationGroup.releaseProhibitingMoreMembers();
+
+      try {
+        operationGroup.arrayRowCountOperation("select 1 as t")
+            .submit();
+        fail("an IllegalStateException should have been thrown");
+      } catch (IllegalStateException e) {
+        assertEquals("It's not permitted to add more operations after an OperationGroup has been released", e.getMessage());
+      }
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      assertEquals(Integer.valueOf(1), result);
+    }
+  }
+
+  @Test
+  public void tryToAddRowCountOperationAfterProhibit() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
+
+      Submission<Integer> sub = operationGroup
+          .collect(CollectorUtils.summingCollector())
+          .submitHoldingForMoreMembers();
+      operationGroup.rowOperation("select 1 as t")
+          .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+      operationGroup.releaseProhibitingMoreMembers();
+
+      try {
+        operationGroup.rowCountOperation("select 1 as t")
+            .submit();
+        fail("an IllegalStateException should have been thrown");
+      } catch (IllegalStateException e) {
+        assertEquals("It's not permitted to add more operations after an OperationGroup has been released", e.getMessage());
+      }
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      assertEquals(Integer.valueOf(1), result);
+    }
+  }
+
+  @Test
+  public void tryToAddOperationAfterProhibit() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
+
+      Submission<Integer> sub = operationGroup
+          .collect(CollectorUtils.summingCollector())
+          .submitHoldingForMoreMembers();
+      operationGroup.rowOperation("select 1 as t")
+          .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+      operationGroup.releaseProhibitingMoreMembers();
+
+      try {
+        operationGroup.operation("select 1 as t")
+            .submit();
+        fail("an IllegalStateException should have been thrown");
+      } catch (IllegalStateException e) {
+        assertEquals("It's not permitted to add more operations after an OperationGroup has been released", e.getMessage());
+      }
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      assertEquals(Integer.valueOf(1), result);
+    }
+  }
+
+  @Test
+  public void tryToAddOutOperationAfterProhibit() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
+
+      Submission<Integer> sub = operationGroup
+          .collect(CollectorUtils.summingCollector())
+          .submitHoldingForMoreMembers();
+      operationGroup.rowOperation("select 1 as t")
+          .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+      operationGroup.releaseProhibitingMoreMembers();
+
+      try {
+        operationGroup.outOperation("select 1 as t")
+            .submit();
+        fail("an IllegalStateException should have been thrown");
+      } catch (IllegalStateException e) {
+        assertEquals("It's not permitted to add more operations after an OperationGroup has been released", e.getMessage());
+      }
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      assertEquals(Integer.valueOf(1), result);
+    }
+  }
+
+  @Test
+  public void tryToAddRowOperationAfterProhibit() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
+
+      Submission<Integer> sub = operationGroup
+          .collect(CollectorUtils.summingCollector())
+          .submitHoldingForMoreMembers();
+      operationGroup.rowOperation("select 1 as t")
+          .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+      operationGroup.releaseProhibitingMoreMembers();
+
+      try {
+        operationGroup.rowOperation("select 1 as t")
+            .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+        fail("an IllegalStateException should have been thrown");
+      } catch (IllegalStateException e) {
+        assertEquals("It's not permitted to add more operations after an OperationGroup has been released", e.getMessage());
+      }
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      assertEquals(Integer.valueOf(1), result);
+    }
+  }
+
+  @Test
+  public void tryToAddRowPublisherOperationAfterProhibit() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
+
+      Submission<Integer> sub = operationGroup
+          .collect(CollectorUtils.summingCollector())
+          .submitHoldingForMoreMembers();
+      operationGroup.rowOperation("select 1 as t")
+          .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+      operationGroup.releaseProhibitingMoreMembers();
+
+      try {
+        operationGroup.rowPublisherOperation("select 1 as t")
+            .submit();
+        fail("an IllegalStateException should have been thrown");
+      } catch (IllegalStateException e) {
+        assertEquals("It's not permitted to add more operations after an OperationGroup has been released", e.getMessage());
+      }
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      assertEquals(Integer.valueOf(1), result);
+    }
+  }
+
+  @Test
+  public void tryToAddEndTransactionOperationAfterProhibit() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
+
+      Submission<Integer> sub = operationGroup
+          .collect(CollectorUtils.summingCollector())
+          .submitHoldingForMoreMembers();
+      operationGroup.rowOperation("select 1 as t")
+          .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+      operationGroup.releaseProhibitingMoreMembers();
+
+      try {
+        operationGroup.endTransactionOperation(new PGTransaction())
+            .submit();
+        fail("an IllegalStateException should have been thrown");
+      } catch (IllegalStateException e) {
+        assertEquals("It's not permitted to add more operations after an OperationGroup has been released", e.getMessage());
+      }
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      assertEquals(Integer.valueOf(1), result);
+    }
+  }
+
+  @Test
+  public void tryToAddLocalOperationAfterProhibit() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Connection conn = ds.getConnection()) {
+      OperationGroup<Integer, Integer> operationGroup = conn.operationGroup();
+
+      Submission<Integer> sub = operationGroup
+          .collect(CollectorUtils.summingCollector())
+          .submitHoldingForMoreMembers();
+      operationGroup.rowOperation("select 1 as t")
+          .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+      operationGroup.releaseProhibitingMoreMembers();
+
+      try {
+        operationGroup.localOperation()
+            .submit();
+        fail("an IllegalStateException should have been thrown");
+      } catch (IllegalStateException e) {
+        assertEquals("It's not permitted to add more operations after an OperationGroup has been released", e.getMessage());
+      }
+
+      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
+      assertEquals(Integer.valueOf(1), result);
     }
   }
 }

@@ -98,6 +98,10 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle() + " and not open for new work");
     }
 
+    if (!held) {
+      throw new IllegalStateException("It's not permitted to add more operations after an OperationGroup has been released");
+    }
+
     if (logger.isLoggable(Level.CONFIG)) {
       logger.log(Level.CONFIG, "CatchOperation created for connection " + this);
     }
@@ -109,6 +113,10 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
   public <R extends S> ArrayRowCountOperation<R> arrayRowCountOperation(String sql) {
     if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle() + " and not open for new work");
+    }
+
+    if (!held) {
+      throw new IllegalStateException("It's not permitted to add more operations after an OperationGroup has been released");
     }
 
     if (logger.isLoggable(Level.CONFIG)) {
@@ -124,6 +132,10 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle() + " and not open for new work");
     }
 
+    if (!held) {
+      throw new IllegalStateException("It's not permitted to add more operations after an OperationGroup has been released");
+    }
+
     if (logger.isLoggable(Level.CONFIG)) {
       logger.log(Level.CONFIG, "CountOperation created for connection " + this);
     }
@@ -135,6 +147,10 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
   public Operation<S> operation(String sql) {
     if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle() + " and not open for new work");
+    }
+
+    if (!held) {
+      throw new IllegalStateException("It's not permitted to add more operations after an OperationGroup has been released");
     }
 
     if (logger.isLoggable(Level.CONFIG)) {
@@ -150,6 +166,10 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle() + " and not open for new work");
     }
 
+    if (!held) {
+      throw new IllegalStateException("It's not permitted to add more operations after an OperationGroup has been released");
+    }
+
     if (logger.isLoggable(Level.CONFIG)) {
       logger.log(Level.CONFIG, "OutOperation created for connection " + this);
     }
@@ -163,6 +183,10 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle() + " and not open for new work");
     }
 
+    if (!held) {
+      throw new IllegalStateException("It's not permitted to add more operations after an OperationGroup has been released");
+    }
+
     if (logger.isLoggable(Level.CONFIG)) {
       logger.log(Level.CONFIG, "RowOperation created for connection " + this);
     }
@@ -174,6 +198,10 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
   public <R extends S> ParameterizedRowPublisherOperation<R> rowPublisherOperation(String sql) {
     if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle() + " and not open for new work");
+    }
+
+    if (!held) {
+      throw new IllegalStateException("It's not permitted to add more operations after an OperationGroup has been released");
     }
 
     if (logger.isLoggable(Level.CONFIG)) {
@@ -194,6 +222,10 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
       throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle() + " and not open for new work");
     }
 
+    if (!held) {
+      throw new IllegalStateException("It's not permitted to add more operations after an OperationGroup has been released");
+    }
+
     if (logger.isLoggable(Level.CONFIG)) {
       logger.log(Level.CONFIG, "EndTransactionOperation created for connection " + this);
     }
@@ -205,6 +237,10 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
   public <R extends S> LocalOperation<R> localOperation() {
     if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
       throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle() + " and not open for new work");
+    }
+
+    if (!held) {
+      throw new IllegalStateException("It's not permitted to add more operations after an OperationGroup has been released");
     }
 
     if (logger.isLoggable(Level.CONFIG)) {
