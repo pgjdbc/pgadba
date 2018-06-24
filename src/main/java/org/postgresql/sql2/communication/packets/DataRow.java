@@ -14,7 +14,7 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
   private Map<String, Integer> columnNames;
   private Map<Integer, TableCell> columns;
   private long rowNumber;
-  private int currentPos = 1;
+  private int currentPos = 0;
 
   public DataRow(byte[] bytes, ColumnDescription[] description, long rowNumber) {
     this.rowNumber = rowNumber;
@@ -79,7 +79,7 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
 
   @Override
   public int absoluteIndex() {
-    return 0;
+    return currentPos;
   }
 
   @Override
@@ -100,7 +100,7 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
 
   @Override
   public int numberOfValuesRemaining() {
-    return 0;
+    return columns.size() - currentPos;
   }
 
   @Override

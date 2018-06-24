@@ -239,9 +239,10 @@ public interface Result {
 
     @Override
     public default void forEach(Consumer<? super Column> action) {
-      do {
+      while (hasNext()) {
+        next();
         action.accept(this);
-      } while (hasNext());
+      }
     }
 
     @Override
