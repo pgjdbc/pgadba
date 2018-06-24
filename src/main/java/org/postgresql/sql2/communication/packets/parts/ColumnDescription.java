@@ -32,7 +32,7 @@ public class ColumnDescription {
     return attributeNumberOfColumn;
   }
 
-  public ColumnTypes  getColumnType() {
+  public ColumnTypes getColumnType() {
     return columnType;
   }
 

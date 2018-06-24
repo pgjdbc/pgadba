@@ -84,12 +84,20 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
 
   @Override
   public SqlType sqlType() {
-    return null;
+    if(!columns.containsKey(currentPos)) {
+      throw new IllegalArgumentException("no column with id " + currentPos);
+    }
+
+    return columns.get(currentPos).getColumnDescription().getColumnType().sqlType();
   }
 
   @Override
   public <T> Class<T> javaType() {
-    return null;
+    if(!columns.containsKey(currentPos)) {
+      throw new IllegalArgumentException("no column with id " + currentPos);
+    }
+
+    return columns.get(currentPos).getColumnDescription().getColumnType().javaType();
   }
 
   @Override
