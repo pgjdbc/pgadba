@@ -229,4 +229,25 @@ public class ResultTest {
       }
     }
   }
+
+  @Test
+  public void resultClone() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      Integer result = conn.<Integer>rowOperation("select 1 union all select 2 union all select 3")
+          .collect(Collector.of(
+              () -> new Integer[]{0},
+              (a, r) -> {
+                a[0] += r.at(1).get(Integer.class);
+                a[0] += r.clone().get(Integer.class);
+              },
+              (l, r) -> null,
+              a -> a[0]))
+          .submit()
+          .getCompletionStage()
+          .toCompletableFuture()
+          .get(10, TimeUnit.SECONDS);
+
+      assertEquals(Integer.valueOf(12), result);
+    }
+  }
 }

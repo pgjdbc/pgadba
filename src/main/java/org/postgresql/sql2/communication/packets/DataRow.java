@@ -140,6 +140,19 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
 
   @Override
   public Column clone() {
-    return null;
+    DataRow row;
+
+    try {
+      row = (DataRow) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new Error();
+    }
+
+    row.columnNames = new HashMap<>(columnNames);
+    row.columns = new HashMap<>(columns);
+    row.rowNumber = rowNumber;
+    row.currentPos = currentPos;
+
+    return row;
   }
 }
