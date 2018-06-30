@@ -2,6 +2,7 @@ group 'org.postgresql'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: "maven"
 
 compileJava.options.encoding = 'UTF-8'
 
@@ -9,6 +10,7 @@ sourceCompatibility = "1.10"
 targetCompatibility = "1.10"
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
