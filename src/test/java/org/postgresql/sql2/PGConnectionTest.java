@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collector;
 
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
@@ -50,6 +51,66 @@ public class PGConnectionTest {
           .collect(CollectorUtils.singleCollector(Integer.class))
           .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
       assertEquals(Integer.valueOf(1), result);
+    }
+  }
+
+  @Test
+  public void selectWithBrokenCollectorSupplier() throws InterruptedException, ExecutionException, TimeoutException {
+
+    String sql = "select 1 as t";
+    try (Connection conn = ds.getConnection()) {
+      conn.<Integer>rowOperation(sql)
+          .collect(Collector.of(
+              () -> {
+                throw new Error("exception thrown in supplier");
+              },
+              (a, r) -> ((Integer[])a)[0] += r.get(Integer.class),
+              (l, r) -> null,
+              a -> ((Integer[])a)[0]
+          ));
+    } catch (Error e) {
+      assertEquals("exception thrown in supplier", e.getMessage());
+    }
+    Thread.sleep(10000);
+  }
+
+  @Test
+  public void selectWithBrokenCollectorAccumulator() throws InterruptedException, ExecutionException, TimeoutException {
+
+    String sql = "select 1 as t";
+    try (Connection conn = ds.getConnection()) {
+      conn.<Integer>rowOperation(sql)
+          .collect(Collector.of(
+              () -> new Integer[] {0},
+              (a, r) -> {
+                throw new Error("exception thrown in accumulator");
+              },
+              (l, r) -> null,
+              a -> ((Integer[])a)[0]
+          ))
+          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      assertEquals("exception thrown in accumulator", e.getCause().getMessage());
+    }
+  }
+
+  @Test
+  public void selectWithBrokenCollectorFinisher() throws InterruptedException, ExecutionException, TimeoutException {
+
+    String sql = "select 1 as t";
+    try (Connection conn = ds.getConnection()) {
+      conn.<Integer>rowOperation(sql)
+          .collect(Collector.of(
+              () -> new Integer[] {0},
+              (a, r) -> a[0] += r.at("t").get(Integer.class),
+              (l, r) -> null,
+              a -> {
+                throw new Error("exception thrown in finisher");
+              }
+          ))
+          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      assertEquals("exception thrown in finisher", e.getCause().getMessage());
     }
   }
 
