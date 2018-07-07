@@ -4,8 +4,9 @@ import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
-import org.postgresql.sql2.submissions.BaseSubmission;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
+import org.postgresql.sql2.submissions.BaseSubmission;
+import org.postgresql.sql2.submissions.RowSubmission;
 
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -57,7 +58,7 @@ public class PGValidationOperation implements Operation<Void> {
       case SERVER:
         break;
       case COMPLETE:
-        BaseSubmission<Void> submission = new BaseSubmission<>(this::cancel, BaseSubmission.Types.VOID, errorHandler, new ParameterHolder(), null, "select 1");
+        RowSubmission<Void> submission = new RowSubmission<Void>(this::cancel, errorHandler, new ParameterHolder(), null, "select 1");
         submission.setCollector(Collector.of(
             () -> null,
             (a, v) -> {
