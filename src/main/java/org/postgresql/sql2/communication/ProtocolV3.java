@@ -86,11 +86,7 @@ public class ProtocolV3 {
           sub.finish(null);
           submissions.poll();
         } else if(sub.getCompletionType() == PGSubmission.Types.GROUP) {
-          try {
-            sub.getCompletionStage().toCompletableFuture().complete(sub.finish(null));
-          } catch (Exception e) {
-            sub.getCompletionStage().toCompletableFuture().completeExceptionally(e);
-          }
+          sub.finish(null);
           submissions.poll();
         } else if (sub.getCompletionType() != PGSubmission.Types.CONNECT && currentState == ProtocolV3States.States.IDLE
             && sub.getSendConsumed().compareAndSet(false, true)) {

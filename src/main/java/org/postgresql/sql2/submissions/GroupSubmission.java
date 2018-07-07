@@ -55,12 +55,16 @@ public class GroupSubmission<T> implements PGSubmission<T> {
 
   @Override
   public Object finish(Object finishObject) {
-    Object o = null;
-    if(collector != null) {
-      o = collector.finisher().apply(collectorHolder);
+    try {
+      Object o = null;
+      if (collector != null) {
+        o = collector.finisher().apply(collectorHolder);
+      }
+      ((CompletableFuture<T>)getCompletionStage()).complete((T)o);
+    } catch (Throwable t) {
+      ((CompletableFuture<T>)getCompletionStage()).completeExceptionally(t);
     }
-    return o;
-
+    return null;
   }
 
   @Override
