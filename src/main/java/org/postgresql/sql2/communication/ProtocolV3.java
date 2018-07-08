@@ -2,7 +2,6 @@ package org.postgresql.sql2.communication;
 
 import jdk.incubator.sql2.ConnectionProperty;
 import jdk.incubator.sql2.SqlException;
-import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
@@ -68,7 +67,7 @@ public class ProtocolV3 {
 
   public void visit() {
     ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-    PGSubmission sub = submissions.peek();
+    PGSubmission<?> sub = submissions.peek();
     if (sub != null) {
       try {
         if (sub.getCompletionType() == PGSubmission.Types.CONNECT && sub.getSendConsumed().compareAndSet(false, true)) {
@@ -199,6 +198,11 @@ public class ProtocolV3 {
     String portalName = sentSqlNameQue.peek();
     DataRow row = new DataRow(packet.getPayload(), preparedStatementCache.getDescription(portalName), rowNumber++);
     PGSubmission sub = submissions.peek();
+
+    if(sub == null) {
+      throw new IllegalStateException("Data Row packet arrived without an corresponding submission, internal state corruption");
+    }
+
     sub.addRow(row);
   }
 
@@ -271,7 +275,11 @@ public class ProtocolV3 {
     if (error.getField(HINT) != null)
       message.append("\nHint: ").append(error.getField(HINT));
 
-    PGSubmission sub = submissions.poll();
+    PGSubmission<?> sub = submissions.poll();
+
+    if(sub == null) {
+      throw new IllegalStateException("missing submission on queue, internal state corruption");
+    }
 
     SqlException exception = new SqlException(message.toString(), null, error.getField(SQLSTATE_CODE), 0,
         sub.getSql(), 0);
@@ -348,8 +356,13 @@ public class ProtocolV3 {
 
     switch (req.getType()) {
       case SUCCESS:
-        Submission sub = submissions.poll();
-        sub.getCompletionStage().toCompletableFuture().complete(null);
+        PGSubmission sub = submissions.poll();
+
+        if(sub == null) {
+          throw new IllegalStateException("missing submission on queue, internal state corruption");
+        }
+
+        sub.finish(null);
         currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.AUTHENTICATION_SUCCESS);
         break;
       case KERBEROS_V5:
