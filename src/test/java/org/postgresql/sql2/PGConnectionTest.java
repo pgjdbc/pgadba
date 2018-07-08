@@ -241,7 +241,7 @@ public class PGConnectionTest {
             return null;
           }).submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
 
-      conn.operation("DROP FUNCTION get_test").submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      conn.operation("DROP FUNCTION get_test()").submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
     }
   }
 
@@ -262,7 +262,7 @@ public class PGConnectionTest {
           .apply((r) -> r.at("x").get(Integer.class) + r.at("y").get(Integer.class))
           .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
 
-      conn.operation("DROP FUNCTION outParameterTestReturnedValue").submit()
+      conn.operation("DROP FUNCTION outParameterTestReturnedValue()").submit()
           .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
 
       assertEquals(Integer.valueOf(3), result);
