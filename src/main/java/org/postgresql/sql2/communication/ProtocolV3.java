@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.NoConnectionPendingException;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.SocketChannel;
@@ -75,17 +76,15 @@ public class ProtocolV3 {
           socketChannel.connect(new InetSocketAddress((String) properties.get(PGConnectionProperties.HOST),
               (Integer) properties.get(PGConnectionProperties.PORT)));
         }
-        if (!socketChannel.finishConnect()) {
+        if (!sentStartPacket && !socketChannel.finishConnect()) {
           return;
         } else if (!sentStartPacket) {
           sendStartupPacket();
           sentStartPacket = true;
         }
 
-        if(sub.getCompletionType() == PGSubmission.Types.LOCAL || sub.getCompletionType() == PGSubmission.Types.CATCH) {
-          sub.finish(null);
-          submissions.poll();
-        } else if(sub.getCompletionType() == PGSubmission.Types.GROUP) {
+        if(sub.getCompletionType() == PGSubmission.Types.LOCAL || sub.getCompletionType() == PGSubmission.Types.CATCH ||
+            sub.getCompletionType() == PGSubmission.Types.GROUP) {
           sub.finish(null);
           submissions.poll();
         } else if (sub.getCompletionType() != PGSubmission.Types.CONNECT && currentState == ProtocolV3States.States.IDLE
@@ -106,7 +105,7 @@ public class ProtocolV3 {
         try {
           int bytesRead = socketChannel.read(readBuffer);
           BEFrameReader.updateState(readBuffer, bytesRead);
-        } catch (NotYetConnectedException e) {
+        } catch (NotYetConnectedException | ClosedChannelException ignore) {
         }
 
         BEFrame packet;
@@ -121,9 +120,11 @@ public class ProtocolV3 {
             socketChannel.close();
             ((CompletableFuture) sub.getCompletionStage())
                 .complete(sub.finish(null));
+            submissions.poll();
           } catch (IOException e) {
             ((CompletableFuture) sub.getCompletionStage())
                 .completeExceptionally(e);
+            submissions.poll();
           }
         }
       } catch (NoConnectionPendingException ignore) {
