@@ -116,16 +116,8 @@ public class ProtocolV3 {
         sendData(socketChannel);
 
         if (outputQue.size() == 0 && waitToSendQue.size() == 0 && sub.getCompletionType() == PGSubmission.Types.CLOSE) {
-          try {
-            socketChannel.close();
-            ((CompletableFuture) sub.getCompletionStage())
-                .complete(sub.finish(null));
-            submissions.poll();
-          } catch (IOException e) {
-            ((CompletableFuture) sub.getCompletionStage())
-                .completeExceptionally(e);
-            submissions.poll();
-          }
+          sub.finish(socketChannel);
+          submissions.poll();
         }
       } catch (NoConnectionPendingException ignore) {
       } catch (Throwable e) {
@@ -229,14 +221,7 @@ public class ProtocolV3 {
         submissions.poll();
         break;
       case CLOSE:
-        try {
-          socketChannel.close();
-          ((CompletableFuture) sub.getCompletionStage())
-              .complete(sub.finish(null));
-        } catch (IOException e) {
-          ((CompletableFuture) sub.getCompletionStage())
-              .completeExceptionally(e);
-        }
+        sub.finish(socketChannel);
         submissions.poll();
         break;
       case TRANSACTION:
