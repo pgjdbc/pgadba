@@ -2,9 +2,9 @@ package org.postgresql.sql2;
 
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.postgresql.sql2.communication.packets.parts.PGAdbaType;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
@@ -23,9 +23,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.postgresql.sql2.testUtil.CollectorUtils.singleCollector;
 
 public class BindParameterTypesTest {
@@ -33,12 +33,12 @@ public class BindParameterTypesTest {
 
   private static DataSource ds;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() {
     ds = ConnectUtil.openDB(postgres);
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() {
     ds.close();
   }

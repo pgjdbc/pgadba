@@ -1,10 +1,10 @@
 package org.postgresql.sql2.communication.packets;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.postgresql.sql2.communication.packets.parts.ColumnTypes;
 import org.postgresql.sql2.communication.packets.parts.FormatCodeTypes;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class RowDescriptionTest {
 

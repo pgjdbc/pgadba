@@ -4,9 +4,9 @@ import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.Transaction;
 import jdk.incubator.sql2.TransactionOutcome;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -16,8 +16,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.postgresql.sql2.testUtil.CollectorUtils.singleCollector;
 
 public class TransactionTest {
@@ -25,7 +25,7 @@ public class TransactionTest {
 
   private static DataSource ds;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() {
     ds = ConnectUtil.openDB(postgres);
 
@@ -33,7 +33,7 @@ public class TransactionTest {
         "id int", "name varchar(100)", "answer int");
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() {
     ds.close();
   }

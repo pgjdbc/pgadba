@@ -5,9 +5,9 @@ import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.OperationGroup;
 import jdk.incubator.sql2.Submission;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.postgresql.sql2.operations.helpers.PGTransaction;
 import org.postgresql.sql2.testUtil.CollectorUtils;
 import org.postgresql.sql2.testUtil.ConnectUtil;
@@ -23,15 +23,15 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class PGOperationGroupTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
 
   private static DataSource ds;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() {
     ds = ConnectUtil.openDB(postgres);
 
@@ -39,7 +39,7 @@ public class PGOperationGroupTest {
         "id int", "name varchar(100)", "answer int");
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() {
     ds.close();
   }

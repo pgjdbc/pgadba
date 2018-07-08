@@ -1,19 +1,16 @@
 package org.postgresql.sql2.communication;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@RunWith(Parameterized.class)
 public class BEFrameReaderTest {
 
-  @Parameterized.Parameters
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {
         { "Authentication Request MD5", new byte[] {0x52, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x05, (byte)0xd3, (byte)0xc9, 0x1c, 0x3b} },
@@ -34,16 +31,9 @@ public class BEFrameReaderTest {
     });
   }
 
-  private String packetName;
-  private byte[] packet;
-
-  public BEFrameReaderTest(String packetName, byte[] packet) {
-    this.packetName = packetName;
-    this.packet = packet;
-  }
-
-  @Test
-  public void parseNetworkPayload() {
+  @ParameterizedTest
+  @MethodSource("data")
+  public void parseNetworkPayload(String packetName, byte[] packet) {
     BEFrameReader instance = new BEFrameReader();
 
     ByteBuffer bb = ByteBuffer.allocate(1024);
@@ -52,6 +42,6 @@ public class BEFrameReaderTest {
 
     BEFrame sp = instance.popFrame();
 
-    assertNotNull(packetName + " could not be parsed", sp);
+    assertNotNull(sp, packetName + " could not be parsed");
   }
 }

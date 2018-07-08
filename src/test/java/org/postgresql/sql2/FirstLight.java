@@ -6,8 +6,8 @@ import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.Transaction;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -19,16 +19,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class FirstLight {
   public static final String TRIVIAL = "SELECT 1";
 
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
 
-  @BeforeClass
+  @BeforeAll
   public static void setup() throws InterruptedException, ExecutionException, TimeoutException {
     try (Connection conn = ConnectUtil.openDB(postgres).getConnection()) {
       conn.operation("create table emp(id int, empno int, ename varchar(10), deptno int)")

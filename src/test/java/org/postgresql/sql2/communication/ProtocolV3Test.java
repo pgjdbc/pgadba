@@ -1,7 +1,7 @@
 package org.postgresql.sql2.communication;
 
 import jdk.incubator.sql2.ConnectionProperty;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.postgresql.sql2.PGConnectionProperties;
 
@@ -12,7 +12,7 @@ import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 

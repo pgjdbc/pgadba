@@ -3,9 +3,9 @@ package org.postgresql.sql2;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.SqlException;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -16,17 +16,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class ErrorStatesTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
 
   private static DataSource ds;
 
-  @BeforeClass
+  @BeforeAll
   public static void setUp() {
     ds = ConnectUtil.openDB(postgres);
 
@@ -34,7 +34,7 @@ public class ErrorStatesTest {
         "id int", "name varchar(100)", "answer int");
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() {
     ds.close();
   }

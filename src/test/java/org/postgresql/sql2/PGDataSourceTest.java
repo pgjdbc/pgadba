@@ -4,16 +4,16 @@ import jdk.incubator.sql2.AdbaConnectionProperty;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.DataSourceFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static junit.framework.TestCase.fail;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class PGDataSourceTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
