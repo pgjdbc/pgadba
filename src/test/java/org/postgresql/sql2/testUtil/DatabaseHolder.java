@@ -18,4 +18,11 @@ public class DatabaseHolder {
     container.start();
     return container;
   }
+
+  public static PostgreSQLContainer getNewWithTLS() {
+    PostgreSQLContainer container = new PostgreSQLContainer("capitol/postgresql-tls:debian-stretch-postgresql10");
+    container.start();
+
+    return container;
+  }
 }

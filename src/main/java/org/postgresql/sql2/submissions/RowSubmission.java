@@ -32,6 +32,10 @@ public class RowSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
     this.holder = holder;
     this.groupSubmission = groupSubmission;
     this.sql = sql;
+
+    if(groupSubmission != null) {
+      groupSubmission.stackFuture((CompletableFuture<T>)getCompletionStage());
+    }
   }
 
   @Override

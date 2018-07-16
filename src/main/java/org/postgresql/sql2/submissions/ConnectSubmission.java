@@ -29,6 +29,10 @@ public class ConnectSubmission implements org.postgresql.sql2.PGSubmission<Void>
     this.completionType = completionType;
     this.errorHandler = errorHandler;
     this.groupSubmission = groupSubmission;
+
+    if(groupSubmission != null) {
+      groupSubmission.stackFuture((CompletableFuture<Void>)getCompletionStage());
+    }
   }
 
   @Override

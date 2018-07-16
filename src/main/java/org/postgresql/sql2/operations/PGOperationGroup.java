@@ -39,7 +39,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
 
   private Collector collector = DEFAULT_COLLECTOR;
 
-  private GroupSubmission<T> groupSubmission;
+  protected GroupSubmission<T> groupSubmission;
 
   public PGOperationGroup() {
 

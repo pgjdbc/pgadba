@@ -5,6 +5,7 @@ import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PGConnection;
 import org.postgresql.sql2.submissions.BaseSubmission;
 import org.postgresql.sql2.submissions.ConnectSubmission;
+import org.postgresql.sql2.submissions.GroupSubmission;
 
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -13,9 +14,11 @@ public class PGConnectOperation implements Operation<Void> {
   private Consumer<Throwable> errorHandler;
   private Duration minTime;
   private PGConnection connection;
+  private GroupSubmission groupSubmission;
 
-  public PGConnectOperation(PGConnection connection) {
+  public PGConnectOperation(PGConnection connection, GroupSubmission groupSubmission) {
     this.connection = connection;
+    this.groupSubmission = groupSubmission;
   }
 
   @Override
@@ -36,7 +39,7 @@ public class PGConnectOperation implements Operation<Void> {
 
   @Override
   public Submission<Void> submit() {
-    ConnectSubmission submission = new ConnectSubmission(this::cancel, BaseSubmission.Types.CONNECT, errorHandler, null);
+    ConnectSubmission submission = new ConnectSubmission(this::cancel, BaseSubmission.Types.CONNECT, errorHandler, groupSubmission);
     submission.getCompletionStage().thenAccept(s -> {
       connection.setLifeCycleOpen();
     });

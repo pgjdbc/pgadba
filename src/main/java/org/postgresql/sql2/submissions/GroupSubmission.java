@@ -16,6 +16,7 @@ import java.util.stream.Collector;
 public class GroupSubmission<T> implements PGSubmission<T> {
   final private Supplier<Boolean> cancel;
   private CompletableFuture<T> publicStage;
+  private CompletionStage<T> membersTail;
   private Consumer<Throwable> errorHandler;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
   private Collector collector;
@@ -105,5 +106,16 @@ public class GroupSubmission<T> implements PGSubmission<T> {
     if (publicStage == null)
       publicStage = new CompletableFuture<>();
     return publicStage;
+  }
+
+  public void stackFuture(CompletableFuture<T> completionStage) {
+    if (membersTail == null)
+      membersTail = getCompletionStage();
+
+    membersTail.exceptionally(e -> {
+      completionStage.completeExceptionally(e);
+      return null;
+    });
+    membersTail = completionStage;
   }
 }

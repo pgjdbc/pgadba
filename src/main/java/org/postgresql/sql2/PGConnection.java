@@ -98,7 +98,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
       throw new IllegalStateException("only connections in state NEW are allowed to start connecting");
     }
 
-    return new PGConnectOperation(this);
+    return new PGConnectOperation(this, groupSubmission);
   }
 
   /**
