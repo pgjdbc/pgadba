@@ -53,8 +53,9 @@ public class ProtocolV3States {
   public static States lookup(States state, Events event) {
     States targetState = transitions.get(state).get(event);
 
-    if (targetState == null)
+    if (targetState == null) {
       System.out.println("target state missing for start state: " + state + " and event: " + event);
+    }
 
     return targetState;
   }

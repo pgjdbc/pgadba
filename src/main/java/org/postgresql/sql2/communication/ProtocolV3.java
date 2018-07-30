@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import static org.postgresql.sql2.communication.ProtocolV3States.States.NOT_CONNECTED;
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.DETAIL;
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.HINT;
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.MESSAGE;
@@ -36,7 +37,7 @@ import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.SQLSTATE_CODE;
 
 public class ProtocolV3 {
-  private ProtocolV3States.States currentState = ProtocolV3States.States.NOT_CONNECTED;
+  private ProtocolV3States.States currentState = NOT_CONNECTED;
   private Map<ConnectionProperty, Object> properties;
   private PreparedStatementCache preparedStatementCache = new PreparedStatementCache();
 
@@ -48,8 +49,6 @@ public class ProtocolV3 {
   private BEFrameReader BEFrameReader = new BEFrameReader();
 
   private SocketChannel socketChannel;
-
-  private boolean sentStartPacket = false;
 
   private long rowNumber = 0;
 
@@ -75,11 +74,10 @@ public class ProtocolV3 {
           socketChannel.connect(new InetSocketAddress((String) properties.get(PGConnectionProperties.HOST),
               (Integer) properties.get(PGConnectionProperties.PORT)));
         }
-        if (!sentStartPacket && !socketChannel.finishConnect()) {
+        if (currentState == NOT_CONNECTED && !socketChannel.finishConnect()) {
           return;
-        } else if (!sentStartPacket) {
+        } else if (currentState == NOT_CONNECTED) {
           sendStartupPacket();
-          sentStartPacket = true;
         }
 
         if(sub.getCompletionType() == PGSubmission.Types.LOCAL || sub.getCompletionType() == PGSubmission.Types.CATCH ||
