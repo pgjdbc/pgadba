@@ -6,6 +6,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 
+import org.postgresql.sql2.execution.NioLoop;
+
 public enum PGConnectionProperties implements ConnectionProperty {
   /**
    * The host name of the server. Defaults to localhost. To specify an IPv6 address your must enclose the host parameter
@@ -360,7 +362,12 @@ public enum PGConnectionProperties implements ConnectionProperty {
   /**
    *
    */
-  TIMEZONE(String.class, "", false);
+  TIMEZONE(String.class, "", false),
+
+  /**
+   * Allows specifying the {@link NioLoop}.
+   */
+  NIO_LOOP(String.class, "", false);
 
   private Class range;
   private Object defaultValue;
