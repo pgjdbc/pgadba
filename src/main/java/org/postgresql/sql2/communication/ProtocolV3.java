@@ -44,10 +44,11 @@ public class ProtocolV3 implements NioService {
   private Map<ConnectionProperty, Object> properties;
   private PreparedStatementCache preparedStatementCache = new PreparedStatementCache();
 
-  private ConcurrentLinkedQueue<FEFrame> outputQue = new ConcurrentLinkedQueue<>();
-  private ConcurrentLinkedQueue<FEFrame> waitToSendQue = new ConcurrentLinkedQueue<>();
-
   private ConcurrentLinkedQueue<PGSubmission> submissions = new ConcurrentLinkedQueue<>();
+
+  private ConcurrentLinkedQueue<FEFrame> outputQue = new ConcurrentLinkedQueue<>();
+
+  private ConcurrentLinkedQueue<PGSubmission> awaitingResults = new ConcurrentLinkedQueue<>();
 
   private BEFrameReader BEFrameReader = new BEFrameReader();
 
@@ -69,13 +70,11 @@ public class ProtocolV3 implements NioService {
   }
 
   public void addSubmission(PGSubmission submission) {
-    // Must be synchronized with the write submission
 
     // Determine if connect
     if (submission.getCompletionType() == PGSubmission.Types.CONNECT
         && submission.getSendConsumed().compareAndSet(false, true)) {
       try {
-        this.socketChannel.configureBlocking(false);
         this.socketChannel.connect(new InetSocketAddress((String) properties.get(PGConnectionProperties.HOST),
             (Integer) properties.get(PGConnectionProperties.PORT)));
       } catch (Exception ex) {
@@ -113,126 +112,74 @@ public class ProtocolV3 implements NioService {
     ByteBuffer readBuffer = ByteBuffer.allocate(1024);
 
     try {
-      int bytesRead = socketChannel.read(readBuffer);
-      BEFrameReader.updateState(readBuffer, bytesRead);
-    } catch (NotYetConnectedException | ClosedChannelException ignore) {
-    }
 
-    BEFrame packet;
-    while ((packet = BEFrameReader.popFrame()) != null) {
-      readPacket(packet);
-    }
-  }
-
-  @Override
-  public void handleWrite() throws IOException {
-    PGSubmission<?> sub;
-    while ((sub = submissions.peek()) != null) {
-      try {
-
-        // Configure prepared statement
-        if (sub.getCompletionType() == PGSubmission.Types.LOCAL || sub.getCompletionType() == PGSubmission.Types.CATCH
-            || sub.getCompletionType() == PGSubmission.Types.GROUP) {
-          sub.finish(null);
-          submissions.poll();
-        } else if (sub.getCompletionType() != PGSubmission.Types.CONNECT && currentState == ProtocolV3States.States.IDLE
-            && sub.getSendConsumed().compareAndSet(false, true)) {
-          if (preparedStatementCache.sqlNotPreparedBefore(sub.getHolder(), sub.getSql())) {
-            queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-          }
-          queFrame(FEFrameSerializer.toDescribePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-          descriptionNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
-          for (int i = 0; i < sub.numberOfQueryRepetitions(); i++) {
-            queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache, i));
-            queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-            sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
-            queFrame(FEFrameSerializer.toSyncPacket());
-          }
-        }
-
-        boolean isAllWritten = sendData(socketChannel);
-        int interestedOps = SelectionKey.OP_READ;
-        if (!isAllWritten) {
-          interestedOps |= SelectionKey.OP_WRITE;
-        }
-        this.context.setInterestedOps(interestedOps);
-
-        if (outputQue.size() == 0 && waitToSendQue.size() == 0 && sub.getCompletionType() == PGSubmission.Types.CLOSE) {
-          sub.finish(socketChannel);
-          submissions.poll();
-        }
-
-      } catch (Throwable ex) {
-        ((CompletableFuture) sub.getCompletionStage()).completeExceptionally(ex);
-      }
-    }
-  }
-
-  @Override
-  public void handleException(Throwable ex) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Deprecated
-  public void visit() {
-    ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-    PGSubmission<?> sub = submissions.peek();
-    if (sub != null) {
-      try {
-        if (sub.getCompletionType() == PGSubmission.Types.CONNECT && sub.getSendConsumed().compareAndSet(false, true)) {
-          socketChannel.configureBlocking(false);
-          socketChannel.connect(new InetSocketAddress((String) properties.get(PGConnectionProperties.HOST),
-              (Integer) properties.get(PGConnectionProperties.PORT)));
-        }
-        if (!sentStartPacket && !socketChannel.finishConnect()) {
-          return;
-        } else if (!sentStartPacket) {
-          sendStartupPacket();
-          sentStartPacket = true;
-        }
-
-        if (sub.getCompletionType() == PGSubmission.Types.LOCAL || sub.getCompletionType() == PGSubmission.Types.CATCH
-            || sub.getCompletionType() == PGSubmission.Types.GROUP) {
-          sub.finish(null);
-          submissions.poll();
-        } else if (sub.getCompletionType() != PGSubmission.Types.CONNECT && currentState == ProtocolV3States.States.IDLE
-            && sub.getSendConsumed().compareAndSet(false, true)) {
-          if (preparedStatementCache.sqlNotPreparedBefore(sub.getHolder(), sub.getSql())) {
-            queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-          }
-          queFrame(FEFrameSerializer.toDescribePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-          descriptionNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
-          for (int i = 0; i < sub.numberOfQueryRepetitions(); i++) {
-            queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache, i));
-            queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-            sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
-            queFrame(FEFrameSerializer.toSyncPacket());
-          }
-        }
-
-        try {
-          int bytesRead = socketChannel.read(readBuffer);
-          BEFrameReader.updateState(readBuffer, bytesRead);
-        } catch (NotYetConnectedException | ClosedChannelException ignore) {
-        }
+      // Consume data on the socket
+      int bytesRead;
+      while ((bytesRead = socketChannel.read(readBuffer)) > 0) {
+        BEFrameReader.updateState(readBuffer, bytesRead);
 
         BEFrame packet;
         while ((packet = BEFrameReader.popFrame()) != null) {
           readPacket(packet);
         }
 
-        sendData(socketChannel);
+        // Reset read buffer
+        readBuffer.clear();
+      }
+    } catch (NotYetConnectedException | ClosedChannelException ignore) {
+      ignore.printStackTrace();
+    }
+  }
 
-        if (outputQue.size() == 0 && waitToSendQue.size() == 0 && sub.getCompletionType() == PGSubmission.Types.CLOSE) {
-          sub.finish(socketChannel);
-          submissions.poll();
+  @Override
+  public void handleWrite() throws IOException {
+
+    // Flush out the submissions
+    PGSubmission<?> sub;
+    while ((sub = submissions.poll()) != null) {
+      try {
+
+        // Configure prepared statement
+        if (sub.getCompletionType() == PGSubmission.Types.LOCAL || sub.getCompletionType() == PGSubmission.Types.CATCH
+            || sub.getCompletionType() == PGSubmission.Types.GROUP) {
+          sub.finish(null);
+
+        } else {
+          if (preparedStatementCache.sqlNotPreparedBefore(sub.getHolder(), sub.getSql())) {
+            queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+          }
+          queFrame(FEFrameSerializer.toDescribePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+          descriptionNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
+          for (int i = 0; i < sub.numberOfQueryRepetitions(); i++) {
+            queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache, i));
+            queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+            sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
+            queFrame(FEFrameSerializer.toSyncPacket());
+          }
+
+          // Await response
+          awaitingResults.add(sub);
         }
-      } catch (NoConnectionPendingException ignore) {
-      } catch (Throwable e) {
-        ((CompletableFuture) sub.getCompletionStage()).completeExceptionally(e);
+
+      } catch (Throwable ex) {
+        ((CompletableFuture) sub.getCompletionStage()).completeExceptionally(ex);
       }
     }
+
+    // Send the data
+    boolean isAllWritten = sendData(socketChannel);
+    if (!isAllWritten) {
+      this.context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+      return; // socket full
+    }
+
+    // As here all data written
+    this.context.setInterestedOps(SelectionKey.OP_READ);
+  }
+
+  @Override
+  public void handleException(Throwable ex) {
+    // TODO Auto-generated method stub
   }
 
   public void readPacket(BEFrame packet) {
@@ -306,7 +253,7 @@ public class ProtocolV3 implements NioService {
   private void doDataRow(BEFrame packet) {
     String portalName = sentSqlNameQue.peek();
     DataRow row = new DataRow(packet.getPayload(), preparedStatementCache.getDescription(portalName), rowNumber++);
-    PGSubmission sub = submissions.peek();
+    PGSubmission sub = awaitingResults.poll();
 
     if (sub == null) {
       throw new IllegalStateException(
@@ -319,7 +266,7 @@ public class ProtocolV3 implements NioService {
   private void doCommandComplete(BEFrame packet) {
     CommandComplete cc = new CommandComplete(packet.getPayload());
 
-    PGSubmission sub = submissions.peek();
+    PGSubmission sub = awaitingResults.peek();
     if (sub == null) {
       throw new IllegalStateException(
           "Command Complete packet arrived without an corresponding submission, internal state corruption");
@@ -328,38 +275,38 @@ public class ProtocolV3 implements NioService {
     switch (sub.getCompletionType()) {
     case COUNT:
       sub.finish(new PGCount(cc.getNumberOfRowsAffected()));
-      submissions.poll();
+      awaitingResults.poll();
       break;
     case ROW:
       sentSqlNameQue.poll();
       sub.finish(null);
-      submissions.poll();
+      awaitingResults.poll();
       break;
     case CLOSE:
       sub.finish(socketChannel);
-      submissions.poll();
+      awaitingResults.poll();
       break;
     case TRANSACTION:
       sub.finish(cc.getType());
-      submissions.poll();
+      awaitingResults.poll();
       break;
     case ARRAY_COUNT:
       boolean allCollected = (Boolean) sub.finish(cc.getNumberOfRowsAffected());
       if (allCollected) {
-        submissions.poll();
+        awaitingResults.poll();
       }
       break;
     case VOID:
       ((CompletableFuture) sub.getCompletionStage()).complete(null);
-      submissions.poll();
+      awaitingResults.poll();
       break;
     case PROCESSOR:
       sub.finish(null);
-      submissions.poll();
+      awaitingResults.poll();
       break;
     case OUT_PARAMETER:
       sub.finish(null);
-      submissions.poll();
+      awaitingResults.poll();
       break;
     }
 
@@ -385,7 +332,7 @@ public class ProtocolV3 implements NioService {
     if (error.getField(HINT) != null)
       message.append("\nHint: ").append(error.getField(HINT));
 
-    PGSubmission<?> sub = submissions.poll();
+    PGSubmission<?> sub = awaitingResults.poll();
 
     if (sub == null) {
       throw new IllegalStateException("missing submission on queue, internal state corruption");
@@ -402,27 +349,23 @@ public class ProtocolV3 implements NioService {
   }
 
   public boolean sendData(SocketChannel socketChannel) {
-    if (outputQue.size() == 0 && waitToSendQue.size() != 0 && currentState == ProtocolV3States.States.IDLE) {
-      outputQue.add(waitToSendQue.poll());
-    }
-    if (outputQue.size() != 0) {
-      FEFrame packet = outputQue.peek();
 
-      if (packet == null) {
-        return true; // no further data
-      }
+    // Obtain next packet
+    FEFrame packet;
+    while ((packet = outputQue.peek()) != null) {
 
       try {
         socketChannel.write(packet.getPayload());
       } catch (IOException e) {
         e.printStackTrace();
       }
-      if (!packet.hasRemaining()) {
-        outputQue.poll();
-      } else {
-        // Write buffer full
-        return false;
+
+      if (packet.hasRemaining()) {
+        return false; // socket write buffer full
       }
+
+      // Written
+      outputQue.poll();
     }
 
     // As here no further data
@@ -430,7 +373,8 @@ public class ProtocolV3 implements NioService {
   }
 
   public void queFrame(FEFrame frame) {
-    waitToSendQue.add(frame);
+    outputQue.add(frame);
+    this.context.writeRequired();
   }
 
   public void sendStartupPacket() {
@@ -459,7 +403,7 @@ public class ProtocolV3 implements NioService {
       array.write(0);
       array.write(0);
 
-      outputQue.add(new FEFrame(array.toByteArray(), true));
+      this.queFrame(new FEFrame(array.toByteArray(), true));
       currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.CONNECTION);
     } catch (IOException e) {
       e.printStackTrace();
@@ -471,7 +415,7 @@ public class ProtocolV3 implements NioService {
 
     switch (req.getType()) {
     case SUCCESS:
-      PGSubmission sub = submissions.poll();
+      PGSubmission sub = awaitingResults.poll();
 
       if (sub == null) {
         throw new IllegalStateException("missing submission on queue, internal state corruption");
@@ -495,7 +439,7 @@ public class ProtocolV3 implements NioService {
       System.arraycopy(content, 0, payload, 5, content.length);
       payload[payload.length - 1] = 0;
 
-      outputQue.add(new FEFrame(payload, false));
+      this.queFrame(new FEFrame(payload, false));
       currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.PASSWORD_SENT);
       break;
     case SCM_CREDENTIAL:

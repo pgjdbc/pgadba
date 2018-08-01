@@ -18,14 +18,15 @@ import jdk.incubator.sql2.Operation;
  */
 public interface NioLoop {
 
-	/**
-	 * Registers an {@link NioService}.
-	 * 
-	 * @param channel           {@link SelectableChannel}.
-	 * @param nioServiceFactory {@link NioServiceFactory} to create the
-	 *                          {@link NioService}.
-	 * @throws IOException If fails to register {@link NioService}.
-	 */
-	void registerNioService(SelectableChannel channel, NioServiceFactory nioServiceFactory) throws IOException;
+  /**
+   * Registers an {@link NioService}.
+   * 
+   * @param channel           {@link SelectableChannel}.
+   * @param nioServiceFactory {@link NioServiceFactory} to create the
+   *                          {@link NioService}.
+   * @return {@link NioService} registered.
+   * @throws IOException If fails to register {@link NioService}.
+   */
+  NioService registerNioService(SelectableChannel channel, NioServiceFactory nioServiceFactory) throws IOException;
 
 }

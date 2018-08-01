@@ -30,28 +30,18 @@ public class PGDataSource implements DataSource {
 
   public PGDataSource(Map<ConnectionProperty, Object> properties) {
     this.properties = properties;
-    
-    // Deprecated
-//    Executor executor = new ThreadPoolExecutor(1, 2, 60, TimeUnit.SECONDS, new LinkedBlockingDeque<>());
-//    executor.execute(() -> {
-//      while (!closed) {
-//        for (PGConnection connection : connections) {
-//          connection.visit();
-//        }
-//      }
-//    });
-    
+
     // Obtain the NIO loop
     NioLoop loop = (NioLoop) this.properties.get(PGConnectionProperties.NIO_LOOP);
     if (loop == null) {
       // Provide default loop
       this.defaultLoop = new DefaultNioLoop();
-      new Thread(this.defaultLoop).run();
+      new Thread(this.defaultLoop).start();
       loop = defaultLoop;
     }
     this.loop = loop;
   }
-  
+
   /**
    * Obtains the {@link NioLoop}.
    * 
@@ -63,9 +53,9 @@ public class PGDataSource implements DataSource {
 
   /**
    * Returns a {@link Connection} builder. By default that builder will return
-   * {@link Connection}s with the {@code ConnectionProperty}s specified when creating this
-   * DataSource. Default and unspecified {@link ConnectionProperty}s can be set with
-   * the returned builder.
+   * {@link Connection}s with the {@code ConnectionProperty}s specified when
+   * creating this DataSource. Default and unspecified {@link ConnectionProperty}s
+   * can be set with the returned builder.
    *
    * @return a new {@link Connection} builder. Not {@code null}.
    */

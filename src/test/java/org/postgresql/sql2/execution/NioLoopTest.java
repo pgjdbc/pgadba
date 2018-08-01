@@ -136,9 +136,10 @@ public class NioLoopTest {
     protected volatile boolean isUsed = false;
 
     @Override
-    public void registerNioService(SelectableChannel channel, NioServiceFactory nioServiceFactory) throws IOException {
+    public NioService registerNioService(SelectableChannel channel, NioServiceFactory nioServiceFactory)
+        throws IOException {
       // TODO Auto-generated method stub
-
+      return null;
     }
   }
 

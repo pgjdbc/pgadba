@@ -55,8 +55,9 @@ public class DefaultNioLoop implements NioLoop, Runnable {
    */
 
   @Override
-  public void registerNioService(SelectableChannel channel, NioServiceFactory nioServiceFactory) throws IOException {
-    new NioServiceAttachment(channel, nioServiceFactory);
+  public NioService registerNioService(SelectableChannel channel, NioServiceFactory nioServiceFactory)
+      throws IOException {
+    return new NioServiceAttachment(channel, nioServiceFactory).service;
   }
 
   /**
@@ -153,6 +154,9 @@ public class DefaultNioLoop implements NioLoop, Runnable {
 
       // Create the service
       this.service = nioServiceFactory.createNioService(this);
+      if (this.service == null) {
+        throw new IllegalStateException("No " + NioService.class.getSimpleName() + " created");
+      }
     }
 
     /*

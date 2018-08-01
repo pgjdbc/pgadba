@@ -4,7 +4,6 @@
  */
 package org.postgresql.sql2;
 
-
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.ConnectionProperty;
 import jdk.incubator.sql2.DataSource;
@@ -38,18 +37,14 @@ import java.util.stream.Collector;
 public class PGConnection extends PGOperationGroup<Object, Object> implements Connection {
   protected static final CompletionStage<Object> ROOT = CompletableFuture.completedFuture(null);
 
-  static final Collector DEFAULT_COLLECTOR = Collector.of(
-      () -> null,
-      (a, v) -> {
-      },
-      (a, b) -> null,
-      a -> null);
+  static final Collector DEFAULT_COLLECTOR = Collector.of(() -> null, (a, v) -> {
+  }, (a, b) -> null, a -> null);
 
   private Logger logger = Logger.getLogger(PGConnection.class.getName());
 
-  private Map<ConnectionProperty, Object> properties;
+  private final Map<ConnectionProperty, Object> properties;
 
-  private ProtocolV3 protocol;
+  private final ProtocolV3 protocol;
 
   private Object accumulator;
   private Collector collector = DEFAULT_COLLECTOR;
@@ -64,11 +59,12 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
 
   public PGConnection(Map<ConnectionProperty, Object> properties, NioLoop loop) throws IOException {
     this.properties = properties;
-    loop.registerNioService(SocketChannel.open(), (context) -> {
-      this.protocol = new ProtocolV3(this.properties, context);
-      this.setConnection(this);
-      return this.protocol;
+    SocketChannel channel = SocketChannel.open();
+    channel.configureBlocking(false);
+    this.protocol = (ProtocolV3) loop.registerNioService(channel, (context) -> {
+      return new ProtocolV3(this.properties, context);
     });
+    this.setConnection(this);
   }
 
   /**
@@ -82,20 +78,20 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    * Otherwise the {@link Operation} will complete exceptionally with
    * {@link SqlException}.
    * <p>
-   * Note: It is highly recommended to use the {@link Connection#connect()} convenience
-   * method or to use {@link DataSource#getConnection} which itself calls
-   * {@link Connection#connect()}. Unless there is a specific need, do not call this method
-   * directly.
+   * Note: It is highly recommended to use the {@link Connection#connect()}
+   * convenience method or to use {@link DataSource#getConnection} which itself
+   * calls {@link Connection#connect()}. Unless there is a specific need, do not
+   * call this method directly.
    * <p>
    * This method exists partially to clearly explain that while creating a
    * {@link Connection} is non-blocking, the act of connecting to the server may
    * block and so is executed asynchronously. We could write a bunch of text
    * saying this but defining this method is more explicit. Given the
-   * {@link Connection#connect()} convenience methods there's probably not much reason to
-   * use this method, but on the other hand, who knows, so here it is.
+   * {@link Connection#connect()} convenience methods there's probably not much
+   * reason to use this method, but on the other hand, who knows, so here it is.
    *
    * @return an {@link Operation} that connects this {@link Connection} to a
-   * server.
+   *         server.
    * @throws IllegalStateException if this {@link Connection} is in a lifecycle
    *                               state other than {@link Lifecycle#NEW}.
    */
@@ -110,9 +106,9 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
 
   /**
    * Returns an {@link Operation} that verifies that the resources are available
-   * and operational. Successful completion of that {@link Operation} implies
-   * that at some point between the beginning and end of the {@link Operation}
-   * the Connection was working properly to the extent specified by {@code depth}.
+   * and operational. Successful completion of that {@link Operation} implies that
+   * at some point between the beginning and end of the {@link Operation} the
+   * Connection was working properly to the extent specified by {@code depth}.
    * There is no guarantee that the {@link Connection} is still working after
    * completion.
    *
@@ -133,20 +129,20 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   /**
    * Create an {@link Operation} to close this {@link Connection}. When the
    * {@link Operation} is executed, if this {@link Connection} is open -&gt;
-   * {@link Lifecycle#CLOSING}. If this {@link Connection} is closed executing
-   * the returned {@link Operation} is a noop. When the queue is empty and all
+   * {@link Lifecycle#CLOSING}. If this {@link Connection} is closed executing the
+   * returned {@link Operation} is a noop. When the queue is empty and all
    * resources released -&gt; {@link Lifecycle#CLOSED}.
    * <p>
-   * A close {@link Operation} is never skipped. Even when the
-   * {@link Connection} is dependent, the default, and an {@link Operation}
-   * completes exceptionally, a close {@link Operation} is still executed. If
-   * the {@link Connection} is parallel, a close {@link Operation} is not
-   * executed so long as there are other {@link Operation}s or the
-   * {@link Connection} is held; for more {@link Operation}s.
+   * A close {@link Operation} is never skipped. Even when the {@link Connection}
+   * is dependent, the default, and an {@link Operation} completes exceptionally,
+   * a close {@link Operation} is still executed. If the {@link Connection} is
+   * parallel, a close {@link Operation} is not executed so long as there are
+   * other {@link Operation}s or the {@link Connection} is held; for more
+   * {@link Operation}s.
    * <p>
    * Note: It is highly recommended to use try with resources or the
-   * {@link Connection#close()} convenience method. Unless there is a specific need, do not
-   * call this method directly.
+   * {@link Connection#close()} convenience method. Unless there is a specific
+   * need, do not call this method directly.
    *
    * @return an {@link Operation} that will close this {@link Connection}.
    * @throws IllegalStateException if the Connection is not active
@@ -167,9 +163,9 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    * Create a new {@link OperationGroup} for this {@link Connection}.
    *
    * @param <S> the result type of the member {@link Operation}s of the returned
-   *            {@link OperationGroup}
+   *        {@link OperationGroup}
    * @param <T> the result type of the collected results of the member
-   *            {@link Operation}s
+   *        {@link Operation}s
    * @return a new {@link OperationGroup}.
    * @throws IllegalStateException if this Connection is not active
    */
@@ -187,13 +183,13 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   }
 
   /**
-   * Returns a new {@link Transaction} that can be used as an argument to a
-   * commit Operation.
+   * Returns a new {@link Transaction} that can be used as an argument to a commit
+   * Operation.
    * <p>
    * It is most likely an error to call this within an error handler, or any
    * handler as it is very likely that when the handler is executed the next
-   * submitted endTransaction {@link Operation} will have been created with a different
-   * Transaction.
+   * submitted endTransaction {@link Operation} will have been created with a
+   * different Transaction.
    *
    * @return a new {@link Transaction}. Not retained.
    * @throws IllegalStateException if this Connection is not active
@@ -226,8 +222,8 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   /**
    * Removes a listener that was registered by calling
    * registerLifecycleListener.Sometime after this method is called the listener
-   * will stop receiving lifecycle events. If the listener is not registered,
-   * this is a no-op.
+   * will stop receiving lifecycle events. If the listener is not registered, this
+   * is a no-op.
    *
    * @param listener Not {@code null}.
    * @return this Connection
@@ -257,13 +253,13 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   }
 
   /**
-   * Terminate this {@link Connection}. If lifecycle is
-   * {@link Lifecycle#NEW}, {@link Lifecycle#OPEN}, {@link Lifecycle#INACTIVE}
-   * or {@link Lifecycle#CLOSING} -&gt; {@link Lifecycle#ABORTING} If lifecycle
-   * is {@link Lifecycle#ABORTING} or {@link Lifecycle#CLOSED} this is a noop.
-   * If an {@link Operation} is currently executing, terminate it immediately.
-   * Remove all remaining {@link Operation}s from the queue. {@link Operation}s
-   * are not skipped. They are just removed from the queue.
+   * Terminate this {@link Connection}. If lifecycle is {@link Lifecycle#NEW},
+   * {@link Lifecycle#OPEN}, {@link Lifecycle#INACTIVE} or
+   * {@link Lifecycle#CLOSING} -&gt; {@link Lifecycle#ABORTING} If lifecycle is
+   * {@link Lifecycle#ABORTING} or {@link Lifecycle#CLOSED} this is a noop. If an
+   * {@link Operation} is currently executing, terminate it immediately. Remove
+   * all remaining {@link Operation}s from the queue. {@link Operation}s are not
+   * skipped. They are just removed from the queue.
    *
    * @return this {@link Connection}
    */
@@ -280,15 +276,15 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   }
 
   /**
-   * Return the set of properties configured on this {@link Connection}
-   * excepting any sensitive properties. Neither the key nor the value for
-   * sensitive properties are included in the result. Properties (other than
-   * sensitive properties) that have default values are included even when not
-   * explicitly set. Properties that have no default value and are not set
-   * explicitly are not included.
+   * Return the set of properties configured on this {@link Connection} excepting
+   * any sensitive properties. Neither the key nor the value for sensitive
+   * properties are included in the result. Properties (other than sensitive
+   * properties) that have default values are included even when not explicitly
+   * set. Properties that have no default value and are not set explicitly are not
+   * included.
    *
    * @return a {@link Map} of property, value. Not modifiable. May be retained.
-   * Not {@code null}.
+   *         Not {@code null}.
    * @throws IllegalStateException if this Connection is not active
    */
   @Override
@@ -335,14 +331,14 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    * Makes this {@link Connection} inactive. After a call to this method
    * previously submitted Operations will be executed normally. If the lifecycle
    * is {@link Lifecycle#NEW} -&gt; {@link Lifecycle#NEW_INACTIVE}. if the
-   * lifecycle is {@link Lifecycle#OPEN} -&gt; {@link Lifecycle#INACTIVE}. If
-   * the lifecycle is {@link Lifecycle#INACTIVE} or
-   * {@link Lifecycle#NEW_INACTIVE} this method is a no-op. After calling this
-   * method calling any method other than {@link Connection#deactivate}, {@link Connection#activate},
-   * {@link Connection#abort}, or {@link Connection#getConnectionLifecycle} or submitting any member
-   * {@link Operation} will throw {@link IllegalStateException}. Local
-   * {@link Connection} state not created by {@link Connection.Builder} may not
-   * be preserved.
+   * lifecycle is {@link Lifecycle#OPEN} -&gt; {@link Lifecycle#INACTIVE}. If the
+   * lifecycle is {@link Lifecycle#INACTIVE} or {@link Lifecycle#NEW_INACTIVE}
+   * this method is a no-op. After calling this method calling any method other
+   * than {@link Connection#deactivate}, {@link Connection#activate},
+   * {@link Connection#abort}, or {@link Connection#getConnectionLifecycle} or
+   * submitting any member {@link Operation} will throw
+   * {@link IllegalStateException}. Local {@link Connection} state not created by
+   * {@link Connection.Builder} may not be preserved.
    * <p>
    * Any implementation of a {@link Connection} pool is by default required to
    * call {@code deactivate} when putting a {@link Connection} into a pool. The
@@ -373,8 +369,10 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
       return result.exceptionally(t -> {
         Throwable ex = unwrapException(t);
         errorHandler.accept(ex);
-        if (ex instanceof SqlSkippedException) throw (SqlSkippedException) ex;
-        else throw new SqlSkippedException("TODO", ex, null, -1, null, -1);
+        if (ex instanceof SqlSkippedException)
+          throw (SqlSkippedException) ex;
+        else
+          throw new SqlSkippedException("TODO", ex, null, -1, null, -1);
       });
     } else {
       return result;
@@ -383,11 +381,6 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
 
   static Throwable unwrapException(Throwable ex) {
     return ex instanceof CompletionException ? ex.getCause() : ex;
-  }
-
-  @Deprecated
-  public void visit() {
-    protocol.visit();
   }
 
   public void addSubmissionOnQue(PGSubmission submission) {
