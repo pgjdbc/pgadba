@@ -5,6 +5,7 @@ import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.ConnectionProperty;
 import org.postgresql.sql2.exceptions.PropertyException;
 
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -48,9 +49,13 @@ public class PGConnectionBuilder implements Connection.Builder {
       }
     }
 
-    PGConnection connection = new PGConnection(properties);
-    dataSource.registerConnection(connection);
-    return connection;
+    try {
+      PGConnection connection = new PGConnection(properties, this.dataSource.getNioLoop());
+      dataSource.registerConnection(connection);
+      return connection;
+    } catch (IOException ex) {
+      throw new IllegalStateException("Failure opening connection", ex);
+    }
   }
 
   public static Map<ConnectionProperty, Object> parseURL(String url, Properties defaults) {

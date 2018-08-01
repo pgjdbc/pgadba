@@ -4,10 +4,12 @@ import jdk.incubator.sql2.ConnectionProperty;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.postgresql.sql2.PGConnectionProperties;
+import org.postgresql.sql2.execution.NioServiceContext;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SocketChannel;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +30,26 @@ public class ProtocolV3Test {
     for (PGConnectionProperties prop : PGConnectionProperties.values())
       properties.put(prop, prop.defaultValue());
 
-    ProtocolV3 instance = new ProtocolV3(properties);
+    SocketChannel sc = mock(SocketChannel.class);
+
+    ProtocolV3 instance = new ProtocolV3(properties, new NioServiceContext() {
+      @Override
+      public SelectableChannel getChannel() {
+        return sc;
+      }
+      
+      @Override
+      public void writeRequired() {
+      }
+      
+      @Override
+      public void unregister() throws IOException {
+      }
+      
+      @Override
+      public void setInterestedOps(int interestedOps) throws IOException {
+      }
+    });
 
     instance.sendStartupPacket();
 
@@ -36,7 +57,6 @@ public class ProtocolV3Test {
 
     instance.doAuthentication(authRequest);
 
-    SocketChannel sc = mock(SocketChannel.class);
     instance.sendData(sc);
 
     ArgumentCaptor<ByteBuffer> bufferCaptor = ArgumentCaptor.forClass(ByteBuffer.class);

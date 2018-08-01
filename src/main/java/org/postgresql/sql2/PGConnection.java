@@ -15,12 +15,16 @@ import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.SqlSkippedException;
 import jdk.incubator.sql2.Transaction;
 import org.postgresql.sql2.communication.ProtocolV3;
+import org.postgresql.sql2.execution.NioLoop;
+import org.postgresql.sql2.execution.NioServiceContext;
 import org.postgresql.sql2.operations.PGCloseOperation;
 import org.postgresql.sql2.operations.PGConnectOperation;
 import org.postgresql.sql2.operations.PGOperationGroup;
 import org.postgresql.sql2.operations.PGValidationOperation;
 import org.postgresql.sql2.operations.helpers.PGTransaction;
 
+import java.io.IOException;
+import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -58,10 +62,13 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    */
   private final CompletableFuture head = new CompletableFuture();
 
-  public PGConnection(Map<ConnectionProperty, Object> properties) {
+  public PGConnection(Map<ConnectionProperty, Object> properties, NioLoop loop) throws IOException {
     this.properties = properties;
-    this.protocol = new ProtocolV3(properties);
-    setConnection(this);
+    loop.registerNioService(SocketChannel.open(), (context) -> {
+      this.protocol = new ProtocolV3(this.properties, context);
+      this.setConnection(this);
+      return this.protocol;
+    });
   }
 
   /**
@@ -378,6 +385,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
     return ex instanceof CompletionException ? ex.getCause() : ex;
   }
 
+  @Deprecated
   public void visit() {
     protocol.visit();
   }

@@ -11,6 +11,9 @@ import org.postgresql.sql2.communication.packets.ErrorResponse;
 import org.postgresql.sql2.communication.packets.ParameterStatus;
 import org.postgresql.sql2.communication.packets.ReadyForQuery;
 import org.postgresql.sql2.communication.packets.RowDescription;
+import org.postgresql.sql2.execution.NioService;
+import org.postgresql.sql2.execution.NioServiceContext;
+import org.postgresql.sql2.execution.NioServiceFactory;
 import org.postgresql.sql2.operations.helpers.FEFrameSerializer;
 import org.postgresql.sql2.util.BinaryHelper;
 import org.postgresql.sql2.util.PGCount;
@@ -23,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.NoConnectionPendingException;
 import java.nio.channels.NotYetConnectedException;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -35,7 +39,7 @@ import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.SEVERITY;
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.SQLSTATE_CODE;
 
-public class ProtocolV3 {
+public class ProtocolV3 implements NioService {
   private ProtocolV3States.States currentState = ProtocolV3States.States.NOT_CONNECTED;
   private Map<ConnectionProperty, Object> properties;
   private PreparedStatementCache preparedStatementCache = new PreparedStatementCache();
@@ -47,6 +51,8 @@ public class ProtocolV3 {
 
   private BEFrameReader BEFrameReader = new BEFrameReader();
 
+  private NioServiceContext context;
+
   private SocketChannel socketChannel;
 
   private boolean sentStartPacket = false;
@@ -56,15 +62,119 @@ public class ProtocolV3 {
   private ConcurrentLinkedQueue<String> descriptionNameQue = new ConcurrentLinkedQueue<>();
   private ConcurrentLinkedQueue<String> sentSqlNameQue = new ConcurrentLinkedQueue<>();
 
-  public ProtocolV3(Map<ConnectionProperty, Object> properties) {
+  public ProtocolV3(Map<ConnectionProperty, Object> properties, NioServiceContext context) {
     this.properties = properties;
-    try {
-      this.socketChannel = SocketChannel.open();
-    } catch (IOException e) {
-      e.printStackTrace();
+    this.context = context;
+    this.socketChannel = (SocketChannel) context.getChannel();
+  }
+
+  public void addSubmission(PGSubmission submission) {
+    // Must be synchronized with the write submission
+
+    // Determine if connect
+    if (submission.getCompletionType() == PGSubmission.Types.CONNECT
+        && submission.getSendConsumed().compareAndSet(false, true)) {
+      try {
+        this.socketChannel.configureBlocking(false);
+        this.socketChannel.connect(new InetSocketAddress((String) properties.get(PGConnectionProperties.HOST),
+            (Integer) properties.get(PGConnectionProperties.PORT)));
+      } catch (Exception ex) {
+        submission.getErrorHandler().accept(ex);
+      }
+      return; // connection underway
+    }
+
+    // Register the submission
+    this.submissions.add(submission);
+
+    // Notify require to write
+    this.context.writeRequired();
+  }
+
+  /*
+   * =============== NioService =====================
+   */
+
+  @Override
+  public void handleConnect() throws IOException {
+    // Handle completion of connect
+    if (!sentStartPacket && !socketChannel.finishConnect()) {
+      return;
+    } else if (!sentStartPacket) {
+      sendStartupPacket();
+      sentStartPacket = true;
     }
   }
 
+  @Override
+  public void handleRead() throws IOException {
+
+    // TODO pool buffers
+    ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+
+    try {
+      int bytesRead = socketChannel.read(readBuffer);
+      BEFrameReader.updateState(readBuffer, bytesRead);
+    } catch (NotYetConnectedException | ClosedChannelException ignore) {
+    }
+
+    BEFrame packet;
+    while ((packet = BEFrameReader.popFrame()) != null) {
+      readPacket(packet);
+    }
+  }
+
+  @Override
+  public void handleWrite() throws IOException {
+    PGSubmission<?> sub;
+    while ((sub = submissions.peek()) != null) {
+      try {
+
+        // Configure prepared statement
+        if (sub.getCompletionType() == PGSubmission.Types.LOCAL || sub.getCompletionType() == PGSubmission.Types.CATCH
+            || sub.getCompletionType() == PGSubmission.Types.GROUP) {
+          sub.finish(null);
+          submissions.poll();
+        } else if (sub.getCompletionType() != PGSubmission.Types.CONNECT && currentState == ProtocolV3States.States.IDLE
+            && sub.getSendConsumed().compareAndSet(false, true)) {
+          if (preparedStatementCache.sqlNotPreparedBefore(sub.getHolder(), sub.getSql())) {
+            queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+          }
+          queFrame(FEFrameSerializer.toDescribePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+          descriptionNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
+          for (int i = 0; i < sub.numberOfQueryRepetitions(); i++) {
+            queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache, i));
+            queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+            sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
+            queFrame(FEFrameSerializer.toSyncPacket());
+          }
+        }
+
+        boolean isAllWritten = sendData(socketChannel);
+        int interestedOps = SelectionKey.OP_READ;
+        if (!isAllWritten) {
+          interestedOps |= SelectionKey.OP_WRITE;
+        }
+        this.context.setInterestedOps(interestedOps);
+
+        if (outputQue.size() == 0 && waitToSendQue.size() == 0 && sub.getCompletionType() == PGSubmission.Types.CLOSE) {
+          sub.finish(socketChannel);
+          submissions.poll();
+        }
+
+      } catch (Throwable ex) {
+        ((CompletableFuture) sub.getCompletionStage()).completeExceptionally(ex);
+      }
+    }
+  }
+
+  @Override
+  public void handleException(Throwable ex) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Deprecated
   public void visit() {
     ByteBuffer readBuffer = ByteBuffer.allocate(1024);
     PGSubmission<?> sub = submissions.peek();
@@ -82,8 +192,8 @@ public class ProtocolV3 {
           sentStartPacket = true;
         }
 
-        if(sub.getCompletionType() == PGSubmission.Types.LOCAL || sub.getCompletionType() == PGSubmission.Types.CATCH ||
-            sub.getCompletionType() == PGSubmission.Types.GROUP) {
+        if (sub.getCompletionType() == PGSubmission.Types.LOCAL || sub.getCompletionType() == PGSubmission.Types.CATCH
+            || sub.getCompletionType() == PGSubmission.Types.GROUP) {
           sub.finish(null);
           submissions.poll();
         } else if (sub.getCompletionType() != PGSubmission.Types.CONNECT && currentState == ProtocolV3States.States.IDLE
@@ -93,7 +203,7 @@ public class ProtocolV3 {
           }
           queFrame(FEFrameSerializer.toDescribePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
           descriptionNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
-          for(int i = 0; i < sub.numberOfQueryRepetitions(); i++) {
+          for (int i = 0; i < sub.numberOfQueryRepetitions(); i++) {
             queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache, i));
             queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
             sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
@@ -120,71 +230,70 @@ public class ProtocolV3 {
         }
       } catch (NoConnectionPendingException ignore) {
       } catch (Throwable e) {
-        ((CompletableFuture) sub.getCompletionStage())
-            .completeExceptionally(e);
+        ((CompletableFuture) sub.getCompletionStage()).completeExceptionally(e);
       }
     }
   }
 
   public void readPacket(BEFrame packet) {
     switch (packet.getTag()) {
-      case AUTHENTICATION:
-        doAuthentication(packet);
-        break;
-      case CANCELLATION_KEY_DATA:
-        break;
-      case BIND_COMPLETE:
-        doBindComplete(packet);
-        break;
-      case CLOSE_COMPLETE:
-        break;
-      case COMMAND_COMPLETE:
-        doCommandComplete(packet);
-        break;
-      case COPY_DATA:
-        break;
-      case COPY_DONE:
-        break;
-      case COPY_IN_RESPONSE:
-        break;
-      case COPY_OUT_RESPONSE:
-        break;
-      case COPY_BOTH_RESPONSE:
-        break;
-      case DATA_ROW:
-        doDataRow(packet);
-        break;
-      case EMPTY_QUERY_RESPONSE:
-        break;
-      case ERROR_RESPONSE:
-        doError(packet);
-        break;
-      case FUNCTION_CALL_RESPONSE:
-        break;
-      case NEGOTIATE_PROTOCOL_VERSION:
-        break;
-      case NO_DATA:
-        break;
-      case NOTICE_RESPONSE:
-        break;
-      case NOTIFICATION_RESPONSE:
-        break;
-      case PARAM_DESCRIPTION:
-        break;
-      case PARAM_STATUS:
-        doParameterStatus(packet);
-        break;
-      case PARSE_COMPLETE:
-        doParseComplete(packet);
-        break;
-      case PORTAL_SUSPENDED:
-        break;
-      case READY_FOR_QUERY:
-        doReadyForQuery(packet);
-        break;
-      case ROW_DESCRIPTION:
-        doRowDescription(packet);
-        break;
+    case AUTHENTICATION:
+      doAuthentication(packet);
+      break;
+    case CANCELLATION_KEY_DATA:
+      break;
+    case BIND_COMPLETE:
+      doBindComplete(packet);
+      break;
+    case CLOSE_COMPLETE:
+      break;
+    case COMMAND_COMPLETE:
+      doCommandComplete(packet);
+      break;
+    case COPY_DATA:
+      break;
+    case COPY_DONE:
+      break;
+    case COPY_IN_RESPONSE:
+      break;
+    case COPY_OUT_RESPONSE:
+      break;
+    case COPY_BOTH_RESPONSE:
+      break;
+    case DATA_ROW:
+      doDataRow(packet);
+      break;
+    case EMPTY_QUERY_RESPONSE:
+      break;
+    case ERROR_RESPONSE:
+      doError(packet);
+      break;
+    case FUNCTION_CALL_RESPONSE:
+      break;
+    case NEGOTIATE_PROTOCOL_VERSION:
+      break;
+    case NO_DATA:
+      break;
+    case NOTICE_RESPONSE:
+      break;
+    case NOTIFICATION_RESPONSE:
+      break;
+    case PARAM_DESCRIPTION:
+      break;
+    case PARAM_STATUS:
+      doParameterStatus(packet);
+      break;
+    case PARSE_COMPLETE:
+      doParseComplete(packet);
+      break;
+    case PORTAL_SUSPENDED:
+      break;
+    case READY_FOR_QUERY:
+      doReadyForQuery(packet);
+      break;
+    case ROW_DESCRIPTION:
+      doRowDescription(packet);
+      break;
     }
   }
 
@@ -199,8 +308,9 @@ public class ProtocolV3 {
     DataRow row = new DataRow(packet.getPayload(), preparedStatementCache.getDescription(portalName), rowNumber++);
     PGSubmission sub = submissions.peek();
 
-    if(sub == null) {
-      throw new IllegalStateException("Data Row packet arrived without an corresponding submission, internal state corruption");
+    if (sub == null) {
+      throw new IllegalStateException(
+          "Data Row packet arrived without an corresponding submission, internal state corruption");
     }
 
     sub.addRow(row);
@@ -210,47 +320,47 @@ public class ProtocolV3 {
     CommandComplete cc = new CommandComplete(packet.getPayload());
 
     PGSubmission sub = submissions.peek();
-    if(sub == null) {
-      throw new IllegalStateException("Command Complete packet arrived without an corresponding submission, internal state corruption");
+    if (sub == null) {
+      throw new IllegalStateException(
+          "Command Complete packet arrived without an corresponding submission, internal state corruption");
     }
 
     switch (sub.getCompletionType()) {
-      case COUNT:
-        sub.finish(new PGCount(cc.getNumberOfRowsAffected()));
+    case COUNT:
+      sub.finish(new PGCount(cc.getNumberOfRowsAffected()));
+      submissions.poll();
+      break;
+    case ROW:
+      sentSqlNameQue.poll();
+      sub.finish(null);
+      submissions.poll();
+      break;
+    case CLOSE:
+      sub.finish(socketChannel);
+      submissions.poll();
+      break;
+    case TRANSACTION:
+      sub.finish(cc.getType());
+      submissions.poll();
+      break;
+    case ARRAY_COUNT:
+      boolean allCollected = (Boolean) sub.finish(cc.getNumberOfRowsAffected());
+      if (allCollected) {
         submissions.poll();
-        break;
-      case ROW:
-        sentSqlNameQue.poll();
-        sub.finish(null);
-        submissions.poll();
-        break;
-      case CLOSE:
-        sub.finish(socketChannel);
-        submissions.poll();
-        break;
-      case TRANSACTION:
-        sub.finish(cc.getType());
-        submissions.poll();
-        break;
-      case ARRAY_COUNT:
-        boolean allCollected = (Boolean)sub.finish(cc.getNumberOfRowsAffected());
-        if(allCollected) {
-          submissions.poll();
-        }
-        break;
-      case VOID:
-        ((CompletableFuture) sub.getCompletionStage())
-            .complete(null);
-        submissions.poll();
-        break;
-      case PROCESSOR:
-        sub.finish(null);
-        submissions.poll();
-        break;
-      case OUT_PARAMETER:
-        sub.finish(null);
-        submissions.poll();
-        break;
+      }
+      break;
+    case VOID:
+      ((CompletableFuture) sub.getCompletionStage()).complete(null);
+      submissions.poll();
+      break;
+    case PROCESSOR:
+      sub.finish(null);
+      submissions.poll();
+      break;
+    case OUT_PARAMETER:
+      sub.finish(null);
+      submissions.poll();
+      break;
     }
 
     currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.COMMAND_COMPLETE);
@@ -267,8 +377,8 @@ public class ProtocolV3 {
   private void doError(BEFrame packet) {
     ErrorResponse error = new ErrorResponse(packet.getPayload());
 
-    StringBuilder message = new StringBuilder("Severity: " + error.getField(SEVERITY) +
-        "\nMessage: " + error.getField(MESSAGE));
+    StringBuilder message = new StringBuilder(
+        "Severity: " + error.getField(SEVERITY) + "\nMessage: " + error.getField(MESSAGE));
 
     if (error.getField(DETAIL) != null)
       message.append("\nDetail: ").append(error.getField(DETAIL));
@@ -277,22 +387,21 @@ public class ProtocolV3 {
 
     PGSubmission<?> sub = submissions.poll();
 
-    if(sub == null) {
+    if (sub == null) {
       throw new IllegalStateException("missing submission on queue, internal state corruption");
     }
 
-    SqlException exception = new SqlException(message.toString(), null, error.getField(SQLSTATE_CODE), 0,
-        sub.getSql(), 0);
+    SqlException exception = new SqlException(message.toString(), null, error.getField(SQLSTATE_CODE), 0, sub.getSql(),
+        0);
 
-    if(sub.getErrorHandler() != null) {
+    if (sub.getErrorHandler() != null) {
       sub.getErrorHandler().accept(exception);
     }
 
-    ((CompletableFuture) sub.getCompletionStage())
-        .completeExceptionally(exception);
+    ((CompletableFuture) sub.getCompletionStage()).completeExceptionally(exception);
   }
 
-  public synchronized void sendData(SocketChannel socketChannel) {
+  public boolean sendData(SocketChannel socketChannel) {
     if (outputQue.size() == 0 && waitToSendQue.size() != 0 && currentState == ProtocolV3States.States.IDLE) {
       outputQue.add(waitToSendQue.poll());
     }
@@ -300,7 +409,7 @@ public class ProtocolV3 {
       FEFrame packet = outputQue.peek();
 
       if (packet == null) {
-        return;
+        return true; // no further data
       }
 
       try {
@@ -310,8 +419,14 @@ public class ProtocolV3 {
       }
       if (!packet.hasRemaining()) {
         outputQue.poll();
+      } else {
+        // Write buffer full
+        return false;
       }
     }
+
+    // As here no further data
+    return true;
   }
 
   public void queFrame(FEFrame frame) {
@@ -355,47 +470,48 @@ public class ProtocolV3 {
     AuthenticationRequest req = new AuthenticationRequest(packet.getPayload());
 
     switch (req.getType()) {
-      case SUCCESS:
-        PGSubmission sub = submissions.poll();
+    case SUCCESS:
+      PGSubmission sub = submissions.poll();
 
-        if(sub == null) {
-          throw new IllegalStateException("missing submission on queue, internal state corruption");
-        }
+      if (sub == null) {
+        throw new IllegalStateException("missing submission on queue, internal state corruption");
+      }
 
-        sub.finish(null);
-        currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.AUTHENTICATION_SUCCESS);
-        break;
-      case KERBEROS_V5:
-        break;
-      case CLEAR_TEXT:
-        break;
-      case MD5:
-        currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.AUTHENTICATION_REQUEST);
-        byte[] content = BinaryHelper.encode(((String) properties.get(PGConnectionProperties.USER)).getBytes(StandardCharsets.UTF_8),
-            ((String) properties.get(PGConnectionProperties.PASSWORD)).getBytes(StandardCharsets.UTF_8), req.getSalt());
-        byte[] payload = new byte[content.length + 6];
+      sub.finish(null);
+      currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.AUTHENTICATION_SUCCESS);
+      break;
+    case KERBEROS_V5:
+      break;
+    case CLEAR_TEXT:
+      break;
+    case MD5:
+      currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.AUTHENTICATION_REQUEST);
+      byte[] content = BinaryHelper.encode(
+          ((String) properties.get(PGConnectionProperties.USER)).getBytes(StandardCharsets.UTF_8),
+          ((String) properties.get(PGConnectionProperties.PASSWORD)).getBytes(StandardCharsets.UTF_8), req.getSalt());
+      byte[] payload = new byte[content.length + 6];
 
-        payload[0] = FEFrame.FrontendTag.PASSWORD_MESSAGE.getByte();
-        System.arraycopy(content, 0, payload, 5, content.length);
-        payload[payload.length - 1] = 0;
+      payload[0] = FEFrame.FrontendTag.PASSWORD_MESSAGE.getByte();
+      System.arraycopy(content, 0, payload, 5, content.length);
+      payload[payload.length - 1] = 0;
 
-        outputQue.add(new FEFrame(payload, false));
-        currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.PASSWORD_SENT);
-        break;
-      case SCM_CREDENTIAL:
-        break;
-      case GSS:
-        break;
-      case GSS_CONTINUE:
-        break;
-      case SSPI:
-        break;
-      case SASL:
-        break;
-      case SASL_CONTINUE:
-        break;
-      case SASL_FINAL:
-        break;
+      outputQue.add(new FEFrame(payload, false));
+      currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.PASSWORD_SENT);
+      break;
+    case SCM_CREDENTIAL:
+      break;
+    case GSS:
+      break;
+    case GSS_CONTINUE:
+      break;
+    case SSPI:
+      break;
+    case SASL:
+      break;
+    case SASL_CONTINUE:
+      break;
+    case SASL_FINAL:
+      break;
     }
   }
 
@@ -404,7 +520,7 @@ public class ProtocolV3 {
 
     ReadyForQuery readyForQuery = new ReadyForQuery(packet.getPayload());
 
-    //todo handle transaction stuff
+    // todo handle transaction stuff
 
     currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.READY_FOR_QUERY);
   }
@@ -416,11 +532,8 @@ public class ProtocolV3 {
     currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.PARAMETER_STATUS);
   }
 
-  public void addSubmission(PGSubmission submission) {
-    submissions.add(submission);
-  }
-
   public boolean isConnectionClosed() {
     return !socketChannel.isConnected();
   }
+
 }

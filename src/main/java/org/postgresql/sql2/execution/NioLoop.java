@@ -1,5 +1,7 @@
 package org.postgresql.sql2.execution;
 
+import java.io.IOException;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.Selector;
 
 import jdk.incubator.sql2.Operation;
@@ -15,5 +17,15 @@ import jdk.incubator.sql2.Operation;
  * @author Daniel Sagenschneider
  */
 public interface NioLoop {
+
+	/**
+	 * Registers an {@link NioService}.
+	 * 
+	 * @param channel           {@link SelectableChannel}.
+	 * @param nioServiceFactory {@link NioServiceFactory} to create the
+	 *                          {@link NioService}.
+	 * @throws IOException If fails to register {@link NioService}.
+	 */
+	void registerNioService(SelectableChannel channel, NioServiceFactory nioServiceFactory) throws IOException;
 
 }
