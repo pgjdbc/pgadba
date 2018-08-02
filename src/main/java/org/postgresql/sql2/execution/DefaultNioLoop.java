@@ -134,7 +134,6 @@ public class DefaultNioLoop implements NioLoop, Runnable {
         logger.log(Level.INFO, "Failed to close selector", ex);
       }
     }
-
   }
 
   private class NioServiceAttachment implements NioServiceContext {

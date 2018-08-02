@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.channels.SelectableChannel;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.After;
 import org.junit.jupiter.api.Test;
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.testUtil.CollectorUtils;
@@ -131,15 +132,29 @@ public class NioLoopTest {
     }
   }
 
-  public static class MockNioLoop implements NioLoop {
+  @After
+  public void closeNioLoop() {
+    if (this.mockLoop != null) {
+      this.mockLoop.close();
+    }
+  }
+
+  private MockNioLoop mockLoop;
+
+  public class MockNioLoop extends DefaultNioLoop {
 
     protected volatile boolean isUsed = false;
+
+    public MockNioLoop() {
+      NioLoopTest.this.mockLoop = this;
+      new Thread(this).start();
+    }
 
     @Override
     public NioService registerNioService(SelectableChannel channel, NioServiceFactory nioServiceFactory)
         throws IOException {
-      // TODO Auto-generated method stub
-      return null;
+      this.isUsed = true;
+      return super.registerNioService(channel, nioServiceFactory);
     }
   }
 

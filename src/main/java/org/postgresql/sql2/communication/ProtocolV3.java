@@ -1,7 +1,24 @@
 package org.postgresql.sql2.communication;
 
-import jdk.incubator.sql2.ConnectionProperty;
-import jdk.incubator.sql2.SqlException;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.DETAIL;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.HINT;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.MESSAGE;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.SEVERITY;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.SQLSTATE_CODE;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.NotYetConnectedException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
@@ -13,31 +30,13 @@ import org.postgresql.sql2.communication.packets.ReadyForQuery;
 import org.postgresql.sql2.communication.packets.RowDescription;
 import org.postgresql.sql2.execution.NioService;
 import org.postgresql.sql2.execution.NioServiceContext;
-import org.postgresql.sql2.execution.NioServiceFactory;
 import org.postgresql.sql2.operations.helpers.FEFrameSerializer;
 import org.postgresql.sql2.util.BinaryHelper;
 import org.postgresql.sql2.util.PGCount;
 import org.postgresql.sql2.util.PreparedStatementCache;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.NoConnectionPendingException;
-import java.nio.channels.NotYetConnectedException;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
-import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.DETAIL;
-import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.HINT;
-import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.MESSAGE;
-import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.SEVERITY;
-import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.SQLSTATE_CODE;
+import jdk.incubator.sql2.ConnectionProperty;
+import jdk.incubator.sql2.SqlException;
 
 public class ProtocolV3 implements NioService {
   private ProtocolV3States.States currentState = ProtocolV3States.States.NOT_CONNECTED;
@@ -77,6 +76,7 @@ public class ProtocolV3 implements NioService {
       try {
         this.socketChannel.connect(new InetSocketAddress((String) properties.get(PGConnectionProperties.HOST),
             (Integer) properties.get(PGConnectionProperties.PORT)));
+        this.awaitingResults.add(submission);
       } catch (Exception ex) {
         submission.getErrorHandler().accept(ex);
       }
@@ -126,6 +126,9 @@ public class ProtocolV3 implements NioService {
         // Reset read buffer
         readBuffer.clear();
       }
+      if (bytesRead < 0) {
+        throw new ClosedChannelException();
+      }
     } catch (NotYetConnectedException | ClosedChannelException ignore) {
       ignore.printStackTrace();
     }
@@ -135,34 +138,36 @@ public class ProtocolV3 implements NioService {
   public void handleWrite() throws IOException {
 
     // Flush out the submissions
-    PGSubmission<?> sub;
-    while ((sub = submissions.poll()) != null) {
-      try {
+    if (this.currentState == ProtocolV3States.States.CONNECTED) {
+      PGSubmission<?> sub;
+      while ((sub = submissions.poll()) != null) {
+        try {
 
-        // Configure prepared statement
-        if (sub.getCompletionType() == PGSubmission.Types.LOCAL || sub.getCompletionType() == PGSubmission.Types.CATCH
-            || sub.getCompletionType() == PGSubmission.Types.GROUP) {
-          sub.finish(null);
+          // Configure prepared statement
+          if (sub.getCompletionType() == PGSubmission.Types.LOCAL || sub.getCompletionType() == PGSubmission.Types.CATCH
+              || sub.getCompletionType() == PGSubmission.Types.GROUP) {
+            sub.finish(null);
 
-        } else {
-          if (preparedStatementCache.sqlNotPreparedBefore(sub.getHolder(), sub.getSql())) {
-            queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+          } else {
+            if (preparedStatementCache.sqlNotPreparedBefore(sub.getHolder(), sub.getSql())) {
+              queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+            }
+            queFrame(FEFrameSerializer.toDescribePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+            descriptionNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
+            for (int i = 0; i < sub.numberOfQueryRepetitions(); i++) {
+              queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache, i));
+              queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+              sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
+              queFrame(FEFrameSerializer.toSyncPacket());
+            }
+
+            // Await response
+            awaitingResults.add(sub);
           }
-          queFrame(FEFrameSerializer.toDescribePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-          descriptionNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
-          for (int i = 0; i < sub.numberOfQueryRepetitions(); i++) {
-            queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache, i));
-            queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-            sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
-            queFrame(FEFrameSerializer.toSyncPacket());
-          }
 
-          // Await response
-          awaitingResults.add(sub);
+        } catch (Throwable ex) {
+          ((CompletableFuture) sub.getCompletionStage()).completeExceptionally(ex);
         }
-
-      } catch (Throwable ex) {
-        ((CompletableFuture) sub.getCompletionStage()).completeExceptionally(ex);
       }
     }
 
@@ -253,7 +258,7 @@ public class ProtocolV3 implements NioService {
   private void doDataRow(BEFrame packet) {
     String portalName = sentSqlNameQue.peek();
     DataRow row = new DataRow(packet.getPayload(), preparedStatementCache.getDescription(portalName), rowNumber++);
-    PGSubmission sub = awaitingResults.poll();
+    PGSubmission sub = awaitingResults.peek();
 
     if (sub == null) {
       throw new IllegalStateException(
@@ -268,6 +273,10 @@ public class ProtocolV3 implements NioService {
 
     PGSubmission sub = awaitingResults.peek();
     if (sub == null) {
+      
+      // TODO REMOVE
+      if (true) return;
+      
       throw new IllegalStateException(
           "Command Complete packet arrived without an corresponding submission, internal state corruption");
     }
@@ -422,7 +431,10 @@ public class ProtocolV3 implements NioService {
       }
 
       sub.finish(null);
-      currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.AUTHENTICATION_SUCCESS);
+      
+      // Connected, so trigger any waiting submissions
+      currentState = ProtocolV3States.States.CONNECTED;
+      this.context.writeRequired();
       break;
     case KERBEROS_V5:
       break;
