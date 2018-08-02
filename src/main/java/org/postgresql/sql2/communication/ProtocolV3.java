@@ -38,8 +38,17 @@ import org.postgresql.sql2.util.PreparedStatementCache;
 import jdk.incubator.sql2.ConnectionProperty;
 import jdk.incubator.sql2.SqlException;
 
+import static org.postgresql.sql2.communication.ProtocolV3States.States.NOT_CONNECTED;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.DETAIL;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.HINT;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.MESSAGE;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.SEVERITY;
+import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.SQLSTATE_CODE;
+
+
 public class ProtocolV3 implements NioService {
   private ProtocolV3States.States currentState = ProtocolV3States.States.NOT_CONNECTED;
+
   private Map<ConnectionProperty, Object> properties;
   private PreparedStatementCache preparedStatementCache = new PreparedStatementCache();
 
@@ -54,8 +63,6 @@ public class ProtocolV3 implements NioService {
   private NioServiceContext context;
 
   private SocketChannel socketChannel;
-
-  private boolean sentStartPacket = false;
 
   private long rowNumber = 0;
 
@@ -97,12 +104,10 @@ public class ProtocolV3 implements NioService {
   @Override
   public void handleConnect() throws IOException {
     // Handle completion of connect
-    if (!sentStartPacket && !socketChannel.finishConnect()) {
-      return;
-    } else if (!sentStartPacket) {
-      sendStartupPacket();
-      sentStartPacket = true;
-    }
+    if (!socketChannel.finishConnect()) {
+      throw new IOException("Failure to finish connection");
+    } 
+    sendStartupPacket();
   }
 
   @Override
