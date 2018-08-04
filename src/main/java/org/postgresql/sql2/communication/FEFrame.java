@@ -4,6 +4,7 @@ import org.postgresql.sql2.util.BinaryHelper;
 
 import java.nio.ByteBuffer;
 
+@Deprecated // write directly to ByteBuffers
 public class FEFrame {
   public enum FrontendTag {
     BIND('B'),
