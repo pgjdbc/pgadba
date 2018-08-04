@@ -46,7 +46,7 @@ public class PGConnectOperation implements Operation<Void> {
     submission.getCompletionStage().thenAccept(s -> {
       connection.setLifeCycleOpen();
     });
-    connection.addSubmissionOnQue(submission);
+    connection.networkConnect(submission);
     return submission;
   }
 

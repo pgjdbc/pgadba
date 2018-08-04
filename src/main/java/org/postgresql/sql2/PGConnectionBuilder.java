@@ -50,7 +50,7 @@ public class PGConnectionBuilder implements Connection.Builder {
     }
 
     try {
-      PGConnection connection = new PGConnection(properties, this.dataSource.getNioLoop());
+      PGConnection connection = new PGConnection(properties, this.dataSource.getNioLoop(), this.dataSource.getByteBufferPool());
       dataSource.registerConnection(connection);
       return connection;
     } catch (IOException ex) {

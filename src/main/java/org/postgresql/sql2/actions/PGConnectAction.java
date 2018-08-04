@@ -8,8 +8,8 @@ import java.util.Map;
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.communication.BEFrame;
 import org.postgresql.sql2.communication.NetworkAction;
+import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.NetworkConnectContext;
-import org.postgresql.sql2.communication.NetworkInitialiseContext;
 import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.NetworkWriteContext;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
@@ -22,7 +22,7 @@ import jdk.incubator.sql2.ConnectionProperty;
  * 
  * @author Daniel Sagenschneider
  */
-public class PGConnectAction implements NetworkAction {
+public class PGConnectAction implements NetworkConnect, NetworkAction {
 
   /*
    * =================== NetworkRequest ====================
@@ -31,7 +31,7 @@ public class PGConnectAction implements NetworkAction {
   private boolean isBlocking = true;
 
   @Override
-  public void init(NetworkInitialiseContext context) throws IOException {
+  public void connect(NetworkConnectContext context) throws IOException {
     // Undertake connecting
     Map<ConnectionProperty, Object> properties = context.getProperties();
     context.getSocketChannel().connect(new InetSocketAddress((String) properties.get(PGConnectionProperties.HOST),
@@ -39,12 +39,15 @@ public class PGConnectAction implements NetworkAction {
   }
 
   @Override
-  public void connect(NetworkConnectContext context) throws IOException {
+  public NetworkAction finishConnect(NetworkConnectContext context) throws IOException {
 
     // Handle completion of connect
     if (!context.getSocketChannel().finishConnect()) {
       throw new IOException("Failure to finish connection");
     }
+
+    // Allow undertaking send start up information before any further actions
+    return this;
   }
 
   @Override
@@ -78,7 +81,7 @@ public class PGConnectAction implements NetworkAction {
     wire.write(0);
     wire.write("UTF8".getBytes());
     wire.write(0);
-    wire.write(0);
+//    wire.write(0);
   }
 
   @Override
@@ -118,6 +121,11 @@ public class PGConnectAction implements NetworkAction {
     default:
       throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
     }
+  }
+
+  @Override
+  public void handleException(Throwable ex) {
+    NetworkAction.super.handleException(ex);
   }
 
 }

@@ -4,24 +4,6 @@
  */
 package org.postgresql.sql2;
 
-import jdk.incubator.sql2.Connection;
-import jdk.incubator.sql2.ConnectionProperty;
-import jdk.incubator.sql2.DataSource;
-import jdk.incubator.sql2.Operation;
-import jdk.incubator.sql2.OperationGroup;
-import jdk.incubator.sql2.ShardingKey;
-import jdk.incubator.sql2.SqlException;
-import jdk.incubator.sql2.SqlSkippedException;
-import jdk.incubator.sql2.Transaction;
-import org.postgresql.sql2.communication.ProtocolV3;
-import org.postgresql.sql2.execution.NioLoop;
-import org.postgresql.sql2.execution.NioServiceContext;
-import org.postgresql.sql2.operations.PGCloseOperation;
-import org.postgresql.sql2.operations.PGConnectOperation;
-import org.postgresql.sql2.operations.PGOperationGroup;
-import org.postgresql.sql2.operations.PGValidationOperation;
-import org.postgresql.sql2.operations.helpers.PGTransaction;
-
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import java.util.Map;
@@ -34,6 +16,27 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collector;
 
+import org.postgresql.sql2.buffer.ByteBufferPool;
+import org.postgresql.sql2.communication.NetworkAction;
+import org.postgresql.sql2.communication.NetworkConnect;
+import org.postgresql.sql2.communication.NetworkConnection;
+import org.postgresql.sql2.execution.NioLoop;
+import org.postgresql.sql2.operations.PGCloseOperation;
+import org.postgresql.sql2.operations.PGConnectOperation;
+import org.postgresql.sql2.operations.PGOperationGroup;
+import org.postgresql.sql2.operations.PGValidationOperation;
+import org.postgresql.sql2.operations.helpers.PGTransaction;
+
+import jdk.incubator.sql2.Connection;
+import jdk.incubator.sql2.ConnectionProperty;
+import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.Operation;
+import jdk.incubator.sql2.OperationGroup;
+import jdk.incubator.sql2.ShardingKey;
+import jdk.incubator.sql2.SqlException;
+import jdk.incubator.sql2.SqlSkippedException;
+import jdk.incubator.sql2.Transaction;
+
 public class PGConnection extends PGOperationGroup<Object, Object> implements Connection {
   protected static final CompletionStage<Object> ROOT = CompletableFuture.completedFuture(null);
 
@@ -44,7 +47,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
 
   private final Map<ConnectionProperty, Object> properties;
 
-  private final ProtocolV3 protocol;
+  private final NetworkConnection protocol;
 
   private Object accumulator;
   private Collector collector = DEFAULT_COLLECTOR;
@@ -57,12 +60,12 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    */
   private final CompletableFuture head = new CompletableFuture();
 
-  public PGConnection(Map<ConnectionProperty, Object> properties, NioLoop loop) throws IOException {
+  public PGConnection(Map<ConnectionProperty, Object> properties, NioLoop loop, ByteBufferPool bufferPool) throws IOException {
     this.properties = properties;
     SocketChannel channel = SocketChannel.open();
     channel.configureBlocking(false);
-    this.protocol = (ProtocolV3) loop.registerNioService(channel, (context) -> {
-      return new ProtocolV3(this.properties, context);
+    this.protocol = (NetworkConnection) loop.registerNioService(channel, (context) -> {
+      return new NetworkConnection(this.properties, context, bufferPool);
     });
     this.setConnection(this);
   }
@@ -382,9 +385,13 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   static Throwable unwrapException(Throwable ex) {
     return ex instanceof CompletionException ? ex.getCause() : ex;
   }
+  
+  public void networkConnect(NetworkConnect connect) {
+    protocol.networkConnect(connect);
+  }
 
-  public void addSubmissionOnQue(PGSubmission submission) {
-    protocol.addSubmission(submission);
+  public void addNetworkAction(NetworkAction action) {
+    protocol.addNetworkAction(action);
   }
 
   public boolean isConnectionClosed() {

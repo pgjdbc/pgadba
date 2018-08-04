@@ -46,6 +46,7 @@ import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.SQLSTATE_CODE;
 
 
+@Deprecated
 public class ProtocolV3 implements NioService {
   private ProtocolV3States.States currentState = ProtocolV3States.States.NOT_CONNECTED;
 
