@@ -25,11 +25,17 @@ public class BEFrameParser {
   // TODO wrap ByteBuffer instances in InputStream for the payload (save copy to
   // unnecessary array)
   private byte[] payload;
+  
+  private int consumedBytes = 0;
+  
+  public int getConsumedBytes() {
+    return this.consumedBytes;
+  }
 
   public BEFrame parseBEFrame(ByteBuffer readBuffer, int position, int bytesRead) {
-    readBuffer.flip();
-
+    this.consumedBytes = 0;
     for (int i = position; i < bytesRead; i++) {
+      this.consumedBytes++;
       switch (state) {
       case BETWEEN:
         tag = readBuffer.get(i);
@@ -61,7 +67,7 @@ public class BEFrameParser {
         }
         break;
       case READ_LEN4:
-        payload[payloadRead] = readBuffer.get();
+        payload[payloadRead] = readBuffer.get(i);
         payloadRead++;
         if (payloadRead == payloadLength - 4) {
           state = States.BETWEEN;

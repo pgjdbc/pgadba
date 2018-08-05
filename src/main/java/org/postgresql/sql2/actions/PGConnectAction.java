@@ -1,7 +1,6 @@
 package org.postgresql.sql2.actions;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
@@ -10,6 +9,7 @@ import org.postgresql.sql2.communication.BEFrame;
 import org.postgresql.sql2.communication.NetworkAction;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.NetworkConnectContext;
+import org.postgresql.sql2.communication.NetworkOutputStream;
 import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.NetworkWriteContext;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
@@ -57,31 +57,19 @@ public class PGConnectAction implements NetworkConnect, NetworkAction {
     Map<ConnectionProperty, Object> properties = context.getProperties();
 
     // As now connected, send start up
-    OutputStream wire = context.getOutputStream();
-
-    // TODO pre-calculate byte[] to reduce method calls
-    wire.write(0);
-    wire.write(0);
-    wire.write(0);
-    wire.write(0);
+    NetworkOutputStream wire = context.getOutputStream();
+    wire.initPacket();
     wire.write(BinaryHelper.writeInt(3 * 65536));
-    wire.write("user".getBytes());
-    wire.write(0);
-    wire.write(((String) properties.get(PGConnectionProperties.USER)).getBytes());
-    wire.write(0);
-    wire.write("database".getBytes());
-    wire.write(0);
-    wire.write(((String) properties.get(PGConnectionProperties.DATABASE)).getBytes());
-    wire.write(0);
-    wire.write("application_name".getBytes());
-    wire.write(0);
-    wire.write("java_sql2_client".getBytes());
-    wire.write(0);
-    wire.write("client_encoding".getBytes());
-    wire.write(0);
-    wire.write("UTF8".getBytes());
-    wire.write(0);
-//    wire.write(0);
+    wire.write("user");
+    wire.write(((String) properties.get(PGConnectionProperties.USER)));
+    wire.write("database");
+    wire.write(((String) properties.get(PGConnectionProperties.DATABASE)));
+    wire.write("application_name");
+    wire.write("java_sql2_client");
+    wire.write("client_encoding");
+    wire.write("UTF8");
+    wire.writeTerminator();
+    wire.completePacket();
   }
 
   @Override

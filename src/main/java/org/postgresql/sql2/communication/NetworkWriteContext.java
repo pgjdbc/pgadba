@@ -1,7 +1,5 @@
 package org.postgresql.sql2.communication;
 
-import java.io.OutputStream;
-
 /**
  * Context for writing to the network.
  * 
@@ -10,10 +8,10 @@ import java.io.OutputStream;
 public interface NetworkWriteContext extends NetworkContext {
 
   /**
-   * Obtains the {@link OutputStream} to write content to the network.
+   * Obtains the {@link NetworkOutputStream} to write content to the network.
    * 
-   * @return {@link OutputStream} to write content to the network.
+   * @return {@link NetworkOutputStream} to write content to the network.
    */
-  OutputStream getOutputStream();
+  NetworkOutputStream getOutputStream();
 
 }

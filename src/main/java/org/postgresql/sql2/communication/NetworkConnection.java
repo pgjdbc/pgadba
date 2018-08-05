@@ -1,7 +1,6 @@
 package org.postgresql.sql2.communication;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.NotYetConnectedException;
@@ -31,7 +30,9 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   private final SocketChannel socketChannel;
 
-  private final Queue<NetworkAction> requestQueue = new ConcurrentLinkedQueue<>();
+  private final Queue<NetworkAction> priorityActionQueue = new LinkedList<>();
+
+  private final Queue<NetworkAction> actionQueue = new ConcurrentLinkedQueue<>();
 
   private final Queue<NetworkAction> awaitingResults = new LinkedList<>();
 
@@ -68,7 +69,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   public void addNetworkAction(NetworkAction networkAction) {
 
     // Ready network request for writing
-    this.requestQueue.add(networkAction);
+    this.actionQueue.add(networkAction);
     this.context.writeRequired();
   }
 
@@ -112,26 +113,22 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   @Override
   public void handleWrite() throws IOException {
-    this.handleWrite(this.requestQueue);
+    this.handleWrite(this.actionQueue);
   }
 
-  private void handleWrite(Queue<NetworkAction> requestActions) throws IOException {
-
-    // Do no write unless active
-    if (!this.isWritingActive) {
-      return;
-    }
-
-    // Write in the incomplete write buffer (should always have space)
-    if (this.incompleteWriteBuffer != null) {
-      this.outputStream.write(this.incompleteWriteBuffer.getByteBuffer());
-      this.incompleteWriteBuffer.release();
-      this.incompleteWriteBuffer = null;
-    }
+  /**
+   * Flushes the {@link NetworkAction} instances to {@link PooledByteBuffer}
+   * instances.
+   * 
+   * @param actions {@link Queue} of {@link NetworkAction} instances.
+   * @return <code>true</code> if to block.
+   * @throws IOException If fails to flush {@link NetworkAction} instances.
+   */
+  private boolean flushActions(Queue<NetworkAction> actions) throws IOException {
 
     // Flush out the actions
     NetworkAction action;
-    FLUSH_LOOP: while ((action = requestActions.peek()) != null) {
+    while ((action = actions.peek()) != null) {
 
       // Flush the action
       action.write(this);
@@ -147,11 +144,39 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
       // Determine if request blocks for further interaction
       if (action.isBlocking()) {
-        break FLUSH_LOOP; // can not send further requests
+        return true; // can not send further requests
       }
 
       // Request flushed, so attempt next request
-      requestActions.poll();
+      actions.poll();
+    }
+
+    // As here, all flushed
+    return false;
+  }
+
+  private void handleWrite(Queue<NetworkAction> requestActions) throws IOException {
+
+    // Do no write unless active
+    if (!this.isWritingActive) {
+      return;
+    }
+
+    // Write in the incomplete write buffer (should always have space)
+    if (this.incompleteWriteBuffer != null) {
+      this.outputStream.write(this.incompleteWriteBuffer.getByteBuffer());
+      if (this.incompleteWriteBuffer.getByteBuffer().hasRemaining()) {
+        // Further writes required
+        this.context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        return;
+      }
+      this.incompleteWriteBuffer.release();
+      this.incompleteWriteBuffer = null;
+    }
+
+    // Flush out the actions
+    if (!this.flushActions(this.priorityActionQueue)) {
+      this.flushActions(requestActions);
     }
 
     // Write data to network
@@ -182,45 +207,63 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   private BEFrame beFrame = null;
 
-  private NetworkAction nextAction = null;
-
   @Override
   public void handleRead() throws IOException {
 
     // TODO use pooled byte buffers
     ByteBuffer readBuffer = ByteBuffer.allocate(1024);
 
+    int bytesRead = -1;
+    boolean isWriteRequired = false;
     try {
 
       // Consume data on the socket
-      int bytesRead;
       while ((bytesRead = socketChannel.read(readBuffer)) > 0) {
+
+        // Setup for consuming parts
+        readBuffer.flip();
+        int position = 0;
 
         // Service the BE frames
         BEFrame frame;
-        while ((frame = this.parser.parseBEFrame(readBuffer, 0, bytesRead)) != null) {
+        while ((frame = this.parser.parseBEFrame(readBuffer, position, bytesRead)) != null) {
+          position += this.parser.getConsumedBytes();
 
           // Obtain the awaiting request
-          NetworkAction awaitingRequest = this.nextAction != null ? this.nextAction : this.awaitingResults.poll();
+          NetworkAction awaitingRequest = this.awaitingResults.poll();
 
           // Provide frame to awaiting request
           this.beFrame = frame;
-          this.nextAction = awaitingRequest.read(this);
+          NetworkAction nextAction = awaitingRequest.read(this);
+
+          // Include as next action
+          if (nextAction != null) {
+            this.priorityActionQueue.add(nextAction);
+            isWriteRequired = true;
+          }
 
           // Remove if blocking writing
-          if (awaitingRequest == this.requestQueue.peek()) {
-            this.requestQueue.poll();
+          if (awaitingRequest == this.actionQueue.peek()) {
+            this.actionQueue.poll();
 
             // Flag to write (as very likely have writes)
-            this.context.writeRequired();
+            isWriteRequired = true;
           }
         }
-      }
-      if (bytesRead < 0) {
-        throw new ClosedChannelException();
+
+        // Clear buffer for re-use
+        readBuffer.clear();
       }
     } catch (NotYetConnectedException | ClosedChannelException ignore) {
       ignore.printStackTrace();
+      throw ignore;
+    } finally {
+      if (isWriteRequired) {
+        this.context.writeRequired();
+      }
+    }
+    if (bytesRead < 0) {
+      throw new ClosedChannelException();
     }
   }
 
@@ -263,7 +306,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    */
 
   @Override
-  public OutputStream getOutputStream() {
+  public NetworkOutputStream getOutputStream() {
     return this.outputStream;
   }
 

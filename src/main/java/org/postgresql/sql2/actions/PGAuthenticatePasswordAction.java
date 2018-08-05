@@ -7,6 +7,7 @@ import java.util.Map;
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.communication.FEFrame;
 import org.postgresql.sql2.communication.NetworkAction;
+import org.postgresql.sql2.communication.NetworkOutputStream;
 import org.postgresql.sql2.communication.NetworkWriteContext;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
 import org.postgresql.sql2.util.BinaryHelper;
@@ -41,13 +42,13 @@ public class PGAuthenticatePasswordAction extends AbstractAuthenticationSuccessA
         ((String) properties.get(PGConnectionProperties.USER)).getBytes(StandardCharsets.UTF_8),
         ((String) properties.get(PGConnectionProperties.PASSWORD)).getBytes(StandardCharsets.UTF_8),
         this.authentication.getSalt());
-    byte[] payload = new byte[content.length + 6];
-    payload[0] = FEFrame.FrontendTag.PASSWORD_MESSAGE.getByte();
-    System.arraycopy(content, 0, payload, 5, content.length);
-    payload[payload.length - 1] = 0;
 
     // Write the request
-    context.getOutputStream().write(payload);
+    NetworkOutputStream wire = context.getOutputStream();
+    wire.write(FEFrame.FrontendTag.PASSWORD_MESSAGE.getByte());
+    wire.initPacket();
+    wire.write(content);
+    wire.completePacket();
   }
 
 }
