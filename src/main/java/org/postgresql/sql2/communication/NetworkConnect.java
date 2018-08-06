@@ -7,7 +7,7 @@ import java.io.IOException;
  * 
  * @author Daniel Sagenschneider
  */
-public interface NetworkConnect {
+public interface NetworkConnect extends NetworkErrorHandler {
 
   /**
    * Triggers the connect.
@@ -18,23 +18,13 @@ public interface NetworkConnect {
   void connect(NetworkConnectContext context) throws IOException;
 
   /**
-   * Handles the connect by the {@link NetworkAction}.
+   * Handles the connect by the {@link NetworkRequest}.
    * 
    * @param context {@link NetworkConnectContext}.
-   * @return Possible {@link NetworkAction} to undertake immediately after
+   * @return Possible {@link NetworkRequest} to undertake immediately after
    *         connection established.
    * @throws IOException If failure in handling the connect.
    */
-  NetworkAction finishConnect(NetworkConnectContext context) throws IOException;
-
-  /**
-   * Handles the failure.
-   * 
-   * @param ex Failure.
-   */
-  default void handleException(Throwable ex) {
-    // TODO provide exception back up the layers
-    ex.printStackTrace();
-  }
+  NetworkRequest finishConnect(NetworkConnectContext context) throws IOException;
 
 }

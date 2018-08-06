@@ -6,7 +6,7 @@ import java.util.Map;
 import jdk.incubator.sql2.ConnectionProperty;
 
 /**
- * Context available to all {@link NetworkAction} events.
+ * Context available to all {@link NetworkRequest} events.
  * 
  * @author Daniel Sagenschneider
  */

@@ -1,6 +1,6 @@
 package org.postgresql.sql2.submissions;
 
-import org.postgresql.sql2.actions.PGConnectAction;
+import org.postgresql.sql2.communication.network.NetworkConnectRequest;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-public class ConnectSubmission extends PGConnectAction implements org.postgresql.sql2.PGSubmission<Void> {
+public class ConnectSubmission extends NetworkConnectRequest implements org.postgresql.sql2.PGSubmission<Void> {
 
   final private Supplier<Boolean> cancel;
   private CompletableFuture<Void> publicStage;
@@ -28,6 +28,7 @@ public class ConnectSubmission extends PGConnectAction implements org.postgresql
 
   public ConnectSubmission(Supplier<Boolean> cancel, Types completionType, Consumer<Throwable> errorHandler,
       GroupSubmission groupSubmission) {
+    super(null);
     this.cancel = cancel;
     this.completionType = completionType;
     this.errorHandler = errorHandler;

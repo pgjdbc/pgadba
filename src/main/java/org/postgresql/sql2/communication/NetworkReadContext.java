@@ -15,6 +15,13 @@ public interface NetworkReadContext extends NetworkContext {
   BEFrame getBEFrame();
 
   /**
+   * Triggers for a {@link NetworkRequest} to be undertaken.
+   * 
+   * @param request {@link NetworkRequest} to be undertaken.
+   */
+  void write(NetworkRequest request);
+
+  /**
    * Triggers for a write.
    */
   void writeRequired();

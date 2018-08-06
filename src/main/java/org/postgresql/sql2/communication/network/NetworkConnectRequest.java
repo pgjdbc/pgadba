@@ -1,4 +1,4 @@
-package org.postgresql.sql2.actions;
+package org.postgresql.sql2.communication.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -6,29 +6,35 @@ import java.util.Map;
 
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.communication.BEFrame;
-import org.postgresql.sql2.communication.NetworkAction;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.NetworkConnectContext;
 import org.postgresql.sql2.communication.NetworkOutputStream;
 import org.postgresql.sql2.communication.NetworkReadContext;
+import org.postgresql.sql2.communication.NetworkRequest;
+import org.postgresql.sql2.communication.NetworkResponse;
 import org.postgresql.sql2.communication.NetworkWriteContext;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
+import org.postgresql.sql2.submissions.ConnectSubmission;
 import org.postgresql.sql2.util.BinaryHelper;
 
 import jdk.incubator.sql2.ConnectionProperty;
 
 /**
- * Connect {@link NetworkAction}.
+ * Connect {@link NetworkRequest}.
  * 
  * @author Daniel Sagenschneider
  */
-public class PGConnectAction implements NetworkConnect, NetworkAction {
+public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, NetworkResponse {
+
+  private final ConnectSubmission connectSubmission;
+
+  public NetworkConnectRequest(ConnectSubmission connectSubmission) {
+    this.connectSubmission = connectSubmission == null ? (ConnectSubmission) this : connectSubmission;
+  }
 
   /*
    * =================== NetworkRequest ====================
    */
-
-  private boolean isBlocking = true;
 
   @Override
   public void connect(NetworkConnectContext context) throws IOException {
@@ -39,7 +45,7 @@ public class PGConnectAction implements NetworkConnect, NetworkAction {
   }
 
   @Override
-  public NetworkAction finishConnect(NetworkConnectContext context) throws IOException {
+  public NetworkRequest finishConnect(NetworkConnectContext context) throws IOException {
 
     // Handle completion of connect
     if (!context.getSocketChannel().finishConnect()) {
@@ -51,7 +57,7 @@ public class PGConnectAction implements NetworkConnect, NetworkAction {
   }
 
   @Override
-  public void write(NetworkWriteContext context) throws IOException {
+  public NetworkRequest write(NetworkWriteContext context) throws IOException {
 
     // Obtain the properties
     Map<ConnectionProperty, Object> properties = context.getProperties();
@@ -70,20 +76,23 @@ public class PGConnectAction implements NetworkConnect, NetworkAction {
     wire.write("UTF8");
     wire.writeTerminator();
     wire.completePacket();
+
+    // No further immediate requests
+    return null;
   }
 
   @Override
   public boolean isBlocking() {
-    return this.isBlocking;
-  }
-
-  @Override
-  public boolean isRequireResponse() {
     return true;
   }
 
   @Override
-  public NetworkAction read(NetworkReadContext context) throws IOException {
+  public NetworkResponse getRequiredResponse() {
+    return this;
+  }
+
+  @Override
+  public NetworkResponse read(NetworkReadContext context) throws IOException {
 
     // Expecting authentication challenge
     BEFrame frame = context.getBEFrame();
@@ -95,12 +104,13 @@ public class PGConnectAction implements NetworkConnect, NetworkAction {
 
       case MD5:
         // Password authentication required
-        return new PGAuthenticatePasswordAction(authentication);
+        context.write(new AuthenticatePasswordRequest(authentication, this.connectSubmission));
+        return null;
 
       case SUCCESS:
         // Connected, so trigger any waiting submissions
         context.writeRequired();
-        return null;
+        return new ReadyForQueryNetworkResponse();
 
       default:
         throw new IllegalStateException("Unhandled authentication " + authentication.getType());
@@ -109,11 +119,6 @@ public class PGConnectAction implements NetworkConnect, NetworkAction {
     default:
       throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
     }
-  }
-
-  @Override
-  public void handleException(Throwable ex) {
-    NetworkAction.super.handleException(ex);
   }
 
 }

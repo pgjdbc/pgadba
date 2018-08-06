@@ -1,31 +1,28 @@
-package org.postgresql.sql2.actions;
+package org.postgresql.sql2.communication.network;
 
 import java.io.IOException;
 
 import org.postgresql.sql2.communication.BEFrame;
-import org.postgresql.sql2.communication.NetworkAction;
 import org.postgresql.sql2.communication.NetworkReadContext;
+import org.postgresql.sql2.communication.NetworkResponse;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
+import org.postgresql.sql2.submissions.ConnectSubmission;
 
 /**
- * Abstract authentication success {@link NetworkAction}.
+ * Authentication success {@link NetworkResponse}.
  * 
  * @author Daniel Sagenschneider
  */
-public abstract class AbstractAuthenticationSuccessAction implements NetworkAction {
+public class AuthenticationSuccessNetworkResponse implements NetworkResponse {
 
-  @Override
-  public boolean isBlocking() {
-    return true;
+  private final ConnectSubmission connectSubmission;
+
+  public AuthenticationSuccessNetworkResponse(ConnectSubmission connectSubmission) {
+    this.connectSubmission = connectSubmission;
   }
 
   @Override
-  public boolean isRequireResponse() {
-    return true;
-  }
-
-  @Override
-  public NetworkAction read(NetworkReadContext context) throws IOException {
+  public NetworkResponse read(NetworkReadContext context) throws IOException {
     // Expecting authentication challenge
     BEFrame frame = context.getBEFrame();
     switch (frame.getTag()) {
@@ -36,8 +33,8 @@ public abstract class AbstractAuthenticationSuccessAction implements NetworkActi
 
       case SUCCESS:
         // Connected, so trigger any waiting submissions
-        context.writeRequired();
-        return null;
+        this.connectSubmission.finish(null);
+        return new ReadyForQueryNetworkResponse();
 
       default:
         throw new IllegalStateException("Unhandled authentication " + authentication.getType());

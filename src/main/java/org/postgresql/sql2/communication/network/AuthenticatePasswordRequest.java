@@ -1,4 +1,4 @@
-package org.postgresql.sql2.actions;
+package org.postgresql.sql2.communication.network;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -6,25 +6,30 @@ import java.util.Map;
 
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.communication.FEFrame;
-import org.postgresql.sql2.communication.NetworkAction;
 import org.postgresql.sql2.communication.NetworkOutputStream;
+import org.postgresql.sql2.communication.NetworkRequest;
+import org.postgresql.sql2.communication.NetworkResponse;
 import org.postgresql.sql2.communication.NetworkWriteContext;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
+import org.postgresql.sql2.submissions.ConnectSubmission;
 import org.postgresql.sql2.util.BinaryHelper;
 
 import jdk.incubator.sql2.ConnectionProperty;
 
 /**
- * {@link NetworkAction} to provide password authentication.
+ * {@link NetworkRequest} to provide password authentication.
  * 
  * @author Daniel Sagenschneider
  */
-public class PGAuthenticatePasswordAction extends AbstractAuthenticationSuccessAction {
+public class AuthenticatePasswordRequest implements NetworkRequest {
 
   private final AuthenticationRequest authentication;
 
-  public PGAuthenticatePasswordAction(AuthenticationRequest authentication) {
+  private final ConnectSubmission connectSubmission;
+
+  public AuthenticatePasswordRequest(AuthenticationRequest authentication, ConnectSubmission connectSubmission) {
     this.authentication = authentication;
+    this.connectSubmission = connectSubmission;
   }
 
   /*
@@ -32,7 +37,7 @@ public class PGAuthenticatePasswordAction extends AbstractAuthenticationSuccessA
    */
 
   @Override
-  public void write(NetworkWriteContext context) throws IOException {
+  public NetworkRequest write(NetworkWriteContext context) throws IOException {
 
     // Obtain the properties
     Map<ConnectionProperty, Object> properties = context.getProperties();
@@ -49,6 +54,19 @@ public class PGAuthenticatePasswordAction extends AbstractAuthenticationSuccessA
     wire.initPacket();
     wire.write(content);
     wire.completePacket();
+
+    // No further immediate requests
+    return null;
+  }
+
+  @Override
+  public boolean isBlocking() {
+    return true;
+  }
+
+  @Override
+  public NetworkResponse getRequiredResponse() {
+    return new AuthenticationSuccessNetworkResponse(this.connectSubmission);
   }
 
 }

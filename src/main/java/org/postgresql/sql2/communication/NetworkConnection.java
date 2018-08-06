@@ -12,9 +12,11 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.buffer.ByteBufferPool;
 import org.postgresql.sql2.buffer.ByteBufferPoolOutputStream;
 import org.postgresql.sql2.buffer.PooledByteBuffer;
+import org.postgresql.sql2.communication.packets.ParameterStatus;
 import org.postgresql.sql2.execution.NioService;
 import org.postgresql.sql2.execution.NioServiceContext;
 
@@ -30,18 +32,33 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   private final SocketChannel socketChannel;
 
-  private final Queue<NetworkAction> priorityActionQueue = new LinkedList<>();
+  private final Queue<NetworkRequest> priorityRequestQueue = new LinkedList<>();
 
-  private final Queue<NetworkAction> actionQueue = new ConcurrentLinkedQueue<>();
+  private final Queue<NetworkRequest> requestQueue = new ConcurrentLinkedQueue<>();
 
-  private final Queue<NetworkAction> awaitingResults = new LinkedList<>();
+  private final Queue<NetworkResponse> awaitingResponses = new LinkedList<>();
 
   private final BEFrameParser parser = new BEFrameParser();
 
   private NetworkConnect connect = null;
 
-  private boolean isWritingActive = false;
+  /**
+   * Possible blocking {@link NetworkResponse}.
+   */
+  private NetworkResponse blockingResponse = new NetworkResponse() {
+    @Override
+    public NetworkResponse read(NetworkReadContext context) throws IOException {
+      throw new IllegalStateException("Should not read until connected");
+    }
+  };
 
+  /**
+   * Instantiate.
+   * 
+   * @param properties Connection properties.
+   * @param context    {@link NioServiceContext}.
+   * @param bufferPool {@link ByteBufferPool}.
+   */
   public NetworkConnection(Map<ConnectionProperty, Object> properties, NioServiceContext context,
       ByteBufferPool bufferPool) {
     this.properties = properties;
@@ -50,7 +67,12 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     this.socketChannel = (SocketChannel) context.getChannel();
   }
 
-  public synchronized void networkConnect(NetworkConnect networkConnect) {
+  /**
+   * Sends the {@link NetworkConnect}.
+   * 
+   * @param networkConnect {@link NetworkConnect}.
+   */
+  public synchronized void sendNetworkConnect(NetworkConnect networkConnect) {
 
     // Ensure only one connect
     if (this.connect != null) {
@@ -66,13 +88,23 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     }
   }
 
-  public void addNetworkAction(NetworkAction networkAction) {
+  /**
+   * Sends the {@link NetworkRequest}.
+   * 
+   * @param request {@link NetworkRequest}.
+   */
+  public void sendNetworkRequest(NetworkRequest request) {
 
     // Ready network request for writing
-    this.actionQueue.add(networkAction);
+    this.requestQueue.add(request);
     this.context.writeRequired();
   }
 
+  /**
+   * Indicates if the connection is closed.
+   * 
+   * @return <code>true</code> if the connection is closed.
+   */
   public boolean isConnectionClosed() {
     return !socketChannel.isConnected();
   }
@@ -85,84 +117,89 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   public synchronized void handleConnect() throws IOException {
 
     // Specify to write immediately
-    NetworkAction initialAction = this.connect.finishConnect(this);
+    NetworkRequest initialRequest = this.connect.finishConnect(this);
+
+    // As connected, may now start writing
+    this.blockingResponse = null;
 
     // Load initial action to be undertaken first
-    if (initialAction != null) {
+    if (initialRequest != null) {
 
-      // Now able to write
-      this.isWritingActive = true;
-
-      // Run initial action
-      Queue<NetworkAction> queue = new LinkedList<>();
-      queue.add(initialAction);
+      // Run initial request
+      Queue<NetworkRequest> queue = new LinkedList<>();
+      queue.add(initialRequest);
       this.handleWrite(queue);
     }
   }
 
+  @Override
+  public void handleWrite() throws IOException {
+    this.handleWrite(this.requestQueue);
+  }
+
   /**
-   * Last awaiting {@link NetworkAction} to avoid {@link NetworkAction} being
-   * registered twice for waiting.
+   * Flushes the {@link NetworkRequest} instances to {@link PooledByteBuffer}
+   * instances.
+   * 
+   * @param requests {@link Queue} of {@link NetworkRequest} instances.
+   * @return <code>true</code> if to block.
+   * @throws IOException If fails to flush {@link NetworkRequest} instances.
    */
-  private NetworkAction lastAwaitingResult = null;
+  private boolean flushRequests(Queue<NetworkRequest> requests) throws IOException {
+
+    // Flush out the request
+    NetworkRequest request;
+    while ((request = requests.poll()) != null) {
+
+      // Flush the request
+      NetworkRequest nextRequest;
+      do {
+        nextRequest = request.write(this);
+
+        // Determine if requires response
+        NetworkResponse response = request.getRequiredResponse();
+        if (response != null) {
+          this.awaitingResponses.add(response);
+        }
+
+        // Determine if request blocks for further interaction
+        if (request.isBlocking()) {
+          this.blockingResponse = response;
+          return true; // can not send further requests
+        }
+
+        // Loop until all next requests flushed
+        request = nextRequest;
+      } while (request != null);
+    }
+
+    // As here, all flushed with no blocking
+    return false;
+  }
 
   /**
    * Possible previous incomplete {@link PooledByteBuffer} not completely written.
    */
   private PooledByteBuffer incompleteWriteBuffer = null;
 
-  @Override
-  public void handleWrite() throws IOException {
-    this.handleWrite(this.actionQueue);
-  }
-
   /**
-   * Flushes the {@link NetworkAction} instances to {@link PooledByteBuffer}
-   * instances.
+   * Handles writing the {@link NetworkRequest} instances.
    * 
-   * @param actions {@link Queue} of {@link NetworkAction} instances.
-   * @return <code>true</code> if to block.
-   * @throws IOException If fails to flush {@link NetworkAction} instances.
+   * @param requests {@link Queue} of {@link NetworkRequest} instances.
+   * @throws IOException If fails to write the {@link NetworkRequest} instances.
    */
-  private boolean flushActions(Queue<NetworkAction> actions) throws IOException {
+  private void handleWrite(Queue<NetworkRequest> requests) throws IOException {
 
-    // Flush out the actions
-    NetworkAction action;
-    while ((action = actions.peek()) != null) {
+    // Only flush further requests if no blocking response
+    if (this.blockingResponse == null) {
 
-      // Flush the action
-      action.write(this);
-
-      // Determine if requires response
-      if (action.isRequireResponse()) {
-        // Only wait on once
-        if (this.lastAwaitingResult != action) {
-          this.awaitingResults.add(action);
-          this.lastAwaitingResult = action;
-        }
+      // Flush out the requests (doing priority queue first)
+      if (!this.flushRequests(this.priorityRequestQueue)) {
+        this.flushRequests(requests);
       }
-
-      // Determine if request blocks for further interaction
-      if (action.isBlocking()) {
-        return true; // can not send further requests
-      }
-
-      // Request flushed, so attempt next request
-      actions.poll();
     }
 
-    // As here, all flushed
-    return false;
-  }
-
-  private void handleWrite(Queue<NetworkAction> requestActions) throws IOException {
-
-    // Do no write unless active
-    if (!this.isWritingActive) {
-      return;
-    }
-
-    // Write in the incomplete write buffer (should always have space)
+    // Write the previous incomplete write buffer
     if (this.incompleteWriteBuffer != null) {
       this.outputStream.write(this.incompleteWriteBuffer.getByteBuffer());
       if (this.incompleteWriteBuffer.getByteBuffer().hasRemaining()) {
@@ -172,11 +209,6 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
       }
       this.incompleteWriteBuffer.release();
       this.incompleteWriteBuffer = null;
-    }
-
-    // Flush out the actions
-    if (!this.flushActions(this.priorityActionQueue)) {
-      this.flushActions(requestActions);
     }
 
     // Write data to network
@@ -205,7 +237,20 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     this.context.setInterestedOps(SelectionKey.OP_READ);
   }
 
+  /**
+   * {@link BEFrame} for {@link NetworkReadContext}.
+   */
   private BEFrame beFrame = null;
+
+  /**
+   * Allows {@link NetworkReadContext} to specify if write required.
+   */
+  private boolean isWriteRequired = false;
+
+  /**
+   * Immediate {@link NetworkResponse}.
+   */
+  private NetworkResponse immediateResponse = null;
 
   @Override
   public void handleRead() throws IOException {
@@ -213,12 +258,13 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     // TODO use pooled byte buffers
     ByteBuffer readBuffer = ByteBuffer.allocate(1024);
 
+    // Reset for reads
     int bytesRead = -1;
-    boolean isWriteRequired = false;
+    this.isWriteRequired = false;
     try {
 
       // Consume data on the socket
-      while ((bytesRead = socketChannel.read(readBuffer)) > 0) {
+      while ((bytesRead = this.socketChannel.read(readBuffer)) > 0) {
 
         // Setup for consuming parts
         readBuffer.flip();
@@ -229,25 +275,40 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
         while ((frame = this.parser.parseBEFrame(readBuffer, position, bytesRead)) != null) {
           position += this.parser.getConsumedBytes();
 
-          // Obtain the awaiting request
-          NetworkAction awaitingRequest = this.awaitingResults.poll();
+          // Hook in any notifications
+          switch (frame.getTag()) {
 
-          // Provide frame to awaiting request
-          this.beFrame = frame;
-          NetworkAction nextAction = awaitingRequest.read(this);
+          case PARAM_STATUS:
+            // Load parameters for connection
+            ParameterStatus paramStatus = new ParameterStatus(frame.getPayload());
+            this.properties.put(PGConnectionProperties.lookup(paramStatus.getName()), paramStatus.getValue());
+            break;
 
-          // Include as next action
-          if (nextAction != null) {
-            this.priorityActionQueue.add(nextAction);
-            isWriteRequired = true;
-          }
+          case CANCELLATION_KEY_DATA:
+            // TODO handle cancellation key
+            break;
 
-          // Remove if blocking writing
-          if (awaitingRequest == this.actionQueue.peek()) {
-            this.actionQueue.poll();
+          default:
+            // Obtain the awaiting response
+            NetworkResponse awaitingResponse;
+            if (this.immediateResponse != null) {
+              awaitingResponse = this.immediateResponse;
+              this.immediateResponse = null;
+            } else {
+              awaitingResponse = this.awaitingResponses.poll();
+            }
 
-            // Flag to write (as very likely have writes)
-            isWriteRequired = true;
+            // Provide frame to awaiting response
+            this.beFrame = frame;
+            this.immediateResponse = awaitingResponse.read(this);
+
+            // Remove if blocking writing
+            if (awaitingResponse == this.blockingResponse) {
+              this.blockingResponse = null;
+
+              // Flag to write (as very likely have writes)
+              this.isWriteRequired = true;
+            }
           }
         }
 
@@ -265,11 +326,6 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     if (bytesRead < 0) {
       throw new ClosedChannelException();
     }
-  }
-
-  @Override
-  public void writeRequired() {
-    this.context.writeRequired();
   }
 
   @Override
@@ -299,6 +355,17 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   @Override
   public BEFrame getBEFrame() {
     return this.beFrame;
+  }
+
+  @Override
+  public void write(NetworkRequest request) {
+    this.priorityRequestQueue.add(request);
+    this.isWriteRequired = true;
+  }
+
+  @Override
+  public void writeRequired() {
+    this.isWriteRequired = true;
   }
 
   /*

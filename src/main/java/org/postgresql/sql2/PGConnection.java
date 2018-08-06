@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collector;
 
 import org.postgresql.sql2.buffer.ByteBufferPool;
-import org.postgresql.sql2.communication.NetworkAction;
+import org.postgresql.sql2.communication.NetworkRequest;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.NetworkConnection;
 import org.postgresql.sql2.execution.NioLoop;
@@ -387,11 +387,11 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   }
   
   public void networkConnect(NetworkConnect connect) {
-    protocol.networkConnect(connect);
+    protocol.sendNetworkConnect(connect);
   }
 
-  public void addNetworkAction(NetworkAction action) {
-    protocol.addNetworkAction(action);
+  public void addNetworkAction(NetworkRequest action) {
+    protocol.sendNetworkRequest(action);
   }
 
   public boolean isConnectionClosed() {
