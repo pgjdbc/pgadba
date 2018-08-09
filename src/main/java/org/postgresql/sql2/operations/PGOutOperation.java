@@ -90,8 +90,9 @@ public class PGOutOperation<R> implements OutOperation<R> {
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new OutSubmission<>(this::cancel, errorHandler, sql, outParameterTypes, processor, groupSubmission, holder);
-    connection.addSubmissionOnQue(submission);
+    PGSubmission<R> submission = new OutSubmission<>(this::cancel, errorHandler, sql, outParameterTypes, processor,
+        groupSubmission, holder);
+    connection.submit(submission);
     return submission;
   }
 

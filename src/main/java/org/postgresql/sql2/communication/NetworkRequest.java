@@ -1,7 +1,5 @@
 package org.postgresql.sql2.communication;
 
-import java.io.IOException;
-
 /**
  * Action over the network to the PostgreSql database.
  * 
@@ -15,9 +13,9 @@ public interface NetworkRequest extends NetworkErrorHandler {
    * @param context {@link NetworkWriteContext}.
    * @return Optional further {@link NetworkRequest} to be undertaken. May be
    *         <code>null</code> if no further {@link NetworkRequest}.
-   * @throws IOException If failure in writing to the network.
+   * @throws Exception If failure in writing to the network.
    */
-  NetworkRequest write(NetworkWriteContext context) throws IOException;
+  NetworkRequest write(NetworkWriteContext context) throws Exception;
 
   /**
    * Indicates the {@link NetworkRequest} is blocking further

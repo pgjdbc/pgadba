@@ -33,7 +33,6 @@ import org.postgresql.sql2.execution.NioServiceContext;
 import org.postgresql.sql2.operations.helpers.FEFrameSerializer;
 import org.postgresql.sql2.util.BinaryHelper;
 import org.postgresql.sql2.util.PGCount;
-import org.postgresql.sql2.util.PreparedStatementCache;
 
 import jdk.incubator.sql2.ConnectionProperty;
 import jdk.incubator.sql2.SqlException;
@@ -155,17 +154,17 @@ public class ProtocolV3 implements NioService {
             sub.finish(null);
 
           } else {
-            if (preparedStatementCache.sqlNotPreparedBefore(sub.getHolder(), sub.getSql())) {
-              queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-            }
-            queFrame(FEFrameSerializer.toDescribePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-            descriptionNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
-            for (int i = 0; i < sub.numberOfQueryRepetitions(); i++) {
-              queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache, i));
-              queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
-              sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
-              queFrame(FEFrameSerializer.toSyncPacket());
-            }
+//            if (preparedStatementCache.sqlNotPreparedBefore(sub.getHolder(), sub.getSql())) {
+//              queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+//            }
+//            queFrame(FEFrameSerializer.toDescribePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+//            descriptionNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
+//            for (int i = 0; i < sub.numberOfQueryRepetitions(); i++) {
+//              queFrame(FEFrameSerializer.toBindPacket(sub.getHolder(), sub.getSql(), preparedStatementCache, i));
+//              queFrame(FEFrameSerializer.toExecutePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
+//              sentSqlNameQue.add(preparedStatementCache.getNameForQuery(sub.getSql(), sub.getParamTypes()));
+//              queFrame(FEFrameSerializer.toSyncPacket());
+//            }
 
             // Await response
             awaitingResults.add(sub);
@@ -258,12 +257,12 @@ public class ProtocolV3 implements NioService {
   private void doRowDescription(BEFrame packet) {
     RowDescription rowDescription = new RowDescription(packet.getPayload());
     String portalName = descriptionNameQue.poll();
-    preparedStatementCache.addDescriptionToPortal(portalName, rowDescription.getDescriptions());
+//    preparedStatementCache.addDescriptionToPortal(portalName, rowDescription.getDescriptions());
   }
 
   private void doDataRow(BEFrame packet) {
     String portalName = sentSqlNameQue.peek();
-    DataRow row = new DataRow(packet.getPayload(), preparedStatementCache.getDescription(portalName), rowNumber++);
+//    DataRow row = new DataRow(packet.getPayload(), preparedStatementCache.getDescription(portalName), rowNumber++);
     PGSubmission sub = awaitingResults.peek();
 
     if (sub == null) {
@@ -271,7 +270,7 @@ public class ProtocolV3 implements NioService {
           "Data Row packet arrived without an corresponding submission, internal state corruption");
     }
 
-    sub.addRow(row);
+//    sub.addRow(row);
   }
 
   private void doCommandComplete(BEFrame packet) {

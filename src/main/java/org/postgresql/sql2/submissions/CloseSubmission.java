@@ -1,5 +1,6 @@
 package org.postgresql.sql2.submissions;
 
+import org.postgresql.sql2.communication.network.CloseRequest;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
@@ -14,7 +15,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-public class CloseSubmission implements org.postgresql.sql2.PGSubmission<Void> {
+public class CloseSubmission extends CloseRequest implements org.postgresql.sql2.PGSubmission<Void> {
   final private Supplier<Boolean> cancel;
   private CompletableFuture<Void> publicStage;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);

@@ -28,7 +28,6 @@ public class ConnectSubmission extends NetworkConnectRequest implements org.post
 
   public ConnectSubmission(Supplier<Boolean> cancel, Types completionType, Consumer<Throwable> errorHandler,
       GroupSubmission groupSubmission) {
-    super(null);
     this.cancel = cancel;
     this.completionType = completionType;
     this.errorHandler = errorHandler;
@@ -106,5 +105,14 @@ public class ConnectSubmission extends NetworkConnectRequest implements org.post
   @Override
   public Consumer<Throwable> getErrorHandler() {
     return errorHandler;
+  }
+
+  /*
+   * ================ NetworkConnectRequest ====================
+   */
+
+  @Override
+  protected ConnectSubmission getConnectSubmission() {
+    return this;
   }
 }

@@ -65,7 +65,7 @@ public class PGValidationOperation implements Operation<Void> {
             },
             (a, b) -> null,
             a -> null));
-        connection.addSubmissionOnQue(submission);
+        connection.submit(submission);
         return submission;
     }
     throw new IllegalArgumentException();

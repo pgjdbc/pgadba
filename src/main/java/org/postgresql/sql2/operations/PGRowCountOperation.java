@@ -85,7 +85,7 @@ public class PGRowCountOperation<R> implements ParameterizedRowCountOperation<R>
   @Override
   public Submission<R> submit() {
     PGSubmission<R> submission = new CountSubmission<>(this::cancel, errorHandler, holder, returningRowSubmission, sql, groupSubmission);
-    connection.addSubmissionOnQue(submission);
+    connection.submit(submission);
     return submission;
   }
 

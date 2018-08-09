@@ -7,19 +7,25 @@ import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.NetworkResponse;
 
 /**
- * Ready for Query {@link NetworkResponse}.
+ * Parse {@link NetworkResponse}.
  * 
  * @author Daniel Sagenschneider
  */
-public class ReadyForQueryNetworkResponse implements NetworkResponse {
+public class ParseResponse implements NetworkResponse {
+
+  private final Query query;
+
+  public ParseResponse(Query query) {
+    this.query = query;
+  }
 
   @Override
   public NetworkResponse read(NetworkReadContext context) throws IOException {
     BEFrame frame = context.getBEFrame();
     switch (frame.getTag()) {
 
-    case READY_FOR_QUERY:
-      // Consume ready for query
+    case PARSE_COMPLETE:
+      this.query.flagParsed();
       return null; // nothing further
 
     default:

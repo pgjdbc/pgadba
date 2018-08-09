@@ -1,6 +1,7 @@
 package org.postgresql.sql2.util;
 
 import org.junit.jupiter.api.Test;
+import org.postgresql.sql2.communication.PreparedStatementCache;
 
 import java.util.Arrays;
 
@@ -13,14 +14,14 @@ public class PreparedStatementCacheTest {
   public void getNameForQuery() {
     PreparedStatementCache cache = new PreparedStatementCache();
 
-    assertEquals("q1", cache.getNameForQuery("select 1", Arrays.asList(1, 2)));
-    assertEquals("q1", cache.getNameForQuery("select 1", Arrays.asList(1, 2)));
+    assertEquals("q1", cache.getQuery("select 1", Arrays.asList(1, 2)).getQueryName());
+    assertEquals("q1", cache.getQuery("select 1", Arrays.asList(1, 2)).getQueryName());
   }
 
   @Test
   public void getNameForQueryNull() {
     PreparedStatementCache cache = new PreparedStatementCache();
 
-    assertNull(cache.getNameForQuery(null, Arrays.asList(1, 2)));
+    assertNull(cache.getQuery(null, Arrays.asList(1, 2)));
   }
 }

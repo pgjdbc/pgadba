@@ -14,4 +14,11 @@ public interface NetworkWriteContext extends NetworkContext {
    */
   NetworkOutputStream getOutputStream();
 
+  /**
+   * Obtains the {@link PreparedStatementCache}.
+   * 
+   * @return {@link PreparedStatementCache}.
+   */
+  PreparedStatementCache getPreparedStatementCache();
+
 }

@@ -16,7 +16,9 @@ import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.buffer.ByteBufferPool;
 import org.postgresql.sql2.buffer.ByteBufferPoolOutputStream;
 import org.postgresql.sql2.buffer.PooledByteBuffer;
+import org.postgresql.sql2.communication.packets.ErrorResponse;
 import org.postgresql.sql2.communication.packets.ParameterStatus;
+import org.postgresql.sql2.communication.packets.parts.ErrorResponseField;
 import org.postgresql.sql2.execution.NioService;
 import org.postgresql.sql2.execution.NioServiceContext;
 
@@ -39,6 +41,8 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   private final Queue<NetworkResponse> awaitingResponses = new LinkedList<>();
 
   private final BEFrameParser parser = new BEFrameParser();
+
+  private final PreparedStatementCache preparedStatementCache = new PreparedStatementCache();
 
   private NetworkConnect connect = null;
 
@@ -72,19 +76,22 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    * 
    * @param networkConnect {@link NetworkConnect}.
    */
-  public synchronized void sendNetworkConnect(NetworkConnect networkConnect) {
+  public void sendNetworkConnect(NetworkConnect networkConnect) {
 
-    // Ensure only one connect
-    if (this.connect != null) {
-      throw new IllegalStateException("Connection already being established");
-    }
-    this.connect = networkConnect;
+    synchronized (this.socketChannel.blockingLock()) {
 
-    // Initialise the network request
-    try {
-      networkConnect.connect(this);
-    } catch (IOException ex) {
-      networkConnect.handleException(ex);
+      // Ensure only one connect
+      if (this.connect != null) {
+        throw new IllegalStateException("Connection already being established");
+      }
+      this.connect = networkConnect;
+
+      // Initialise the network request
+      try {
+        networkConnect.connect(this);
+      } catch (IOException ex) {
+        networkConnect.handleException(ex);
+      }
     }
   }
 
@@ -95,9 +102,12 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    */
   public void sendNetworkRequest(NetworkRequest request) {
 
-    // Ready network request for writing
-    this.requestQueue.add(request);
-    this.context.writeRequired();
+    synchronized (this.socketChannel.blockingLock()) {
+
+      // Ready network request for writing
+      this.requestQueue.add(request);
+      this.context.writeRequired();
+    }
   }
 
   /**
@@ -114,26 +124,29 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    */
 
   @Override
-  public synchronized void handleConnect() throws IOException {
+  public void handleConnect() throws Exception {
 
-    // Specify to write immediately
-    NetworkRequest initialRequest = this.connect.finishConnect(this);
+    synchronized (this.socketChannel.blockingLock()) {
 
-    // As connected, may now start writing
-    this.blockingResponse = null;
+      // Specify to write immediately
+      NetworkRequest initialRequest = this.connect.finishConnect(this);
 
-    // Load initial action to be undertaken first
-    if (initialRequest != null) {
+      // As connected, may now start writing
+      this.blockingResponse = null;
 
-      // Run initial request
-      Queue<NetworkRequest> queue = new LinkedList<>();
-      queue.add(initialRequest);
-      this.handleWrite(queue);
+      // Load initial action to be undertaken first
+      if (initialRequest != null) {
+
+        // Run initial request
+        Queue<NetworkRequest> queue = new LinkedList<>();
+        queue.add(initialRequest);
+        this.handleWrite(queue);
+      }
     }
   }
 
   @Override
-  public void handleWrite() throws IOException {
+  public void handleWrite() throws Exception {
     this.handleWrite(this.requestQueue);
   }
 
@@ -143,9 +156,9 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    * 
    * @param requests {@link Queue} of {@link NetworkRequest} instances.
    * @return <code>true</code> if to block.
-   * @throws IOException If fails to flush {@link NetworkRequest} instances.
+   * @throws Exception If fails to flush {@link NetworkRequest} instances.
    */
-  private boolean flushRequests(Queue<NetworkRequest> requests) throws IOException {
+  private boolean flushRequests(Queue<NetworkRequest> requests) throws Exception {
 
     // Flush out the request
     NetworkRequest request;
@@ -186,9 +199,9 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    * Handles writing the {@link NetworkRequest} instances.
    * 
    * @param requests {@link Queue} of {@link NetworkRequest} instances.
-   * @throws IOException If fails to write the {@link NetworkRequest} instances.
+   * @throws Exception If fails to write the {@link NetworkRequest} instances.
    */
-  private void handleWrite(Queue<NetworkRequest> requests) throws IOException {
+  private void handleWrite(Queue<NetworkRequest> requests) throws Exception {
 
     // Only flush further requests if no blocking response
     if (this.blockingResponse == null) {
@@ -288,6 +301,17 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
             // TODO handle cancellation key
             break;
 
+          case READY_FOR_QUERY:
+            // TODO handle ready for query
+            break;
+
+          case ERROR_RESPONSE:
+            // TODO this should be handled specific to NetworkResponse
+            ErrorResponse error = new ErrorResponse(frame.getPayload());
+            String message = error.getField(ErrorResponseField.Types.MESSAGE);
+            System.out.println("ERROR: " + message);
+            break;
+
           default:
             // Obtain the awaiting response
             NetworkResponse awaitingResponse;
@@ -375,6 +399,11 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   @Override
   public NetworkOutputStream getOutputStream() {
     return this.outputStream;
+  }
+
+  @Override
+  public PreparedStatementCache getPreparedStatementCache() {
+    return this.preparedStatementCache;
   }
 
 }

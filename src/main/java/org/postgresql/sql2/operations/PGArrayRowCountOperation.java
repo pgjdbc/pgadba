@@ -79,10 +79,10 @@ public class PGArrayRowCountOperation<R> implements ArrayRowCountOperation<R> {
   @Override
   public Submission<R> submit() {
     PGSubmission<R> submission = new ArrayCountSubmission<>(this::cancel, errorHandler, holder, sql, groupSubmission);
-    if(collector != null) {
+    if (collector != null) {
       submission.setCollector(collector);
     }
-    connection.addSubmissionOnQue(submission);
+    connection.submit(submission);
     return submission;
   }
 

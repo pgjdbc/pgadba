@@ -18,6 +18,8 @@ import java.util.stream.Collector;
 
 import org.postgresql.sql2.buffer.ByteBufferPool;
 import org.postgresql.sql2.communication.NetworkRequest;
+import org.postgresql.sql2.communication.network.ParseRequest;
+import org.postgresql.sql2.communication.network.Portal;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.NetworkConnection;
 import org.postgresql.sql2.execution.NioLoop;
@@ -60,7 +62,8 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    */
   private final CompletableFuture head = new CompletableFuture();
 
-  public PGConnection(Map<ConnectionProperty, Object> properties, NioLoop loop, ByteBufferPool bufferPool) throws IOException {
+  public PGConnection(Map<ConnectionProperty, Object> properties, NioLoop loop, ByteBufferPool bufferPool)
+      throws IOException {
     this.properties = properties;
     SocketChannel channel = SocketChannel.open();
     channel.configureBlocking(false);
@@ -385,12 +388,17 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   static Throwable unwrapException(Throwable ex) {
     return ex instanceof CompletionException ? ex.getCause() : ex;
   }
-  
-  public void networkConnect(NetworkConnect connect) {
+
+  public void sendNetworkConnect(NetworkConnect connect) {
     protocol.sendNetworkConnect(connect);
   }
 
-  public void addNetworkAction(NetworkRequest action) {
+  public void submit(PGSubmission<?> submission) {
+    Portal portal = new Portal(submission);
+    this.sendNetworkRequest(new ParseRequest<>(portal));
+  }
+
+  public void sendNetworkRequest(NetworkRequest action) {
     protocol.sendNetworkRequest(action);
   }
 

@@ -21,13 +21,13 @@ import jdk.incubator.sql2.ConnectionProperty;
  * 
  * @author Daniel Sagenschneider
  */
-public class AuthenticatePasswordRequest implements NetworkRequest {
+public class PasswordRequest implements NetworkRequest {
 
   private final AuthenticationRequest authentication;
 
   private final ConnectSubmission connectSubmission;
 
-  public AuthenticatePasswordRequest(AuthenticationRequest authentication, ConnectSubmission connectSubmission) {
+  public PasswordRequest(AuthenticationRequest authentication, ConnectSubmission connectSubmission) {
     this.authentication = authentication;
     this.connectSubmission = connectSubmission;
   }
@@ -66,7 +66,7 @@ public class AuthenticatePasswordRequest implements NetworkRequest {
 
   @Override
   public NetworkResponse getRequiredResponse() {
-    return new AuthenticationSuccessNetworkResponse(this.connectSubmission);
+    return new AuthenticationResponse(this.connectSubmission);
   }
 
 }

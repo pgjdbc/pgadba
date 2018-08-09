@@ -45,7 +45,7 @@ public class PGTransactionOperation implements Operation<TransactionOutcome> {
       sql = "COMMIT TRANSACTION";
     }
     PGSubmission<TransactionOutcome> submission = new TransactionSubmission(this::cancel, errorHandler, sql);
-    connection.addSubmissionOnQue(submission);
+    connection.submit(submission);
     return submission;
   }
 

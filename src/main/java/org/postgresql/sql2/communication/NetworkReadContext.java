@@ -15,6 +15,13 @@ public interface NetworkReadContext extends NetworkContext {
   BEFrame getBEFrame();
 
   /**
+   * Obtains the {@link PreparedStatementCache}.
+   * 
+   * @return {@link PreparedStatementCache}.
+   */
+  PreparedStatementCache getPreparedStatementCache();
+
+  /**
    * Triggers for a {@link NetworkRequest} to be undertaken.
    * 
    * @param request {@link NetworkRequest} to be undertaken.

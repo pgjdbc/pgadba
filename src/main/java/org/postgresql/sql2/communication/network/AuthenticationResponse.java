@@ -13,11 +13,11 @@ import org.postgresql.sql2.submissions.ConnectSubmission;
  * 
  * @author Daniel Sagenschneider
  */
-public class AuthenticationSuccessNetworkResponse implements NetworkResponse {
+public class AuthenticationResponse implements NetworkResponse {
 
   private final ConnectSubmission connectSubmission;
 
-  public AuthenticationSuccessNetworkResponse(ConnectSubmission connectSubmission) {
+  public AuthenticationResponse(ConnectSubmission connectSubmission) {
     this.connectSubmission = connectSubmission;
   }
 
@@ -34,7 +34,7 @@ public class AuthenticationSuccessNetworkResponse implements NetworkResponse {
       case SUCCESS:
         // Connected, so trigger any waiting submissions
         this.connectSubmission.finish(null);
-        return new ReadyForQueryNetworkResponse();
+        return null;
 
       default:
         throw new IllegalStateException("Unhandled authentication " + authentication.getType());

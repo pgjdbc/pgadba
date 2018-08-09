@@ -1,14 +1,15 @@
 package org.postgresql.sql2.operations.helpers;
 
 import org.postgresql.sql2.communication.FEFrame;
+import org.postgresql.sql2.communication.PreparedStatementCache;
 import org.postgresql.sql2.util.BinaryHelper;
-import org.postgresql.sql2.util.PreparedStatementCache;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 
+@Deprecated
 public class FEFrameSerializer {
   public static FEFrame toBindPacket(ParameterHolder holder, String sql, PreparedStatementCache cache, int index) {
     try {
@@ -18,9 +19,9 @@ public class FEFrameSerializer {
       os.write(0);
       os.write(0);
       os.write(0);
-      os.write(cache.getNameForPortal(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
+      //os.write(cache.getNameForPortal(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
       os.write(0);
-      os.write(cache.getNameForQuery(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
+      //os.write(cache.getNameForQuery(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
       os.write(0);
       os.write(BinaryHelper.writeShort(holder.size()));
       for (QueryParameter qp : holder.parameters()) {
@@ -52,7 +53,7 @@ public class FEFrameSerializer {
       os.write(0);
       os.write(0);
       os.write(0);
-      os.write(cache.getNameForQuery(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
+      //os.write(cache.getNameForQuery(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
       os.write(0);
       os.write(sql.getBytes(StandardCharsets.UTF_8));
       os.write(0);
@@ -75,7 +76,7 @@ public class FEFrameSerializer {
       os.write(0);
       os.write(0);
       os.write(0);
-      os.write(cache.getNameForPortal(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
+      //os.write(cache.getNameForPortal(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
       os.write(0);
       os.write(BinaryHelper.writeInt(0)); // number of rows to return, 0 == all
       return new FEFrame(os.toByteArray(), false);
@@ -96,7 +97,7 @@ public class FEFrameSerializer {
   }
 
   public static FEFrame toDescribePacket(ParameterHolder holder, String sql, PreparedStatementCache preparedStatementCache) {
-    try {
+//    try {
       ByteArrayOutputStream os = new ByteArrayOutputStream();
       os.write(FEFrame.FrontendTag.DESCRIBE.getByte());
       os.write(0);
@@ -104,12 +105,12 @@ public class FEFrameSerializer {
       os.write(0);
       os.write(0);
       os.write('S');
-      os.write(preparedStatementCache.getNameForQuery(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
+      //os.write(preparedStatementCache.getNameForQuery(sql, holder.getParamTypes()).getBytes(StandardCharsets.UTF_8));
       os.write(0);
       return new FEFrame(os.toByteArray(), false);
-    } catch (IOException | ExecutionException | InterruptedException e) {
-      e.printStackTrace();
-      throw new Error(e.getMessage());
-    }
+//    } catch (IOException | ExecutionException | InterruptedException e) {
+//      e.printStackTrace();
+//      throw new Error(e.getMessage());
+//    }
   }
 }
