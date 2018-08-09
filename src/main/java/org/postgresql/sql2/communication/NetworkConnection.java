@@ -354,8 +354,21 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   @Override
   public void handleException(Throwable ex) {
+
     // TODO consider how to handle exception
     ex.printStackTrace();
+
+    // Close the connection (if open)
+    if (this.socketChannel.isOpen()) {
+      try {
+        this.socketChannel.close();
+        this.context.unregister();
+      } catch (IOException closeEx) {
+
+        // TODO consider handle close exception
+        closeEx.printStackTrace();
+      }
+    }
   }
 
   /*

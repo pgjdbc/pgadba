@@ -47,7 +47,7 @@ public class ParseRequest<T> implements NetworkRequest {
     }
 
     // Determine if prepare query
-    if (!query.isParsed()) {
+    if ((!query.isParsed()) && (!query.isWaitingParse())) {
 
       // Obtain the query details
       String sql = this.portal.getSql();
@@ -74,7 +74,15 @@ public class ParseRequest<T> implements NetworkRequest {
   @Override
   public NetworkResponse getRequiredResponse() {
     Query query = this.portal.getQuery();
-    return query.isParsed() ? null : new ParseResponse(query);
+
+    // Determine if waiting on parse
+    if (!query.isWaitingParse()) {
+      query.flagWaitingParse();
+      return new ParseResponse(query);
+    }
+
+    // Already waiting on parse
+    return null;
   }
 
 }

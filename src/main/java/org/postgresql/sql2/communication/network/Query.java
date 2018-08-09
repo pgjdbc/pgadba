@@ -27,6 +27,11 @@ public class Query {
   private boolean isParsed = false;
 
   /**
+   * Indicates if waiting parse.
+   */
+  private boolean isAwaitingParse = false;
+
+  /**
    * {@link RowDescription}.
    */
   private RowDescription rowDescription = null;
@@ -63,6 +68,22 @@ public class Query {
    */
   void flagParsed() {
     this.isParsed = true;
+  }
+
+  /**
+   * Indicates if waiting on parse.
+   * 
+   * @return Waiting on parse.
+   */
+  public boolean isWaitingParse() {
+    return this.isAwaitingParse;
+  }
+  
+  /**
+   * Flags that waiting on parse.
+   */
+  void flagWaitingParse() {
+    this.isAwaitingParse = true;
   }
 
   /**
