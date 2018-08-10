@@ -17,11 +17,11 @@ import java.util.logging.Logger;
 import java.util.stream.Collector;
 
 import org.postgresql.sql2.buffer.ByteBufferPool;
+import org.postgresql.sql2.communication.NetworkConnect;
+import org.postgresql.sql2.communication.NetworkConnection;
 import org.postgresql.sql2.communication.NetworkRequest;
 import org.postgresql.sql2.communication.network.ParseRequest;
 import org.postgresql.sql2.communication.network.Portal;
-import org.postgresql.sql2.communication.NetworkConnect;
-import org.postgresql.sql2.communication.NetworkConnection;
 import org.postgresql.sql2.execution.NioLoop;
 import org.postgresql.sql2.operations.PGCloseOperation;
 import org.postgresql.sql2.operations.PGConnectOperation;
@@ -67,9 +67,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
     this.properties = properties;
     SocketChannel channel = SocketChannel.open();
     channel.configureBlocking(false);
-    this.protocol = (NetworkConnection) loop.registerNioService(channel, (context) -> {
-      return new NetworkConnection(this.properties, context, bufferPool);
-    });
+    this.protocol = new NetworkConnection(this.properties, loop, bufferPool);
     this.setConnection(this);
   }
 

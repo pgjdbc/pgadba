@@ -70,7 +70,7 @@ public class NioLoopTest {
       Connection connection = dataSource.getConnection();
 
       // Run multiple queries over the connection
-      final int QUERY_COUNT = 10;
+      final int QUERY_COUNT = 1000;
       Submission<Integer>[] submissions = new Submission[QUERY_COUNT];
       for (int i = 0; i < QUERY_COUNT; i++) {
         submissions[i] = connection.<Integer>rowOperation("SELECT 1 as t")

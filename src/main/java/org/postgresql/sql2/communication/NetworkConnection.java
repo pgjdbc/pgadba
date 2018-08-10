@@ -19,6 +19,7 @@ import org.postgresql.sql2.buffer.PooledByteBuffer;
 import org.postgresql.sql2.communication.packets.ErrorResponse;
 import org.postgresql.sql2.communication.packets.ParameterStatus;
 import org.postgresql.sql2.communication.packets.parts.ErrorResponseField;
+import org.postgresql.sql2.execution.NioLoop;
 import org.postgresql.sql2.execution.NioService;
 import org.postgresql.sql2.execution.NioServiceContext;
 
@@ -26,13 +27,13 @@ import jdk.incubator.sql2.ConnectionProperty;
 
 public class NetworkConnection implements NioService, NetworkConnectContext, NetworkWriteContext, NetworkReadContext {
 
+  private static ClosedChannelException CLOSE_EXCEPTION = new ClosedChannelException();
+
   private final Map<ConnectionProperty, Object> properties;
 
-  private final NioServiceContext context;
+  private final NioLoop loop;
 
   private final ByteBufferPoolOutputStream outputStream;
-
-  private final SocketChannel socketChannel;
 
   private final Queue<NetworkRequest> priorityRequestQueue = new LinkedList<>();
 
@@ -45,6 +46,10 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   private final PreparedStatementCache preparedStatementCache = new PreparedStatementCache();
 
   private NetworkConnect connect = null;
+
+  private SocketChannel socketChannel;
+
+  private NioServiceContext context = null;
 
   /**
    * Possible blocking {@link NetworkResponse}.
@@ -60,15 +65,13 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    * Instantiate.
    * 
    * @param properties Connection properties.
-   * @param context    {@link NioServiceContext}.
+   * @param loop       {@link NioLoop}.
    * @param bufferPool {@link ByteBufferPool}.
    */
-  public NetworkConnection(Map<ConnectionProperty, Object> properties, NioServiceContext context,
-      ByteBufferPool bufferPool) {
+  public NetworkConnection(Map<ConnectionProperty, Object> properties, NioLoop loop, ByteBufferPool bufferPool) {
     this.properties = properties;
-    this.context = context;
+    this.loop = loop;
     this.outputStream = new ByteBufferPoolOutputStream(bufferPool);
-    this.socketChannel = (SocketChannel) context.getChannel();
   }
 
   /**
@@ -76,22 +79,33 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    * 
    * @param networkConnect {@link NetworkConnect}.
    */
-  public void sendNetworkConnect(NetworkConnect networkConnect) {
+  public synchronized void sendNetworkConnect(NetworkConnect networkConnect) {
 
-    synchronized (this.socketChannel.blockingLock()) {
+    // Synchronizes with handleConnect so service thread has correct state
+    // (Connections should be long running so low impact)
 
-      // Ensure only one connect
-      if (this.connect != null) {
-        throw new IllegalStateException("Connection already being established");
-      }
-      this.connect = networkConnect;
+    // Ensure only one connect
+    if (this.connect != null) {
+      throw new IllegalStateException("Connection already being established");
+    }
+    this.connect = networkConnect;
 
-      // Initialise the network request
-      try {
-        networkConnect.connect(this);
-      } catch (IOException ex) {
-        networkConnect.handleException(ex);
-      }
+    // Initialise the network request
+    try {
+
+      // Register the connection
+      this.socketChannel = SocketChannel.open();
+      this.socketChannel.configureBlocking(false);
+      this.loop.registerNioService(this.socketChannel, (context) -> {
+        this.context = context;
+        return this;
+      });
+
+      // Undertake connect
+      networkConnect.connect(this);
+
+    } catch (IOException ex) {
+      networkConnect.handleException(ex);
     }
   }
 
@@ -102,12 +116,9 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    */
   public void sendNetworkRequest(NetworkRequest request) {
 
-    synchronized (this.socketChannel.blockingLock()) {
-
-      // Ready network request for writing
-      this.requestQueue.add(request);
-      this.context.writeRequired();
-    }
+    // Ready network request for writing
+    this.requestQueue.add(request);
+    this.context.writeRequired();
   }
 
   /**
@@ -124,24 +135,25 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    */
 
   @Override
-  public void handleConnect() throws Exception {
+  public synchronized void handleConnect() throws Exception {
 
-    synchronized (this.socketChannel.blockingLock()) {
+    if (this.connect == null) {
+      throw new IllegalStateException("No " + NetworkConnect.class.getSimpleName() + " to handle connect");
+    }
 
-      // Specify to write immediately
-      NetworkRequest initialRequest = this.connect.finishConnect(this);
+    // Specify to write immediately
+    NetworkRequest initialRequest = this.connect.finishConnect(this);
 
-      // As connected, may now start writing
-      this.blockingResponse = null;
+    // As connected, may now start writing
+    this.blockingResponse = null;
 
-      // Load initial action to be undertaken first
-      if (initialRequest != null) {
+    // Load initial action to be undertaken first
+    if (initialRequest != null) {
 
-        // Run initial request
-        Queue<NetworkRequest> queue = new LinkedList<>();
-        queue.add(initialRequest);
-        this.handleWrite(queue);
-      }
+      // Run initial request
+      Queue<NetworkRequest> queue = new LinkedList<>();
+      queue.add(initialRequest);
+      this.handleWrite(queue);
     }
   }
 
@@ -348,15 +360,18 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
       }
     }
     if (bytesRead < 0) {
-      throw new ClosedChannelException();
+      throw CLOSE_EXCEPTION;
     }
   }
 
   @Override
   public void handleException(Throwable ex) {
 
-    // TODO consider how to handle exception
-    ex.printStackTrace();
+    // Ignore close exception
+    if (ex != CLOSE_EXCEPTION) {
+      // TODO consider how to handle exception
+      ex.printStackTrace();
+    }
 
     // Close the connection (if open)
     if (this.socketChannel.isOpen()) {
