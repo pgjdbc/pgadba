@@ -48,6 +48,8 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   private Logger logger = Logger.getLogger(PGConnection.class.getName());
 
   private final Map<ConnectionProperty, Object> properties;
+  
+  private final PGDataSource dataSource;
 
   private final NetworkConnection protocol;
 
@@ -62,12 +64,13 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    */
   private final CompletableFuture head = new CompletableFuture();
 
-  public PGConnection(Map<ConnectionProperty, Object> properties, NioLoop loop, ByteBufferPool bufferPool)
+  public PGConnection(Map<ConnectionProperty, Object> properties, PGDataSource dataSource, NioLoop loop, ByteBufferPool bufferPool)
       throws IOException {
     this.properties = properties;
+    this.dataSource = dataSource;
     SocketChannel channel = SocketChannel.open();
     channel.configureBlocking(false);
-    this.protocol = new NetworkConnection(this.properties, loop, bufferPool);
+    this.protocol = new NetworkConnection(this.properties, this, loop, bufferPool);
     this.setConnection(this);
   }
 
@@ -398,6 +401,10 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
 
   public void sendNetworkRequest(NetworkRequest action) {
     protocol.sendNetworkRequest(action);
+  }
+  
+  public void unregister() {
+    this.dataSource.unregisterConnection(this);
   }
 
   public boolean isConnectionClosed() {

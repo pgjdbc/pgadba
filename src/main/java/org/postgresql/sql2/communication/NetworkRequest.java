@@ -5,7 +5,7 @@ package org.postgresql.sql2.communication;
  * 
  * @author Daniel Sagenschneider
  */
-public interface NetworkRequest extends NetworkErrorHandler {
+public interface NetworkRequest {
 
   /**
    * Writes this {@link NetworkRequest} to the network.

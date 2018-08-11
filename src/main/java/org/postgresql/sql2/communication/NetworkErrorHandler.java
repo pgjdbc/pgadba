@@ -11,10 +11,8 @@ public interface NetworkErrorHandler {
    * Handles the failure.
    * 
    * @param ex Failure.
+   * @return Optional {@link NetworkResponse}. May be <code>null</code>.
    */
-  default void handleException(Throwable ex) {
-    // TODO provide exception back up the layers
-    ex.printStackTrace();
-  }
+  NetworkResponse handleException(Throwable ex);
 
 }

@@ -12,13 +12,11 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.postgresql.sql2.PGConnectionProperties;
+import org.postgresql.sql2.PGConnection;
 import org.postgresql.sql2.buffer.ByteBufferPool;
 import org.postgresql.sql2.buffer.ByteBufferPoolOutputStream;
 import org.postgresql.sql2.buffer.PooledByteBuffer;
-import org.postgresql.sql2.communication.packets.ErrorResponse;
-import org.postgresql.sql2.communication.packets.ParameterStatus;
-import org.postgresql.sql2.communication.packets.parts.ErrorResponseField;
+import org.postgresql.sql2.communication.packets.ErrorPacket;
 import org.postgresql.sql2.execution.NioLoop;
 import org.postgresql.sql2.execution.NioService;
 import org.postgresql.sql2.execution.NioServiceContext;
@@ -30,6 +28,8 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   private static ClosedChannelException CLOSE_EXCEPTION = new ClosedChannelException();
 
   private final Map<ConnectionProperty, Object> properties;
+
+  private final PGConnection connection;
 
   private final NioLoop loop;
 
@@ -59,17 +59,25 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     public NetworkResponse read(NetworkReadContext context) throws IOException {
       throw new IllegalStateException("Should not read until connected");
     }
+
+    @Override
+    public NetworkResponse handleException(Throwable ex) {
+      throw new IllegalStateException("Should not read until connected");
+    }
   };
 
   /**
    * Instantiate.
    * 
    * @param properties Connection properties.
+   * @param connection {@link PGConnection}.
    * @param loop       {@link NioLoop}.
    * @param bufferPool {@link ByteBufferPool}.
    */
-  public NetworkConnection(Map<ConnectionProperty, Object> properties, NioLoop loop, ByteBufferPool bufferPool) {
+  public NetworkConnection(Map<ConnectionProperty, Object> properties, PGConnection connection, NioLoop loop,
+      ByteBufferPool bufferPool) {
     this.properties = properties;
+    this.connection = connection;
     this.loop = loop;
     this.outputStream = new ByteBufferPoolOutputStream(bufferPool);
   }
@@ -277,6 +285,22 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    */
   private NetworkResponse immediateResponse = null;
 
+  /**
+   * Obtains the awaiting {@link NetworkResponse}.
+   * 
+   * @return Awaiting {@link NetworkResponse}.
+   */
+  private NetworkResponse getAwaitingResponse() {
+    NetworkResponse awaitingResponse;
+    if (this.immediateResponse != null) {
+      awaitingResponse = this.immediateResponse;
+      this.immediateResponse = null;
+    } else {
+      awaitingResponse = this.awaitingResponses.poll();
+    }
+    return awaitingResponse;
+  }
+
   @Override
   public void handleRead() throws IOException {
 
@@ -300,51 +324,35 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
         while ((frame = this.parser.parseBEFrame(readBuffer, position, bytesRead)) != null) {
           position += this.parser.getConsumedBytes();
 
-          // Hook in any notifications
+          // Obtain the awaiting response
+          NetworkResponse awaitingResponse = this.getAwaitingResponse();
+
+          // Ensure have awaiting response
+          if (awaitingResponse == null) {
+            throw new IllegalStateException(
+                "No awaiting " + NetworkResponse.class.getSimpleName() + " for tag " + frame.getTag());
+          }
+
+          // Handle frame
           switch (frame.getTag()) {
 
-          case PARAM_STATUS:
-            // Load parameters for connection
-            ParameterStatus paramStatus = new ParameterStatus(frame.getPayload());
-            this.properties.put(PGConnectionProperties.lookup(paramStatus.getName()), paramStatus.getValue());
-            break;
-
-          case CANCELLATION_KEY_DATA:
-            // TODO handle cancellation key
-            break;
-
-          case READY_FOR_QUERY:
-            // TODO handle ready for query
-            break;
-
           case ERROR_RESPONSE:
-            // TODO this should be handled specific to NetworkResponse
-            ErrorResponse error = new ErrorResponse(frame.getPayload());
-            String message = error.getField(ErrorResponseField.Types.MESSAGE);
-            System.out.println("ERROR: " + message);
+            // Handle error
+            this.immediateResponse = awaitingResponse.handleException(new ErrorPacket(frame.getPayload()));
             break;
 
           default:
-            // Obtain the awaiting response
-            NetworkResponse awaitingResponse;
-            if (this.immediateResponse != null) {
-              awaitingResponse = this.immediateResponse;
-              this.immediateResponse = null;
-            } else {
-              awaitingResponse = this.awaitingResponses.poll();
-            }
-
             // Provide frame to awaiting response
             this.beFrame = frame;
             this.immediateResponse = awaitingResponse.read(this);
+          }
 
-            // Remove if blocking writing
-            if (awaitingResponse == this.blockingResponse) {
-              this.blockingResponse = null;
+          // Remove if blocking writing
+          if (awaitingResponse == this.blockingResponse) {
+            this.blockingResponse = null;
 
-              // Flag to write (as very likely have writes)
-              this.isWriteRequired = true;
-            }
+            // Flag to write (as very likely have writes)
+            this.isWriteRequired = true;
           }
         }
 
@@ -366,6 +374,9 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   @Override
   public void handleException(Throwable ex) {
+
+    // Unregister the connection (as closed)
+    this.connection.unregister();
 
     // Ignore close exception
     if (ex != CLOSE_EXCEPTION) {
@@ -432,6 +443,11 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   @Override
   public PreparedStatementCache getPreparedStatementCache() {
     return this.preparedStatementCache;
+  }
+
+  @Override
+  public void setProperty(ConnectionProperty property, Object value) {
+    this.properties.put(property, value);
   }
 
 }

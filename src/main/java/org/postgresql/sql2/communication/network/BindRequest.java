@@ -1,18 +1,12 @@
 package org.postgresql.sql2.communication.network;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
 import org.postgresql.sql2.communication.FEFrame;
 import org.postgresql.sql2.communication.NetworkOutputStream;
 import org.postgresql.sql2.communication.NetworkRequest;
 import org.postgresql.sql2.communication.NetworkResponse;
 import org.postgresql.sql2.communication.NetworkWriteContext;
-import org.postgresql.sql2.communication.PreparedStatementCache;
-import org.postgresql.sql2.operations.helpers.FEFrameSerializer;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.operations.helpers.QueryParameter;
-import org.postgresql.sql2.submissions.RowSubmission;
 import org.postgresql.sql2.util.BinaryHelper;
 
 /**
@@ -34,7 +28,7 @@ public class BindRequest<T> implements NetworkRequest {
 
   @Override
   public NetworkRequest write(NetworkWriteContext context) throws Exception {
-    
+
     // Obtain the query details
     String portalName = this.portal.getPortalName();
     String queryName = this.portal.getQuery().getQueryName();
@@ -72,7 +66,7 @@ public class BindRequest<T> implements NetworkRequest {
 
   @Override
   public NetworkResponse getRequiredResponse() {
-    return new BindResponse();
+    return new BindResponse(this.portal);
   }
 
 }

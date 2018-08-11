@@ -5,8 +5,6 @@ import org.postgresql.sql2.communication.NetworkOutputStream;
 import org.postgresql.sql2.communication.NetworkRequest;
 import org.postgresql.sql2.communication.NetworkResponse;
 import org.postgresql.sql2.communication.NetworkWriteContext;
-import org.postgresql.sql2.communication.PreparedStatementCache;
-import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.submissions.RowSubmission;
 
 /**
@@ -49,7 +47,7 @@ public class DescribeRequest<T> implements NetworkRequest {
 
   @Override
   public NetworkResponse getRequiredResponse() {
-    return new DescribeResponse(this.portal.getQuery());
+    return new DescribeResponse(this.portal);
   }
 
 }

@@ -24,7 +24,7 @@ import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
 import org.postgresql.sql2.communication.packets.CommandComplete;
 import org.postgresql.sql2.communication.packets.DataRow;
-import org.postgresql.sql2.communication.packets.ErrorResponse;
+import org.postgresql.sql2.communication.packets.ErrorPacket;
 import org.postgresql.sql2.communication.packets.ParameterStatus;
 import org.postgresql.sql2.communication.packets.ReadyForQuery;
 import org.postgresql.sql2.communication.packets.RowDescription;
@@ -336,7 +336,7 @@ public class ProtocolV3 implements NioService {
   }
 
   private void doError(BEFrame packet) {
-    ErrorResponse error = new ErrorResponse(packet.getPayload());
+    ErrorPacket error = new ErrorPacket(packet.getPayload());
 
     StringBuilder message = new StringBuilder(
         "Severity: " + error.getField(SEVERITY) + "\nMessage: " + error.getField(MESSAGE));

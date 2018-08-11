@@ -36,6 +36,10 @@ public class PGCloseOperation implements Operation<Void> {
   public Submission<Void> submit() {
     CloseSubmission submission = new CloseSubmission(this::cancel, errorHandler);
     connection.sendNetworkRequest(submission);
+    
+    // Closing so unregister connection
+    this.connection.unregister();
+    
     return submission;
   }
 

@@ -24,14 +24,21 @@ import jdk.incubator.sql2.ConnectionProperty;
  * 
  * @author Daniel Sagenschneider
  */
-public abstract class NetworkConnectRequest implements NetworkConnect, NetworkRequest, NetworkResponse {
+public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, NetworkResponse {
 
   /**
-   * Obtains the {@link ConnectSubmission}.
-   * 
-   * @return {@link ConnectSubmission}.
+   * {@link ConnectSubmission}.
    */
-  protected abstract ConnectSubmission getConnectSubmission();
+  private final ConnectSubmission connectSubmission;
+
+  /**
+   * Instantiate.
+   * 
+   * @param connectSubmission {@link ConnectSubmission}.
+   */
+  public NetworkConnectRequest(ConnectSubmission connectSubmission) {
+    this.connectSubmission = connectSubmission;
+  }
 
   /*
    * =================== NetworkRequest ====================
@@ -105,13 +112,13 @@ public abstract class NetworkConnectRequest implements NetworkConnect, NetworkRe
 
       case MD5:
         // Password authentication required
-        context.write(new PasswordRequest(authentication, this.getConnectSubmission()));
+        context.write(new PasswordRequest(authentication, this.connectSubmission));
         return null;
 
       case SUCCESS:
         // Connected, so trigger any waiting submissions
         context.writeRequired();
-        return new ReadyForQueryResponse();
+        return new AuthenticationResponse(this.connectSubmission);
 
       default:
         throw new IllegalStateException("Unhandled authentication " + authentication.getType());
@@ -120,6 +127,12 @@ public abstract class NetworkConnectRequest implements NetworkConnect, NetworkRe
     default:
       throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
     }
+  }
+
+  @Override
+  public NetworkResponse handleException(Throwable ex) {
+    this.connectSubmission.getErrorHandler().accept(ex);
+    return null;
   }
 
 }

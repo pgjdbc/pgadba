@@ -12,12 +12,10 @@ import org.postgresql.sql2.communication.packets.RowDescription;
  * 
  * @author Daniel Sagenschneider
  */
-public class DescribeResponse implements NetworkResponse {
+public class DescribeResponse extends AbstractPortalResponse {
 
-  private Query query;
-
-  public DescribeResponse(Query query) {
-    this.query = query;
+  public DescribeResponse(Portal portal) {
+    super(portal);
   }
 
   @Override
@@ -25,12 +23,15 @@ public class DescribeResponse implements NetworkResponse {
     BEFrame frame = context.getBEFrame();
     switch (frame.getTag()) {
 
+    case NO_DATA:
+      return null;
+
     case PARAM_DESCRIPTION:
       return this; // wait on row description
 
     case ROW_DESCRIPTION:
       RowDescription rowDescription = new RowDescription(frame.getPayload());
-      this.query.setRowDescription(rowDescription);
+      this.portal.getQuery().setRowDescription(rowDescription);
       return null; // nothing further
 
     default:

@@ -78,7 +78,7 @@ public class ParseRequest<T> implements NetworkRequest {
     // Determine if waiting on parse
     if (!query.isWaitingParse()) {
       query.flagWaitingParse();
-      return new ParseResponse(query);
+      return new ParseResponse(this.portal);
     }
 
     // Already waiting on parse

@@ -1,5 +1,6 @@
 package org.postgresql.sql2.submissions;
 
+import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.network.NetworkConnectRequest;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
@@ -13,7 +14,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-public class ConnectSubmission extends NetworkConnectRequest implements org.postgresql.sql2.PGSubmission<Void> {
+public class ConnectSubmission implements org.postgresql.sql2.PGSubmission<Void> {
 
   final private Supplier<Boolean> cancel;
   private CompletableFuture<Void> publicStage;
@@ -25,6 +26,8 @@ public class ConnectSubmission extends NetworkConnectRequest implements org.post
   private Consumer<Throwable> errorHandler;
 
   private GroupSubmission groupSubmission;
+  
+  private NetworkConnectRequest request;
 
   public ConnectSubmission(Supplier<Boolean> cancel, Types completionType, Consumer<Throwable> errorHandler,
       GroupSubmission groupSubmission) {
@@ -32,10 +35,15 @@ public class ConnectSubmission extends NetworkConnectRequest implements org.post
     this.completionType = completionType;
     this.errorHandler = errorHandler;
     this.groupSubmission = groupSubmission;
+    this.request = new NetworkConnectRequest(this);
 
     if (groupSubmission != null) {
       groupSubmission.stackFuture((CompletableFuture<Void>) getCompletionStage());
     }
+  }
+  
+  public NetworkConnect getNetworkConnect() {
+    return this.request;
   }
 
   @Override
@@ -107,12 +115,4 @@ public class ConnectSubmission extends NetworkConnectRequest implements org.post
     return errorHandler;
   }
 
-  /*
-   * ================ NetworkConnectRequest ====================
-   */
-
-  @Override
-  protected ConnectSubmission getConnectSubmission() {
-    return this;
-  }
 }

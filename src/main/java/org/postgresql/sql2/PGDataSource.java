@@ -82,6 +82,10 @@ public class PGDataSource implements DataSource {
 
     return new PGConnectionBuilder(this);
   }
+  
+  public void unregisterConnection(PGConnection connection) {
+    this.connections.remove(connection);
+  }
 
   @Override
   public void close() {

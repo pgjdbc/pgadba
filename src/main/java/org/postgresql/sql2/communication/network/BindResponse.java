@@ -11,7 +11,11 @@ import org.postgresql.sql2.communication.NetworkResponse;
  * 
  * @author Daniel Sagenschneider
  */
-public class BindResponse implements NetworkResponse {
+public class BindResponse extends AbstractPortalResponse {
+
+  public BindResponse(Portal portal) {
+    super(portal);
+  }
 
   @Override
   public NetworkResponse read(NetworkReadContext context) throws IOException {

@@ -7,11 +7,16 @@ import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.NetworkResponse;
 
 /**
- * Ready for Query {@link NetworkResponse}.
+ * Ready for query {@link NetworkResponse}.
  * 
  * @author Daniel Sagenschneider
  */
 public class ReadyForQueryResponse implements NetworkResponse {
+
+  @Override
+  public NetworkResponse handleException(Throwable ex) {
+    throw new IllegalStateException("Ready For Query should not fail", ex);
+  }
 
   @Override
   public NetworkResponse read(NetworkReadContext context) throws IOException {
@@ -19,8 +24,7 @@ public class ReadyForQueryResponse implements NetworkResponse {
     switch (frame.getTag()) {
 
     case READY_FOR_QUERY:
-      // Consume ready for query
-      return null; // nothing further
+      return null; // Nothing further
 
     default:
       throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());

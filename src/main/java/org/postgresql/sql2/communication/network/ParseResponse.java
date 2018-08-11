@@ -11,12 +11,10 @@ import org.postgresql.sql2.communication.NetworkResponse;
  * 
  * @author Daniel Sagenschneider
  */
-public class ParseResponse implements NetworkResponse {
+public class ParseResponse extends AbstractPortalResponse {
 
-  private final Query query;
-
-  public ParseResponse(Query query) {
-    this.query = query;
+  public ParseResponse(Portal portal) {
+    super(portal);
   }
 
   @Override
@@ -25,7 +23,7 @@ public class ParseResponse implements NetworkResponse {
     switch (frame.getTag()) {
 
     case PARSE_COMPLETE:
-      this.query.flagParsed();
+      this.portal.getQuery().flagParsed();
       return null; // nothing further
 
     default:

@@ -13,12 +13,10 @@ import org.postgresql.sql2.communication.packets.DataRow;
  * 
  * @author Daniel Sagenschneider
  */
-public class ExecuteResponse implements NetworkResponse {
-
-  private final Portal portal;
+public class ExecuteResponse extends AbstractPortalResponse {
 
   public ExecuteResponse(Portal portal) {
-    this.portal = portal;
+    super(portal);
   }
 
   @Override
@@ -34,7 +32,10 @@ public class ExecuteResponse implements NetworkResponse {
 
     case COMMAND_COMPLETE:
       CommandComplete complete = new CommandComplete(frame.getPayload());
-      this.portal.commandComplete(complete);
+      this.portal.commandComplete(complete, context.getSocketChannel());
+      return this;
+
+    case READY_FOR_QUERY:
       return null;
 
     default:

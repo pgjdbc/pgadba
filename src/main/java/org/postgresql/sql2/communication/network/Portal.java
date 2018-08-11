@@ -1,11 +1,14 @@
 package org.postgresql.sql2.communication.network;
 
+import java.nio.channels.SocketChannel;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.CommandComplete;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
+import org.postgresql.sql2.util.PGCount;
 
 /**
  * Portal.
@@ -20,7 +23,7 @@ public class Portal {
 
   private String name;
 
-  private long nextRowNumber = 1;
+  private long nextRowNumber = 0;
 
   /**
    * Thread safe as only accessed via network thread.
@@ -64,14 +67,38 @@ public class Portal {
     return this.name;
   }
 
+  /**
+   * Handles the {@link Throwable}.
+   * 
+   * @param ex {@link Throwable}.
+   */
+  public void handleException(Throwable ex) {
+    this.submission.getErrorHandler().accept(ex);
+  }
+
+  /**
+   * Obtains the possibly associated {@link Query}.
+   * 
+   * @return {@link Query}. May be <code>null</code>.
+   */
   Query getQuery() {
     return this.query;
   }
 
+  /**
+   * Specifies the {@link Query}.
+   * 
+   * @param query {@link Query}.
+   */
   void setQuery(Query query) {
     this.query = query;
   }
 
+  /**
+   * Obtains the next row number.
+   * 
+   * @return Next row number.
+   */
   long nextRowNumber() {
     return this.nextRowNumber++;
   }
@@ -88,10 +115,39 @@ public class Portal {
   /**
    * Flags the command is complete.
    * 
-   * @param complete Command is complete.
+   * @param complete      Command is complete.
+   * @param socketChannel {@link SocketChannel}.
    */
-  void commandComplete(CommandComplete complete) {
-    this.submission.finish(complete);
+  void commandComplete(CommandComplete complete, SocketChannel socketChannel) {
+    switch (this.submission.getCompletionType()) {
+    case COUNT:
+      this.submission.finish(new PGCount(complete.getNumberOfRowsAffected()));
+      break;
+    case ROW:
+      this.submission.finish(null);
+      break;
+    case CLOSE:
+      this.submission.finish(socketChannel);
+      break;
+    case TRANSACTION:
+      this.submission.finish(complete.getType());
+      break;
+    case ARRAY_COUNT:
+      this.submission.finish(complete.getNumberOfRowsAffected());
+      break;
+    case VOID:
+      ((CompletableFuture) this.submission.getCompletionStage()).complete(null);
+      break;
+    case PROCESSOR:
+      this.submission.finish(null);
+      break;
+    case OUT_PARAMETER:
+      this.submission.finish(null);
+      break;
+    default:
+      throw new IllegalStateException("Invalid completion type '" + this.submission.getCompletionType() + "' for "
+          + this.getClass().getSimpleName());
+    }
   }
 
 }
