@@ -20,6 +20,7 @@ import org.postgresql.sql2.buffer.ByteBufferPool;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.NetworkConnection;
 import org.postgresql.sql2.communication.NetworkRequest;
+import org.postgresql.sql2.communication.network.ImmediateComplete;
 import org.postgresql.sql2.communication.network.ParseRequest;
 import org.postgresql.sql2.communication.network.Portal;
 import org.postgresql.sql2.execution.NioLoop;
@@ -48,7 +49,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   private Logger logger = Logger.getLogger(PGConnection.class.getName());
 
   private final Map<ConnectionProperty, Object> properties;
-  
+
   private final PGDataSource dataSource;
 
   private final NetworkConnection protocol;
@@ -64,8 +65,8 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
    */
   private final CompletableFuture head = new CompletableFuture();
 
-  public PGConnection(Map<ConnectionProperty, Object> properties, PGDataSource dataSource, NioLoop loop, ByteBufferPool bufferPool)
-      throws IOException {
+  public PGConnection(Map<ConnectionProperty, Object> properties, PGDataSource dataSource, NioLoop loop,
+      ByteBufferPool bufferPool) throws IOException {
     this.properties = properties;
     this.dataSource = dataSource;
     SocketChannel channel = SocketChannel.open();
@@ -395,14 +396,23 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   }
 
   public void submit(PGSubmission<?> submission) {
-    Portal portal = new Portal(submission);
-    this.sendNetworkRequest(new ParseRequest<>(portal));
+    switch (submission.getCompletionType()) {
+    case LOCAL:
+    case CATCH:
+    case GROUP:
+      this.sendNetworkRequest(new ImmediateComplete(submission));
+      break;
+
+    default:
+      Portal portal = new Portal(submission);
+      this.sendNetworkRequest(new ParseRequest<>(portal));
+    }
   }
 
   public void sendNetworkRequest(NetworkRequest action) {
     protocol.sendNetworkRequest(action);
   }
-  
+
   public void unregister() {
     this.dataSource.unregisterConnection(this);
   }

@@ -3,6 +3,7 @@ package org.postgresql.sql2.communication.network;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.CommandComplete;
@@ -10,12 +11,25 @@ import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.util.PGCount;
 
+import jdk.incubator.sql2.SqlException;
+
 /**
  * Portal.
  * 
  * @author Daniel Sagenschneider
  */
 public class Portal {
+
+  public static void doHandleException(PGSubmission<?> submission, Throwable ex) {
+    if (!(ex instanceof SqlException)) {
+      ex = new SqlException(ex.getMessage(), ex, null, 0, null, 0);
+    }
+    Consumer<Throwable> errorHandler = submission.getErrorHandler();
+    if (errorHandler != null) {
+      errorHandler.accept(ex);
+    }
+    ((CompletableFuture) submission.getCompletionStage()).completeExceptionally(ex);
+  }
 
   private static AtomicLong nameIndex = new AtomicLong(0);
 
@@ -73,7 +87,7 @@ public class Portal {
    * @param ex {@link Throwable}.
    */
   public void handleException(Throwable ex) {
-    this.submission.getErrorHandler().accept(ex);
+    doHandleException(this.submission, ex);
   }
 
   /**
