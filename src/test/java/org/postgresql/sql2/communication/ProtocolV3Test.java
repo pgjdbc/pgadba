@@ -38,6 +38,7 @@ public class ProtocolV3Test {
 
     SocketChannel sc = mock(SocketChannel.class);
     instance.sendData(sc);
+    instance.sendData(sc);
 
     ArgumentCaptor<ByteBuffer> bufferCaptor = ArgumentCaptor.forClass(ByteBuffer.class);
     verify(sc).write(bufferCaptor.capture());

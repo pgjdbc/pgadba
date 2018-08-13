@@ -36,23 +36,23 @@ public enum PGConnectionProperties implements ConnectionProperty {
   PASSWORD(String.class, "test", true),
 
   /**
-   * Connect using SSL. The driver must have been compiled with SSL support. This property does not need a value associated
-   * with it. The mere presence of it specifies a SSL connection. However, for compatibility with future versions, the value
-   * "true" is preferred. For more information see Chapter 4, Using SSL.
+   * Connect using TLS. The driver must have been compiled with TLS support. This property does not need a value associated
+   * with it. The mere presence of it specifies a TLS connection. However, for compatibility with future versions, the value
+   * "true" is preferred. For more information see Chapter 4, Using TLS.
    */
-  SSL(Boolean.class, false, false),
+  TLS(Boolean.class, false, false),
 
   /**
-   * The provided value is a class name to use as the SSLSocketFactory when establishing a SSL connection. For more
+   * The provided value is a class name to use as the SSLSocketFactory when establishing a TLS connection. For more
    * information see the section called ?Custom SSLSocketFactory?.
    */
-  SSL_FACTORY(Class.class, null, false),
+  TLS_FACTORY(Class.class, null, false),
 
   /**
    * This value is an optional argument to the constructor of the ssl factory class provided above. For more information
    * see the section called ?Custom SSLSocketFactory?.
    */
-  SSL_FACTORY_ARG(String.class, "", false),
+  TLS_FACTORY_ARG(String.class, "", false),
 
   /**
    * Act like an older version of the driver to retain compatibility with older applications. At the moment this controls

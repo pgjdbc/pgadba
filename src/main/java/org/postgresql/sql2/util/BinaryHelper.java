@@ -1,5 +1,6 @@
 package org.postgresql.sql2.util;
 
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -108,5 +109,12 @@ public class BinaryHelper {
       }
     }
     return bytes.length;
+  }
+
+  public static ByteBuffer combineBuffers(ByteBuffer first, ByteBuffer second) {
+    final ByteBuffer combined = ByteBuffer.allocate(first.limit() + second.limit());
+    combined.put(first.duplicate());
+    combined.put(second.duplicate());
+    return combined;
   }
 }

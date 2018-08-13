@@ -3,6 +3,7 @@ package org.postgresql.sql2.testUtil;
 import jdk.incubator.sql2.AdbaConnectionProperty;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.DataSourceFactory;
+import org.postgresql.sql2.PGConnectionProperties;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 public class ConnectUtil {
@@ -15,6 +16,19 @@ public class ConnectUtil {
         .password(postgres.getPassword())
         .connectionProperty(AdbaConnectionProperty.TRANSACTION_ISOLATION,
             AdbaConnectionProperty.TransactionIsolation.REPEATABLE_READ)
+        .build();
+  }
+
+  public static DataSource openDBWithTLS(PostgreSQLContainer postgres) {
+    return DataSourceFactory.newFactory("org.postgresql.sql2.PGDataSourceFactory")
+        .builder()
+        .url("jdbc:postgresql://" + postgres.getContainerIpAddress() + ":" + postgres.getMappedPort(5432) +
+            "/" + postgres.getDatabaseName())
+        .username(postgres.getUsername())
+        .password(postgres.getPassword())
+        .connectionProperty(AdbaConnectionProperty.TRANSACTION_ISOLATION,
+            AdbaConnectionProperty.TransactionIsolation.REPEATABLE_READ)
+        .connectionProperty(PGConnectionProperties.TLS, true)
         .build();
   }
 

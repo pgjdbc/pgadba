@@ -16,6 +16,10 @@ import org.postgresql.sql2.util.BinaryHelper;
 import org.postgresql.sql2.util.PGCount;
 import org.postgresql.sql2.util.PreparedStatementCache;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult;
+import javax.net.ssl.SSLException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -25,11 +29,21 @@ import java.nio.channels.NoConnectionPendingException;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import static javax.net.ssl.SSLEngineResult.HandshakeStatus.FINISHED;
+import static javax.net.ssl.SSLEngineResult.HandshakeStatus.NEED_TASK;
+import static javax.net.ssl.SSLEngineResult.HandshakeStatus.NEED_WRAP;
+import static javax.net.ssl.SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING;
+import static org.postgresql.sql2.PGConnectionProperties.TLS;
+import static org.postgresql.sql2.communication.ProtocolV3States.Events.TLS_HANDSHAKE_DONE;
+import static org.postgresql.sql2.communication.ProtocolV3States.States.IDLE;
 import static org.postgresql.sql2.communication.ProtocolV3States.States.NOT_CONNECTED;
+import static org.postgresql.sql2.communication.ProtocolV3States.States.TLS_CONNECTION_ACCEPTED;
+import static org.postgresql.sql2.communication.ProtocolV3States.States.TLS_HANDSHAKE_FINISHED;
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.DETAIL;
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.HINT;
 import static org.postgresql.sql2.communication.packets.parts.ErrorResponseField.Types.MESSAGE;
@@ -41,6 +55,7 @@ public class ProtocolV3 {
   private Map<ConnectionProperty, Object> properties;
   private PreparedStatementCache preparedStatementCache = new PreparedStatementCache();
 
+  private ConcurrentLinkedQueue<ByteBuffer> currentlySending = new ConcurrentLinkedQueue<>();
   private ConcurrentLinkedQueue<FEFrame> outputQue = new ConcurrentLinkedQueue<>();
   private ConcurrentLinkedQueue<FEFrame> waitToSendQue = new ConcurrentLinkedQueue<>();
 
@@ -49,6 +64,7 @@ public class ProtocolV3 {
   private BEFrameReader BEFrameReader = new BEFrameReader();
 
   private SocketChannel socketChannel;
+  private SSLEngine tlsEngine;
 
   private long rowNumber = 0;
 
@@ -77,6 +93,12 @@ public class ProtocolV3 {
         if (currentState == NOT_CONNECTED && !socketChannel.finishConnect()) {
           return;
         } else if (currentState == NOT_CONNECTED) {
+          if (properties.containsKey(TLS) && (Boolean) properties.get(TLS)) {
+            sendTLSPacket();
+          } else {
+            sendStartupPacket();
+          }
+        } else if (currentState == TLS_HANDSHAKE_FINISHED) {
           sendStartupPacket();
         }
 
@@ -84,7 +106,7 @@ public class ProtocolV3 {
             sub.getCompletionType() == PGSubmission.Types.GROUP) {
           sub.finish(null);
           submissions.poll();
-        } else if (sub.getCompletionType() != PGSubmission.Types.CONNECT && currentState == ProtocolV3States.States.IDLE
+        } else if (sub.getCompletionType() != PGSubmission.Types.CONNECT && currentState == IDLE
             && sub.getSendConsumed().compareAndSet(false, true)) {
           if (preparedStatementCache.sqlNotPreparedBefore(sub.getHolder(), sub.getSql())) {
             queFrame(FEFrameSerializer.toParsePacket(sub.getHolder(), sub.getSql(), preparedStatementCache));
@@ -101,7 +123,7 @@ public class ProtocolV3 {
 
         try {
           int bytesRead = socketChannel.read(readBuffer);
-          BEFrameReader.updateState(readBuffer, bytesRead);
+          BEFrameReader.updateState(readBuffer, bytesRead, currentState, tlsEngine);
         } catch (NotYetConnectedException | ClosedChannelException ignore) {
         }
 
@@ -183,6 +205,32 @@ public class ProtocolV3 {
       case ROW_DESCRIPTION:
         doRowDescription(packet);
         break;
+      case TLS_RESPONSE:
+        doTLSResponse(packet);
+        break;
+      case TLS_HANDSHAKE:
+        currentlySending.add(ByteBuffer.wrap(packet.getPayload()));
+        break;
+    }
+  }
+
+  private void doTLSResponse(BEFrame packet) {
+    if(packet.getPayload()[0] == 'S') {
+      currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.TLS_YES);
+
+      try {
+        SSLContext tlsContext = SSLContext.getDefault();
+
+        tlsEngine = tlsContext.createSSLEngine();
+
+        tlsEngine.setUseClientMode(true);
+      } catch (NoSuchAlgorithmException e) {
+        e.printStackTrace();
+      }
+    } else if(packet.getPayload()[0] == 'N') {
+      currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.TLS_NO);
+    } else {
+      throw new IllegalStateException(packet.getPayload()[0] + " is not a valid byte value for the response to an TLS start request");
     }
   }
 
@@ -291,29 +339,94 @@ public class ProtocolV3 {
   }
 
   public synchronized void sendData(SocketChannel socketChannel) {
-    if (outputQue.size() == 0 && waitToSendQue.size() != 0 && currentState == ProtocolV3States.States.IDLE) {
-      outputQue.add(waitToSendQue.poll());
-    }
-    if (outputQue.size() != 0) {
-      FEFrame packet = outputQue.peek();
+    if (currentlySending.size() != 0) {
+      ByteBuffer packet = currentlySending.peek();
 
       if (packet == null) {
         return;
       }
 
       try {
-        socketChannel.write(packet.getPayload());
+        socketChannel.write(packet);
       } catch (IOException e) {
         e.printStackTrace();
       }
       if (!packet.hasRemaining()) {
-        outputQue.poll();
+        currentlySending.poll();
       }
+      return;
+    }
+
+    if(properties.containsKey(TLS) && (Boolean) properties.get(TLS) && tlsEngine != null) {
+      SSLEngineResult.HandshakeStatus hss = tlsEngine.getHandshakeStatus();
+      if (hss != FINISHED && hss != NOT_HANDSHAKING) {
+        if (hss == NEED_WRAP) {
+          try {
+            ByteBuffer out = ByteBuffer.allocate(tlsEngine.getSession().getPacketBufferSize());
+            tlsEngine.wrap(ByteBuffer.allocate(1), out);
+            out.flip();
+            currentlySending.add(out);
+          } catch (SSLException e) {
+            e.printStackTrace();
+          }
+        } else if (hss == NEED_TASK) {
+          final Runnable tlsTask = tlsEngine.getDelegatedTask();
+          new Thread(tlsTask).run();
+        }
+        return;
+      } else if (currentState == TLS_CONNECTION_ACCEPTED) {
+        currentState = ProtocolV3States.lookup(currentState, TLS_HANDSHAKE_DONE);
+      }
+    }
+
+    if (outputQue.size() != 0) {
+      FEFrame frame = outputQue.poll();
+
+      if(frame == null) {
+        return;
+      }
+
+      if(properties.containsKey(TLS) && (Boolean) properties.get(TLS) && tlsEngine != null) {
+        try {
+          ByteBuffer out = ByteBuffer.allocate(tlsEngine.getSession().getPacketBufferSize());
+          SSLEngineResult result = tlsEngine.wrap(frame.getPayload(), out);
+          out.flip();
+          currentlySending.add(out);
+        } catch (SSLException e) {
+          e.printStackTrace();
+        }
+      } else {
+        currentlySending.add(frame.getPayload());
+      }
+    } else if (waitToSendQue.size() != 0 && currentState == IDLE) {
+      outputQue.add(waitToSendQue.poll());
     }
   }
 
   public void queFrame(FEFrame frame) {
+    try {
+      throw new Exception("adding new frame of type: " + frame.getPayload().array()[4]);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     waitToSendQue.add(frame);
+  }
+
+  private void sendTLSPacket() {
+    try {
+      ByteArrayOutputStream array = new ByteArrayOutputStream();
+      array.write(0);
+      array.write(0);
+      array.write(0);
+      array.write(0);
+      array.write(BinaryHelper.writeInt(80877103));
+
+      outputQue.add(new FEFrame(array.toByteArray(), true));
+      currentState = ProtocolV3States.lookup(currentState, ProtocolV3States.Events.TLS_CONNECTION_START);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
   }
 
   public void sendStartupPacket() {

@@ -1,5 +1,6 @@
 package org.postgresql.sql2.communication;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -38,10 +39,23 @@ public class BEFrameReaderTest {
 
     ByteBuffer bb = ByteBuffer.allocate(1024);
     bb.put(packet);
-    instance.updateState(bb, packet.length);
+    instance.updateState(bb, packet.length, ProtocolV3States.States.IDLE, null);
 
     BEFrame sp = instance.popFrame();
 
     assertNotNull(sp, packetName + " could not be parsed");
+  }
+
+  @Test
+  public void parseTLSResponse() {
+    BEFrameReader instance = new BEFrameReader();
+
+    ByteBuffer bb = ByteBuffer.allocate(1024);
+    bb.put(new byte[] { 'S' });
+    instance.updateState(bb, 1, ProtocolV3States.States.TLS_PACKET_SENT, null);
+
+    BEFrame sp = instance.popFrame();
+
+    assertNotNull(sp, "TLSResponse could not be parsed");
   }
 }

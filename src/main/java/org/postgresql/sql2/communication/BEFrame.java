@@ -25,7 +25,9 @@ public class BEFrame {
     PARSE_COMPLETE('1'),
     PORTAL_SUSPENDED('s'),
     READY_FOR_QUERY('Z'),
-    ROW_DESCRIPTION('T');
+    ROW_DESCRIPTION('T'),
+    TLS_RESPONSE('-'),
+    TLS_HANDSHAKE('/');
 
     private char tag;
 
