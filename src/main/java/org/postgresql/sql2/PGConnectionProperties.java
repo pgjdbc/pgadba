@@ -368,7 +368,7 @@ public enum PGConnectionProperties implements ConnectionProperty {
   /**
    * Allows specifying the {@link NioLoop}.
    */
-  NIO_LOOP(String.class, "", false),
+  NIO_LOOP(String.class, null, false),
   
   /**
    * Allows specifying the {@link ByteBufferPool}.
