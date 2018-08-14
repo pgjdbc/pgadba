@@ -26,7 +26,7 @@ public class VoidSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
   private GroupSubmission groupSubmission;
 
   public VoidSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder,
-                        GroupSubmission groupSubmission, String sql) {
+      GroupSubmission groupSubmission, String sql) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.holder = holder;
@@ -70,9 +70,9 @@ public class VoidSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
 
   public Object finish(Object finishObject) {
     Object o = null;
-    if(collector != null) {
+    if (collector != null) {
       o = collector.finisher().apply(collectorHolder);
-      if(groupSubmission != null) {
+      if (groupSubmission != null) {
         groupSubmission.addGroupResult(o);
       }
     }
@@ -81,7 +81,9 @@ public class VoidSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
 
   public void addRow(DataRow row) {
     try {
-      collector.accumulator().accept(collectorHolder, row);
+      if (collector != null) {
+        collector.accumulator().accept(collectorHolder, row);
+      }
     } catch (Throwable e) {
       publicStage.completeExceptionally(e);
     }

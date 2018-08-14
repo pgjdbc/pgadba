@@ -5,24 +5,22 @@
 
 package org.postgresql.sql2;
 
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.postgresql.sql2.buffer.ByteBufferPool;
+import org.postgresql.sql2.buffer.DefaultByteBufferPool;
+import org.postgresql.sql2.execution.DefaultNioLoop;
+import org.postgresql.sql2.execution.NioLoop;
+
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.ConnectionProperty;
 import jdk.incubator.sql2.DataSource;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import org.postgresql.sql2.execution.DefaultNioLoop;
-import org.postgresql.sql2.execution.NioLoop;
-
 public class PGDataSource implements DataSource {
   private final NioLoop loop;
+  private final ByteBufferPool bufferPool;
   private Queue<PGConnection> connections = new ConcurrentLinkedQueue<>();
   private boolean closed;
   private Map<ConnectionProperty, Object> properties;
@@ -40,6 +38,14 @@ public class PGDataSource implements DataSource {
       loop = defaultLoop;
     }
     this.loop = loop;
+    
+    // Obtain the byte buffer pool
+    ByteBufferPool pool = (ByteBufferPool) this.properties.get(PGConnectionProperties.BYTE_BUFFER_POOL);
+    if (pool == null) {
+      // Provide default pool
+      pool = new DefaultByteBufferPool(properties);
+    }
+    this.bufferPool = pool;
   }
 
   /**
@@ -49,6 +55,15 @@ public class PGDataSource implements DataSource {
    */
   public NioLoop getNioLoop() {
     return this.loop;
+  }
+  
+  /**
+   * Obtains the {@link ByteBufferPool}.
+   * 
+   * @return {@link ByteBufferPool}.
+   */
+  public ByteBufferPool getByteBufferPool() {
+    return this.bufferPool;
   }
 
   /**
@@ -66,6 +81,10 @@ public class PGDataSource implements DataSource {
     }
 
     return new PGConnectionBuilder(this);
+  }
+  
+  public void unregisterConnection(PGConnection connection) {
+    this.connections.remove(connection);
   }
 
   @Override

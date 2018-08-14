@@ -55,6 +55,7 @@ public class BEFrame {
     return tag;
   }
 
+  // TODO make this InputStream from PooledByteBuffer instances (avoids unnecessary copies)
   public byte[] getPayload() {
     return payload;
   }

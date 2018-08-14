@@ -21,12 +21,8 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
   private PGConnection connection;
   private String sql;
   private ParameterHolder holder;
-  private Collector collector = Collector.of(
-      () -> null,
-      (a, v) -> {
-      },
-      (a, b) -> null,
-      a -> null);
+  private Collector collector = Collector.of(() -> null, (a, v) -> {
+  }, (a, b) -> null, a -> null);
   private Consumer<Throwable> errorHandler;
   private GroupSubmission groupSubmission;
 
@@ -89,9 +85,9 @@ public class PGParameterizedRowOperation<R> implements ParameterizedRowOperation
 
   @Override
   public Submission<R> submit() {
-    PGSubmission<R> submission = new RowSubmission<>(this::cancel, errorHandler, holder, groupSubmission, sql);
+    RowSubmission<R> submission = new RowSubmission<>(this::cancel, errorHandler, holder, groupSubmission, sql);
     submission.setCollector(collector);
-    connection.addSubmissionOnQue(submission);
+    connection.submit(submission);
 
     return submission;
   }

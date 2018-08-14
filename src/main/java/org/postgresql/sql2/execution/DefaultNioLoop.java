@@ -86,9 +86,14 @@ public class DefaultNioLoop implements NioLoop, Runnable {
 
         // Service the selected keys
         Iterator<SelectionKey> iterator = selectedKeys.iterator();
-        while (iterator.hasNext()) {
+        NEXT_KEY: while (iterator.hasNext()) {
           SelectionKey selectedKey = iterator.next();
           iterator.remove();
+
+          // Stop processing if cancelled
+          if (!selectedKey.isValid()) {
+            continue NEXT_KEY;
+          }
 
           // Obtain the attached service
           NioServiceAttachment attachment = (NioServiceAttachment) selectedKey.attachment();
@@ -97,6 +102,13 @@ public class DefaultNioLoop implements NioLoop, Runnable {
           int readyOps = selectedKey.readyOps();
 
           try {
+
+            if (attachment == null) {
+              System.out.println("Attachement is null");
+            }
+            if (attachment.service == null) {
+              System.out.println("Service is null");
+            }
 
             // Determine if connect
             if ((readyOps & SelectionKey.OP_CONNECT) == SelectionKey.OP_CONNECT) {
@@ -147,15 +159,15 @@ public class DefaultNioLoop implements NioLoop, Runnable {
     private NioServiceAttachment(SelectableChannel channel, NioServiceFactory nioServiceFactory) throws IOException {
       this.channel = channel;
 
-      // Undertake registration
-      this.selectionKey = channel.register(DefaultNioLoop.this.selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ,
-          this);
-
       // Create the service
       this.service = nioServiceFactory.createNioService(this);
       if (this.service == null) {
         throw new IllegalStateException("No " + NioService.class.getSimpleName() + " created");
       }
+
+      // Undertake registration
+      this.selectionKey = channel.register(DefaultNioLoop.this.selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ,
+          this);
     }
 
     /*
