@@ -43,16 +43,17 @@ public class PasswordRequest implements NetworkRequest {
     Map<ConnectionProperty, Object> properties = context.getProperties();
 
     // Create the payload (TODO determine if can reduce object creation)
-    byte[] content = BinaryHelper.encode(
-        ((String) properties.get(PGConnectionProperties.USER)).getBytes(StandardCharsets.UTF_8),
-        ((String) properties.get(PGConnectionProperties.PASSWORD)).getBytes(StandardCharsets.UTF_8),
-        this.authentication.getSalt());
+    String username = (String) properties.get(PGConnectionProperties.USER);
+    String password = (String) properties.get(PGConnectionProperties.PASSWORD);
+    byte[] content = BinaryHelper.encode(username.getBytes(StandardCharsets.UTF_8),
+        password.getBytes(StandardCharsets.UTF_8), this.authentication.getSalt());
 
     // Write the request
     NetworkOutputStream wire = context.getOutputStream();
     wire.write(FEFrame.FrontendTag.PASSWORD_MESSAGE.getByte());
     wire.initPacket();
     wire.write(content);
+    wire.writeTerminator();
     wire.completePacket();
 
     // No further immediate requests

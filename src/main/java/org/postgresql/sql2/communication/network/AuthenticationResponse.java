@@ -1,6 +1,7 @@
 package org.postgresql.sql2.communication.network;
 
 import java.io.IOException;
+import java.util.function.Consumer;
 
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.communication.BEFrame;
@@ -62,7 +63,13 @@ public class AuthenticationResponse implements NetworkResponse {
 
   @Override
   public NetworkResponse handleException(Throwable ex) {
-    this.connectSubmission.getErrorHandler().accept(ex);
+    Consumer<Throwable> errorHandler = this.connectSubmission.getErrorHandler();
+    if (errorHandler != null) {
+      this.connectSubmission.getErrorHandler().accept(ex);
+    } else {
+      // TODO handle connection error
+      ex.printStackTrace();
+    }
     return null;
   }
 
