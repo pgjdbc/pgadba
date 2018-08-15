@@ -186,8 +186,10 @@ public class DefaultNioLoop implements NioLoop, Runnable {
 
     @Override
     public void writeRequired() {
-      this.selectionKey.interestOps(this.selectionKey.interestOps() | SelectionKey.OP_WRITE);
-      DefaultNioLoop.this.selector.wakeup();
+      if (selectionKey.isValid()) {
+        this.selectionKey.interestOps(this.selectionKey.interestOps() | SelectionKey.OP_WRITE);
+        DefaultNioLoop.this.selector.wakeup();
+      }
     }
 
     @Override
