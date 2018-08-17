@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class PGConnectionTLSTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getNewWithTLS();
@@ -35,18 +36,16 @@ public class PGConnectionTLSTest {
   }
 
   @Test
-  public void selectAfterDeactivateActivate() throws InterruptedException, ExecutionException, TimeoutException {
+  public void connectWithoutTLStoTLSOnlyDB() throws InterruptedException, ExecutionException, TimeoutException {
 
     String sql = "select 1 as t";
     try (Connection conn = ds.getConnection()) {
-      Integer result = conn.<Integer>rowOperation(sql)
+      conn.rowOperation(sql)
           .collect(CollectorUtils.singleCollector(Integer.class))
           .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
-      assertEquals(Integer.valueOf(1), result);
+      fail("Exception should have been thrown, as the connection properties doesn't include TLS");
     } catch (ExecutionException e) {
-      assertEquals("Severity: FATAL\n" +
-          "Message: no pg_hba.conf entry for host \"172.17.0.1\", user \"test\", database \"test\", SSL off", e.getCause().getMessage());
+      assertEquals("no pg_hba.conf entry for host \"172.17.0.1\", user \"test\", database \"test\", SSL off", e.getCause().getMessage());
     }
-    Thread.sleep(1000);
   }
 }
