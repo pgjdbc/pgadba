@@ -9,7 +9,7 @@ import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class BEFrameReaderTest {
+public class BEFrameParserTest {
 
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {
@@ -34,13 +34,11 @@ public class BEFrameReaderTest {
   @ParameterizedTest
   @MethodSource("data")
   public void parseNetworkPayload(String packetName, byte[] packet) {
-    BEFrameReader instance = new BEFrameReader();
+    BEFrameParser instance = new BEFrameParser();
 
     ByteBuffer bb = ByteBuffer.allocate(1024);
     bb.put(packet);
-    instance.updateState(bb, packet.length);
-
-    BEFrame sp = instance.popFrame();
+    BEFrame sp = instance.parseBEFrame(bb, 0, packet.length);
 
     assertNotNull(sp, packetName + " could not be parsed");
   }
