@@ -84,7 +84,7 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
     held = false;
     
     // TODO is this to be a group of submissions?
-    //connection.addSubmissionOnQue(groupSubmission);
+    connection.submit(groupSubmission);
     return groupSubmission;
   }
 
