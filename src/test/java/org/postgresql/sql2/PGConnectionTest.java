@@ -109,6 +109,7 @@ public class PGConnectionTest {
               }
           ))
           .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      fail("an ExecutionException should have been thrown");
     } catch (ExecutionException e) {
       assertEquals("exception thrown in finisher", e.getCause().getMessage());
     }

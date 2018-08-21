@@ -1,17 +1,16 @@
 package org.postgresql.sql2.communication.network;
 
-import java.nio.channels.SocketChannel;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-
+import jdk.incubator.sql2.SqlException;
 import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.CommandComplete;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.util.PGCount;
 
-import jdk.incubator.sql2.SqlException;
+import java.nio.channels.SocketChannel;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 /**
  * Portal.
@@ -133,35 +132,38 @@ public class Portal {
    * @param socketChannel {@link SocketChannel}.
    */
   void commandComplete(CommandComplete complete, SocketChannel socketChannel) {
-    switch (this.submission.getCompletionType()) {
-    case COUNT:
-      this.submission.finish(new PGCount(complete.getNumberOfRowsAffected()));
-      break;
-    case ROW:
-      this.submission.finish(null);
-      break;
-    case CLOSE:
-      this.submission.finish(socketChannel);
-      break;
-    case TRANSACTION:
-      this.submission.finish(complete.getType());
-      break;
-    case ARRAY_COUNT:
-      this.submission.finish(complete.getNumberOfRowsAffected());
-      break;
-    case VOID:
-      ((CompletableFuture) this.submission.getCompletionStage()).complete(null);
-      break;
-    case PROCESSOR:
-      this.submission.finish(null);
-      break;
-    case OUT_PARAMETER:
-      this.submission.finish(null);
-      break;
-    default:
-      throw new IllegalStateException("Invalid completion type '" + this.submission.getCompletionType() + "' for "
-          + this.getClass().getSimpleName());
+    try {
+      switch (submission.getCompletionType()) {
+        case COUNT:
+          submission.finish(new PGCount(complete.getNumberOfRowsAffected()));
+          break;
+        case ROW:
+          submission.finish(null);
+          break;
+        case CLOSE:
+          submission.finish(socketChannel);
+          break;
+        case TRANSACTION:
+          submission.finish(complete.getType());
+          break;
+        case ARRAY_COUNT:
+          submission.finish(complete.getNumberOfRowsAffected());
+          break;
+        case VOID:
+          ((CompletableFuture) submission.getCompletionStage()).complete(null);
+          break;
+        case PROCESSOR:
+          submission.finish(null);
+          break;
+        case OUT_PARAMETER:
+          submission.finish(null);
+          break;
+        default:
+          throw new IllegalStateException("Invalid completion type '" + submission.getCompletionType() + "' for "
+              + this.getClass().getSimpleName());
+      }
+    } catch (Throwable t) {
+      ((CompletableFuture<?>)submission.getCompletionStage()).completeExceptionally(t);
     }
   }
-
 }
