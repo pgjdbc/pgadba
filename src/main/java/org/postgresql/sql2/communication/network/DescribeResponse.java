@@ -1,11 +1,11 @@
 package org.postgresql.sql2.communication.network;
 
-import java.io.IOException;
-
 import org.postgresql.sql2.communication.BEFrame;
 import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.NetworkResponse;
 import org.postgresql.sql2.communication.packets.RowDescription;
+
+import java.io.IOException;
 
 /**
  * Describe {@link NetworkResponse}.
