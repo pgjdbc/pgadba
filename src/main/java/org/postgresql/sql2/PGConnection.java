@@ -4,18 +4,15 @@
  */
 package org.postgresql.sql2;
 
-import java.io.IOException;
-import java.nio.channels.SocketChannel;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collector;
-
+import jdk.incubator.sql2.Connection;
+import jdk.incubator.sql2.ConnectionProperty;
+import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.Operation;
+import jdk.incubator.sql2.OperationGroup;
+import jdk.incubator.sql2.ShardingKey;
+import jdk.incubator.sql2.SqlException;
+import jdk.incubator.sql2.SqlSkippedException;
+import jdk.incubator.sql2.Transaction;
 import org.postgresql.sql2.buffer.ByteBufferPool;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.NetworkConnection;
@@ -30,15 +27,17 @@ import org.postgresql.sql2.operations.PGOperationGroup;
 import org.postgresql.sql2.operations.PGValidationOperation;
 import org.postgresql.sql2.operations.helpers.PGTransaction;
 
-import jdk.incubator.sql2.Connection;
-import jdk.incubator.sql2.ConnectionProperty;
-import jdk.incubator.sql2.DataSource;
-import jdk.incubator.sql2.Operation;
-import jdk.incubator.sql2.OperationGroup;
-import jdk.incubator.sql2.ShardingKey;
-import jdk.incubator.sql2.SqlException;
-import jdk.incubator.sql2.SqlSkippedException;
-import jdk.incubator.sql2.Transaction;
+import java.io.IOException;
+import java.nio.channels.SocketChannel;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collector;
 
 public class PGConnection extends PGOperationGroup<Object, Object> implements Connection {
   protected static final CompletionStage<Object> ROOT = CompletableFuture.completedFuture(null);
@@ -59,6 +58,7 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
   protected Consumer<Throwable> errorHandler = null;
   private Lifecycle lifecycle = Lifecycle.NEW;
   private ConcurrentLinkedQueue<ConnectionLifecycleListener> lifecycleListeners = new ConcurrentLinkedQueue<>();
+  private PGSubmission<?> lastSubmission;
 
   /**
    * predecessor of all member Operations and the OperationGroup itself
@@ -399,14 +399,20 @@ public class PGConnection extends PGOperationGroup<Object, Object> implements Co
     switch (submission.getCompletionType()) {
     case LOCAL:
     case CATCH:
+      sendNetworkRequest(new ImmediateComplete(submission));
+      break;
     case GROUP:
-      this.sendNetworkRequest(new ImmediateComplete(submission));
+      if(lastSubmission != null)  {
+        ((CompletableFuture<?>)lastSubmission.getCompletionStage()).thenApply(a ->
+            submission.finish(null));
+      }
       break;
 
     default:
       Portal portal = new Portal(submission);
-      this.sendNetworkRequest(new ParseRequest<>(portal));
+      sendNetworkRequest(new ParseRequest<>(portal));
     }
+    lastSubmission = submission;
   }
 
   public void sendNetworkRequest(NetworkRequest action) {

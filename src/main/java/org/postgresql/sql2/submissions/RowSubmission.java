@@ -1,6 +1,5 @@
 package org.postgresql.sql2.submissions;
 
-import org.postgresql.sql2.communication.network.ParseRequest;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
