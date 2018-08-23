@@ -14,8 +14,6 @@ import org.postgresql.sql2.testUtil.ConnectUtil;
 import org.postgresql.sql2.testUtil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +39,7 @@ public class CountOperationTest {
   }
 
   @Test
-  public void insertWithoutATable() {
+  public void insertWithoutATable() throws InterruptedException, ExecutionException, TimeoutException {
 
     String sql = "insert into tab(id, name, answer) values ($1, $2, $3)";
     Submission sub;
@@ -53,10 +51,10 @@ public class CountOperationTest {
           .submit();
     }
     try {
-      ((CompletableFuture) sub.getCompletionStage()).join();
+      sub.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
       fail("table 'tab' doesn't exist, so an exception should be thrown");
-    } catch (CompletionException e) {
-      assertEquals("jdk.incubator.sql2.SqlException: relation \"tab\" does not exist", e.getMessage());
+    } catch (ExecutionException e) {
+      assertEquals("relation \"tab\" does not exist", e.getCause().getMessage());
     }
   }
 

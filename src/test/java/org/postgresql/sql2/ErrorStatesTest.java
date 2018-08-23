@@ -18,6 +18,7 @@ import java.util.stream.Collector;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -50,10 +51,10 @@ public class ErrorStatesTest {
     } catch (ExecutionException e) {
       SqlException ex = (SqlException)e.getCause();
 
-      assertEquals("Severity: ERROR\n" +
-          "Message: syntax error at or near \"select\"", ex.getMessage());
-      assertEquals("42601", ex.getSqlState());
-      assertEquals("select select", ex.getSqlString());
+      assertEquals("syntax error at or near \"select\"", ex.getMessage());
+      assertEquals("ERROR", ex.getSqlState());
+      assertEquals(42601, ex.getVendorCode());
+      assertNull(ex.getSqlString());
     }
   }
 

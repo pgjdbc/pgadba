@@ -4,6 +4,8 @@ import jdk.incubator.sql2.SqlException;
 import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.CommandComplete;
 import org.postgresql.sql2.communication.packets.DataRow;
+import org.postgresql.sql2.communication.packets.ErrorPacket;
+import org.postgresql.sql2.communication.packets.parts.ErrorResponseField;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.submissions.ArrayCountSubmission;
 import org.postgresql.sql2.util.PGCount;
@@ -24,6 +26,21 @@ import static org.postgresql.sql2.PGSubmission.Types.ARRAY_COUNT;
 public class Portal {
 
   public static void doHandleException(PGSubmission<?> submission, Throwable ex) {
+    if (ex instanceof ErrorPacket) {
+      ErrorPacket e = (ErrorPacket)ex;
+      int code = 0;
+      if (e.getField(ErrorResponseField.Types.SQLSTATE_CODE) != null) {
+        try {
+          code = Integer.parseInt(e.getField(ErrorResponseField.Types.SQLSTATE_CODE));
+        } catch (NumberFormatException ignore) {
+        }
+      }
+      int position = 0;
+      if (e.getField(ErrorResponseField.Types.POSITION) != null) {
+        position = Integer.parseInt(e.getField(ErrorResponseField.Types.POSITION));
+      }
+      ex = new SqlException(e.getMessage(), e, e.getField(ErrorResponseField.Types.SEVERITY), code, null, position);
+    }
     if (!(ex instanceof SqlException)) {
       ex = new SqlException(ex.getMessage(), ex, null, 0, null, 0);
     }
