@@ -36,7 +36,7 @@ public class ExecuteRequest<T> implements NetworkRequest {
     wire.completePacket();
 
     // TODO Auto-generated method stub
-    return new SyncRequest();
+    return new SyncRequest(portal);
   }
 
   @Override

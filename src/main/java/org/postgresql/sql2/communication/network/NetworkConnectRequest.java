@@ -1,9 +1,6 @@
 package org.postgresql.sql2.communication.network;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Map;
-
+import jdk.incubator.sql2.ConnectionProperty;
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.communication.BEFrame;
 import org.postgresql.sql2.communication.NetworkConnect;
@@ -17,7 +14,9 @@ import org.postgresql.sql2.communication.packets.AuthenticationRequest;
 import org.postgresql.sql2.submissions.ConnectSubmission;
 import org.postgresql.sql2.util.BinaryHelper;
 
-import jdk.incubator.sql2.ConnectionProperty;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Map;
 
 /**
  * Connect {@link NetworkRequest}.

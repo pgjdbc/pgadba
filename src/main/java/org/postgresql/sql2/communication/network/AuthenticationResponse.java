@@ -1,8 +1,5 @@
 package org.postgresql.sql2.communication.network;
 
-import java.io.IOException;
-import java.util.function.Consumer;
-
 import org.postgresql.sql2.PGConnectionProperties;
 import org.postgresql.sql2.communication.BEFrame;
 import org.postgresql.sql2.communication.NetworkReadContext;
@@ -10,6 +7,9 @@ import org.postgresql.sql2.communication.NetworkResponse;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
 import org.postgresql.sql2.communication.packets.ParameterStatus;
 import org.postgresql.sql2.submissions.ConnectSubmission;
+
+import java.io.IOException;
+import java.util.function.Consumer;
 
 /**
  * Authentication success {@link NetworkResponse}.

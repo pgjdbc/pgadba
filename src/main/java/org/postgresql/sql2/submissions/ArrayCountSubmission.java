@@ -34,6 +34,7 @@ public class ArrayCountSubmission<T> implements PGSubmission<T> {
   private GroupSubmission groupSubmission;
 
   private int numResults = 0;
+  private int numBindExecuteSent = 0;
 
   public ArrayCountSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder, String sql, GroupSubmission groupSubmission) {
     this.cancel = cancel;
@@ -126,5 +127,10 @@ public class ArrayCountSubmission<T> implements PGSubmission<T> {
     if (publicStage == null)
       publicStage = new CompletableFuture<>();
     return publicStage;
+  }
+
+  public boolean hasMoreToExecute() throws ExecutionException, InterruptedException {
+    numBindExecuteSent++;
+    return numBindExecuteSent != numberOfQueryRepetitions();
   }
 }

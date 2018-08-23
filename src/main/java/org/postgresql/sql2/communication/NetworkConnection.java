@@ -291,11 +291,11 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    */
   private NetworkResponse getAwaitingResponse() {
     NetworkResponse awaitingResponse;
-    if (this.immediateResponse != null) {
-      awaitingResponse = this.immediateResponse;
-      this.immediateResponse = null;
+    if (immediateResponse != null) {
+      awaitingResponse = immediateResponse;
+      immediateResponse = null;
     } else {
-      awaitingResponse = this.awaitingResponses.poll();
+      awaitingResponse = awaitingResponses.poll();
     }
     return awaitingResponse;
   }

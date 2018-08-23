@@ -5,12 +5,16 @@ import org.postgresql.sql2.PGSubmission;
 import org.postgresql.sql2.communication.packets.CommandComplete;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
+import org.postgresql.sql2.submissions.ArrayCountSubmission;
 import org.postgresql.sql2.util.PGCount;
 
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+
+import static org.postgresql.sql2.PGSubmission.Types.ARRAY_COUNT;
 
 /**
  * Portal.
@@ -165,5 +169,12 @@ public class Portal {
     } catch (Throwable t) {
       ((CompletableFuture<?>)submission.getCompletionStage()).completeExceptionally(t);
     }
+  }
+
+  public boolean hasMoreToExecute() throws ExecutionException, InterruptedException {
+    if (submission.getCompletionType() == ARRAY_COUNT) {
+      return ((ArrayCountSubmission)submission).hasMoreToExecute();
+    }
+    return false;
   }
 }
