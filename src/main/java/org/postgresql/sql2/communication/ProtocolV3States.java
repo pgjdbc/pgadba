@@ -9,8 +9,8 @@ public class ProtocolV3States {
     STARTUP_PACKET_SENT,
     AUTHENTICATION_REQUESTED,
     AUTHENTICATION_SENT,
-    IDLE,
-    PROCESSING_QUERY
+    CONNECTED,
+    CLOSED
   }
 
   public enum Events {
@@ -35,12 +35,16 @@ public class ProtocolV3States {
     addTransition(States.AUTHENTICATION_REQUESTED, Events.AUTHENTICATION_SUCCESS, States.AUTHENTICATION_REQUESTED);
     addTransition(States.AUTHENTICATION_REQUESTED, Events.PARAMETER_STATUS, States.AUTHENTICATION_REQUESTED);
     addTransition(States.AUTHENTICATION_REQUESTED, Events.BACKEND_KEY_DATA, States.AUTHENTICATION_REQUESTED);
-    addTransition(States.AUTHENTICATION_REQUESTED, Events.READY_FOR_QUERY, States.IDLE);
-    addTransition(States.IDLE, Events.PARSE_COMPLETE, States.PROCESSING_QUERY);
-    addTransition(States.IDLE, Events.BIND_COMPLETE, States.PROCESSING_QUERY);
-    addTransition(States.PROCESSING_QUERY, Events.BIND_COMPLETE, States.PROCESSING_QUERY);
-    addTransition(States.PROCESSING_QUERY, Events.COMMAND_COMPLETE, States.PROCESSING_QUERY);
-    addTransition(States.PROCESSING_QUERY, Events.READY_FOR_QUERY, States.IDLE);
+    addTransition(States.AUTHENTICATION_REQUESTED, Events.READY_FOR_QUERY, States.CONNECTED);
+    addTransition(States.CONNECTED, Events.PARAMETER_STATUS, States.CONNECTED);
+    addTransition(States.CONNECTED, Events.READY_FOR_QUERY, States.CONNECTED);
+    
+    // States suggest only one query at a time, but NIO should be capable of pipelining
+    addTransition(States.CONNECTED, Events.PARSE_COMPLETE, States.CONNECTED);
+    addTransition(States.CONNECTED, Events.BIND_COMPLETE, States.CONNECTED);
+    addTransition(States.CONNECTED, Events.BIND_COMPLETE, States.CONNECTED);
+    addTransition(States.CONNECTED, Events.COMMAND_COMPLETE, States.CONNECTED);
+    addTransition(States.CONNECTED, Events.READY_FOR_QUERY, States.CONNECTED);
   }
 
   private static void addTransition(States start, Events event, States end) {

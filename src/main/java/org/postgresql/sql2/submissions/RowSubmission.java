@@ -26,15 +26,15 @@ public class RowSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
   private GroupSubmission groupSubmission;
 
   public RowSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder,
-                       GroupSubmission groupSubmission, String sql) {
+      GroupSubmission groupSubmission, String sql) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.holder = holder;
     this.groupSubmission = groupSubmission;
     this.sql = sql;
 
-    if(groupSubmission != null) {
-      groupSubmission.stackFuture((CompletableFuture<T>)getCompletionStage());
+    if (groupSubmission != null) {
+      groupSubmission.stackFuture((CompletableFuture<T>) getCompletionStage());
     }
   }
 
@@ -74,14 +74,13 @@ public class RowSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
 
   public Object finish(Object finishObject) {
     T o = null;
-    if(collector != null) {
-      o = (T)collector.finisher().apply(collectorHolder);
-      if(groupSubmission != null) {
+    if (collector != null) {
+      o = (T) collector.finisher().apply(collectorHolder);
+      if (groupSubmission != null) {
         groupSubmission.addGroupResult(o);
       }
     }
-    ((CompletableFuture<T>) getCompletionStage())
-        .complete(o);
+    ((CompletableFuture<T>) getCompletionStage()).complete(o);
     return o;
   }
 
@@ -104,4 +103,5 @@ public class RowSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
   public Consumer<Throwable> getErrorHandler() {
     return errorHandler;
   }
+
 }

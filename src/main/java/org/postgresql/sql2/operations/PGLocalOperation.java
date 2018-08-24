@@ -51,7 +51,7 @@ public class PGLocalOperation<T> implements LocalOperation<T> {
   @Override
   public Submission<T> submit() {
     PGSubmission<T> submission = new LocalSubmission<>(this::cancel, errorHandler, action, groupSubmission);
-    connection.addSubmissionOnQue(submission);
+    connection.submit(submission);
     return submission;
   }
 

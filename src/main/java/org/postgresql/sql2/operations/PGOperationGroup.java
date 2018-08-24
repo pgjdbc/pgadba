@@ -82,7 +82,9 @@ public class PGOperationGroup<S, T> implements OperationGroup<S, T> {
   @Override
   public Submission<T> releaseProhibitingMoreMembers() {
     held = false;
-    connection.addSubmissionOnQue(groupSubmission);
+    
+    // TODO is this to be a group of submissions?
+    connection.submit(groupSubmission);
     return groupSubmission;
   }
 

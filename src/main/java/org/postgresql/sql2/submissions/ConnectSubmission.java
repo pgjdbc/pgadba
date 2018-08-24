@@ -1,5 +1,7 @@
 package org.postgresql.sql2.submissions;
 
+import org.postgresql.sql2.communication.NetworkConnect;
+import org.postgresql.sql2.communication.network.NetworkConnectRequest;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
@@ -13,6 +15,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 
 public class ConnectSubmission implements org.postgresql.sql2.PGSubmission<Void> {
+
   final private Supplier<Boolean> cancel;
   private CompletableFuture<Void> publicStage;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
@@ -23,16 +26,24 @@ public class ConnectSubmission implements org.postgresql.sql2.PGSubmission<Void>
   private Consumer<Throwable> errorHandler;
 
   private GroupSubmission groupSubmission;
+  
+  private NetworkConnectRequest request;
 
-  public ConnectSubmission(Supplier<Boolean> cancel, Types completionType, Consumer<Throwable> errorHandler, GroupSubmission groupSubmission) {
+  public ConnectSubmission(Supplier<Boolean> cancel, Types completionType, Consumer<Throwable> errorHandler,
+      GroupSubmission groupSubmission) {
     this.cancel = cancel;
     this.completionType = completionType;
     this.errorHandler = errorHandler;
     this.groupSubmission = groupSubmission;
+    this.request = new NetworkConnectRequest(this);
 
-    if(groupSubmission != null) {
-      groupSubmission.stackFuture((CompletableFuture<Void>)getCompletionStage());
+    if (groupSubmission != null) {
+      groupSubmission.stackFuture((CompletableFuture<Void>) getCompletionStage());
     }
+  }
+  
+  public NetworkConnect getNetworkConnect() {
+    return this.request;
   }
 
   @Override
@@ -76,7 +87,7 @@ public class ConnectSubmission implements org.postgresql.sql2.PGSubmission<Void>
 
   @Override
   public Object finish(Object finishObject) {
-    ((CompletableFuture<Void>)getCompletionStage()).complete(null);
+    ((CompletableFuture<Void>) getCompletionStage()).complete(null);
     return null;
   }
 
@@ -103,4 +114,5 @@ public class ConnectSubmission implements org.postgresql.sql2.PGSubmission<Void>
   public Consumer<Throwable> getErrorHandler() {
     return errorHandler;
   }
+
 }

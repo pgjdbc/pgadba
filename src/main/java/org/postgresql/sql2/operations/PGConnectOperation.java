@@ -1,16 +1,18 @@
 package org.postgresql.sql2.operations;
 
-import jdk.incubator.sql2.Operation;
-import jdk.incubator.sql2.Submission;
+import java.time.Duration;
+import java.util.function.Consumer;
+
 import org.postgresql.sql2.PGConnection;
 import org.postgresql.sql2.submissions.BaseSubmission;
 import org.postgresql.sql2.submissions.ConnectSubmission;
 import org.postgresql.sql2.submissions.GroupSubmission;
 
-import java.time.Duration;
-import java.util.function.Consumer;
+import jdk.incubator.sql2.Operation;
+import jdk.incubator.sql2.Submission;
 
 public class PGConnectOperation implements Operation<Void> {
+
   private Consumer<Throwable> errorHandler;
   private Duration minTime;
   private PGConnection connection;
@@ -39,11 +41,12 @@ public class PGConnectOperation implements Operation<Void> {
 
   @Override
   public Submission<Void> submit() {
-    ConnectSubmission submission = new ConnectSubmission(this::cancel, BaseSubmission.Types.CONNECT, errorHandler, groupSubmission);
+    ConnectSubmission submission = new ConnectSubmission(this::cancel, BaseSubmission.Types.CONNECT, errorHandler,
+        groupSubmission);
     submission.getCompletionStage().thenAccept(s -> {
       connection.setLifeCycleOpen();
     });
-    connection.addSubmissionOnQue(submission);
+    connection.sendNetworkConnect(submission.getNetworkConnect());
     return submission;
   }
 
@@ -51,4 +54,5 @@ public class PGConnectOperation implements Operation<Void> {
     // todo set life cycle to canceled
     return true;
   }
+
 }

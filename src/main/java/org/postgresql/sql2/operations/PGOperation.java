@@ -38,7 +38,7 @@ public class PGOperation<S> implements Operation<S> {
   @Override
   public Submission<S> submit() {
     PGSubmission<S> submission = new VoidSubmission<>(this::cancel, errorHandler, new ParameterHolder(), null, sql);
-    connection.addSubmissionOnQue(submission);
+    connection.submit(submission);
     return submission;
   }
 

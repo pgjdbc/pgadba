@@ -90,7 +90,7 @@ public class PGRowPublisherOperation<R> implements ParameterizedRowPublisherOper
   @Override
   public Submission<R> submit() {
     submission = new ProcessorSubmission<>(this::cancel, errorHandler, sql, publisher, holder, groupSubmission);
-    connection.addSubmissionOnQue(submission);
+    connection.submit(submission);
     return submission;
   }
 
