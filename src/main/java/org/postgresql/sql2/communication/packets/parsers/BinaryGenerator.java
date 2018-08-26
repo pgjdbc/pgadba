@@ -196,6 +196,12 @@ public class BinaryGenerator {
     return null;
   }
 
+  /**
+   * converts what the user sends for a binary blog to what the server wants as a binary blob
+   * (which are the same things).
+   * @param input data from the user
+   * @return a byte array containing the information
+   */
   public static byte[] fromByteArray(Object input) {
     if (input instanceof byte[]) {
       return (byte[])input;

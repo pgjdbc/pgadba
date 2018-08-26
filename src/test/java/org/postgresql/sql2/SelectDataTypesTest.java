@@ -2,6 +2,7 @@ package org.postgresql.sql2;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
 import static org.postgresql.sql2.testutil.FutureUtil.get10;
@@ -312,6 +313,38 @@ public class SelectDataTypesTest {
       get10(conn.rowCountOperation("drop table insertAndSelectByteArray").submit().getCompletionStage());
 
       assertArrayEquals(insertData, get10(idF));
+    }
+  }
+
+  /*
+  @Test
+  public void selectVeryLargeNumberOfRequests() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection connection = ds.getConnection()) {
+
+      //Thread.sleep(60000);
+
+      // Run multiple queries over the connection
+      final int queryCount = 100000;
+      Submission<Integer>[] submissions = new Submission[queryCount];
+      for (int i = 0; i < queryCount; i++) {
+        submissions[i] = connection.<Integer>rowOperation("SELECT " + i + " as t")
+            .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+      }
+
+      // Ensure obtain all results
+      for (int i = 0; i < queryCount; i++) {
+        Integer result = get10(submissions[i].getCompletionStage());
+        Assert.assertEquals("Incorrect result", Integer.valueOf(i), result);
+      }
+    }
+  }
+  */
+
+  @Test
+  public void ensureMultipleQueriesAreNotAllowed() {
+    try (Connection connection = ds.getConnection()) {
+      assertThrows(ExecutionException.class, () -> get10(connection.<Integer>rowOperation("select 0 as t;select 1 as t")
+          .submit().getCompletionStage()));
     }
   }
 }

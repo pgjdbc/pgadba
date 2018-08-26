@@ -197,6 +197,12 @@ public class TextParser {
     return LocalTime.parse(in, localTimeFormatter);
   }
 
+  /**
+   * parses a timestamp into either a LocalDateTime or LocalTime based on what the user requested.
+   * @param in string from the postgresql server
+   * @param requestedClass class the user requested
+   * @return object
+   */
   public static Object timestamp_out(String in, Class<?> requestedClass) {
     LocalDateTime ldt = LocalDateTime.parse(in, timestampWithoutTimeZoneFormatter);
 

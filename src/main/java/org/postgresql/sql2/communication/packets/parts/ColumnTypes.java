@@ -186,7 +186,8 @@ public enum ColumnTypes {
   private final Class clazz;
   private final PgAdbaType type;
 
-  ColumnTypes(int oid, BiFunction<String, Class<?>, Object> textParser, QuadFunction<byte[], Integer, Integer, Class<?>, Object> binaryParser,
+  ColumnTypes(int oid, BiFunction<String, Class<?>, Object> textParser,
+      QuadFunction<byte[], Integer, Integer, Class<?>, Object> binaryParser,
       Class c, PgAdbaType type) {
     this.oid = oid;
     this.textParser = textParser;
