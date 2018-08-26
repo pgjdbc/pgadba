@@ -219,6 +219,18 @@ public class SelectDataTypesTest {
   }
 
   @Test
+  public void selectDateAsTime() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<LocalTime> idF = conn.<LocalTime>rowOperation("select '2018-04-29 20:55:57.692132'::timestamp as t")
+          .collect(singleCollector(LocalTime.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(LocalTime.of(20, 55, 57, 692132000), get10(idF));
+    }
+  }
+
+  @Test
   public void selectTime() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalTime> idF = conn.<LocalTime>rowOperation("select '2018-04-29 20:55:57.692132'::time as t")

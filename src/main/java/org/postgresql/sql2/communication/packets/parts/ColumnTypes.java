@@ -1,16 +1,15 @@
 package org.postgresql.sql2.communication.packets.parts;
 
-import org.postgresql.sql2.communication.packets.parsers.BinaryParser;
-import org.postgresql.sql2.communication.packets.parsers.TextParser;
-import org.postgresql.sql2.util.TriFunction;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
-import java.util.function.Function;
+import java.util.function.BiFunction;
+import org.postgresql.sql2.communication.packets.parsers.BinaryParser;
+import org.postgresql.sql2.communication.packets.parsers.TextParser;
+import org.postgresql.sql2.util.QuadFunction;
 
 public enum ColumnTypes {
   BOOL(16, TextParser::boolout, BinaryParser::boolsend, Boolean.class, PgAdbaType.BOOLEAN),
@@ -182,12 +181,12 @@ public enum ColumnTypes {
   OTHER(0, TextParser::passthrough, null, null, null);
 
   private final int oid;
-  private final Function<String, Object> textParser;
-  private final TriFunction<byte[], Integer, Integer, Object> binaryParser;
+  private final BiFunction<String, Class<?>, Object> textParser;
+  private final QuadFunction<byte[], Integer, Integer, Class<?>, Object> binaryParser;
   private final Class clazz;
   private final PgAdbaType type;
 
-  ColumnTypes(int oid, Function<String, Object> textParser, TriFunction<byte[], Integer, Integer, Object> binaryParser,
+  ColumnTypes(int oid, BiFunction<String, Class<?>, Object> textParser, QuadFunction<byte[], Integer, Integer, Class<?>, Object> binaryParser,
       Class c, PgAdbaType type) {
     this.oid = oid;
     this.textParser = textParser;
@@ -211,11 +210,11 @@ public enum ColumnTypes {
     return OTHER;
   }
 
-  public Function<String, Object> getTextParser() {
+  public BiFunction<String, Class<?>, Object> getTextParser() {
     return textParser;
   }
 
-  public TriFunction<byte[], Integer, Integer, Object> getBinaryParser() {
+  public QuadFunction<byte[], Integer, Integer, Class<?>, Object> getBinaryParser() {
     return binaryParser;
   }
 

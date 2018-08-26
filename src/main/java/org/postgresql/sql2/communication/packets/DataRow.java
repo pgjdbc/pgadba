@@ -65,9 +65,9 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
     switch (tc.getColumnDescription().getFormatCode()) {
       case TEXT:
         String data = new String(BinaryHelper.subBytes(tc.getBytes(), tc.getStart(), tc.getStop()), StandardCharsets.UTF_8);
-        return (T)tc.getColumnDescription().getColumnType().getTextParser().apply(data);
+        return (T)tc.getColumnDescription().getColumnType().getTextParser().apply(data, type);
       case BINARY:
-        return (T)tc.getColumnDescription().getColumnType().getBinaryParser().apply(tc.getBytes(), tc.getStart(), tc.getStop());
+        return (T)tc.getColumnDescription().getColumnType().getBinaryParser().apply(tc.getBytes(), tc.getStart(), tc.getStop(), type);
       default:
         throw new IllegalStateException("unimplemented switch case");
     }

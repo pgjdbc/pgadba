@@ -4,13 +4,13 @@ import java.util.Objects;
 import java.util.function.Function;
 
 @FunctionalInterface
-public interface TriFunction<A, B, C, R> {
+public interface QuadFunction<A, B, C, D, R> {
 
-  R apply(A a, B b, C c);
+  R apply(A a, B b, C c, D d);
 
-  default <V> TriFunction<A, B, C, V> andThen(
+  default <V> QuadFunction<A, B, C, D, V> andThen(
       Function<? super R, ? extends V> after) {
     Objects.requireNonNull(after);
-    return (A a, B b, C c) -> after.apply(apply(a, b, c));
+    return (A a, B b, C c, D d) -> after.apply(apply(a, b, c, d));
   }
 }

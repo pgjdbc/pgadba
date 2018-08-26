@@ -22,7 +22,7 @@ public class TextParser {
   private static final DateTimeFormatter localTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSS");
   private static final DateTimeFormatter offsetTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSX");
 
-  public static Object boolout(String in) {
+  public static Object boolout(String in, Class<?> requestedClass) {
     return in.equals("t");
   }
 
@@ -31,7 +31,7 @@ public class TextParser {
    * @param in the hex string
    * @return the bytes
    */
-  public static Object byteaout(String in) {
+  public static Object byteaout(String in, Class<?> requestedClass) {
     int len = in.length() - 2;
     byte[] data = new byte[len / 2];
     for (int i = 0; i < len; i += 2) {
@@ -41,167 +41,173 @@ public class TextParser {
     return data;
   }
 
-  public static Object charout(String in) {
+  public static Object charout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object nameout(String in) {
+  public static Object nameout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object int8out(String in) {
+  public static Object int8out(String in, Class<?> requestedClass) {
     return Long.parseLong(in);
   }
 
-  public static Object int2out(String in) {
+  public static Object int2out(String in, Class<?> requestedClass) {
     return Short.parseShort(in);
   }
 
-  public static Object int2vectorout(String in) {
+  public static Object int2vectorout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object int4out(String in) {
+  public static Object int4out(String in, Class<?> requestedClass) {
     return Integer.parseInt(in);
   }
 
-  public static Object regprocout(String in) {
+  public static Object regprocout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object oidout(String in) {
+  public static Object oidout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object tidout(String in) {
+  public static Object tidout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object xidout(String in) {
+  public static Object xidout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object cidout(String in) {
+  public static Object cidout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object oidvectorout(String in) {
+  public static Object oidvectorout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object pg_ddl_command_out(String in) {
+  public static Object pg_ddl_command_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object json_out(String in) {
+  public static Object json_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object xml_out(String in) {
+  public static Object xml_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object pg_node_tree_out(String in) {
+  public static Object pg_node_tree_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object smgrout(String in) {
+  public static Object smgrout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object point_out(String in) {
+  public static Object point_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object lseg_out(String in) {
+  public static Object lseg_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object path_out(String in) {
+  public static Object path_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object box_out(String in) {
+  public static Object box_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object poly_out(String in) {
+  public static Object poly_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object line_out(String in) {
+  public static Object line_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object cidr_out(String in) {
+  public static Object cidr_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object float4out(String in) {
+  public static Object float4out(String in, Class<?> requestedClass) {
     return Float.parseFloat(in);
   }
 
-  public static Object float8out(String in) {
+  public static Object float8out(String in, Class<?> requestedClass) {
     return Double.parseDouble(in);
   }
 
-  public static Object abstimeout(String in) {
+  public static Object abstimeout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object reltimeout(String in) {
+  public static Object reltimeout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object tintervalout(String in) {
+  public static Object tintervalout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object unknownout(String in) {
+  public static Object unknownout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object circle_out(String in) {
+  public static Object circle_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object cash_out(String in) {
+  public static Object cash_out(String in, Class<?> requestedClass) {
     return in;
   }
 
-  public static Object macaddr_out(String in) {
+  public static Object macaddr_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object inet_out(String in) {
+  public static Object inet_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object aclitemout(String in) {
+  public static Object aclitemout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object bpcharout(String in) {
+  public static Object bpcharout(String in, Class<?> requestedClass) {
     return in.charAt(0);
   }
 
-  public static Object varcharout(String in) {
+  public static Object varcharout(String in, Class<?> requestedClass) {
     return in;
   }
 
-  public static Object date_out(String in) {
+  public static Object date_out(String in, Class<?> requestedClass) {
     return LocalDate.parse(in, localDateFormatter);
   }
 
-  public static Object time_out(String in) {
+  public static Object time_out(String in, Class<?> requestedClass) {
     return LocalTime.parse(in, localTimeFormatter);
   }
 
-  public static Object timestamp_out(String in) {
-    return LocalDateTime.parse(in, timestampWithoutTimeZoneFormatter);
+  public static Object timestamp_out(String in, Class<?> requestedClass) {
+    LocalDateTime ldt = LocalDateTime.parse(in, timestampWithoutTimeZoneFormatter);
+
+    if (LocalTime.class.equals(requestedClass)) {
+      return ldt.toLocalTime();
+    }
+
+    return ldt;
   }
 
-  public static Object timestamptz_out(String in) {
+  public static Object timestamptz_out(String in, Class<?> requestedClass) {
     return OffsetDateTime.parse(in, timestampWithTimeZoneFormatter);
   }
 
@@ -210,7 +216,7 @@ public class TextParser {
    * @param in the string to parse
    * @return a Duration object
    */
-  public static Object interval_out(String in) {
+  public static Object interval_out(String in, Class<?> requestedClass) {
     final boolean IsoFormat = !in.startsWith("@");
 
     // Just a simple '0'
@@ -295,163 +301,163 @@ public class TextParser {
     }
   }
 
-  public static Object timetz_out(String in) {
+  public static Object timetz_out(String in, Class<?> requestedClass) {
     return OffsetTime.parse(in, offsetTimeFormatter);
   }
 
-  public static Object bit_out(String in) {
+  public static Object bit_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object varbit_out(String in) {
+  public static Object varbit_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object numeric_out(String in) {
+  public static Object numeric_out(String in, Class<?> requestedClass) {
     return new BigDecimal(in);
   }
 
-  public static Object textout(String in) {
+  public static Object textout(String in, Class<?> requestedClass) {
     return in;
   }
 
-  public static Object regprocedureout(String in) {
+  public static Object regprocedureout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object regoperout(String in) {
+  public static Object regoperout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object regoperatorout(String in) {
+  public static Object regoperatorout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object regclassout(String in) {
+  public static Object regclassout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object regtypeout(String in) {
+  public static Object regtypeout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object cstring_out(String in) {
+  public static Object cstring_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object any_out(String in) {
+  public static Object any_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object anyarray_out(String in) {
+  public static Object anyarray_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object void_out(String in) {
+  public static Object void_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object trigger_out(String in) {
+  public static Object trigger_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object language_handler_out(String in) {
+  public static Object language_handler_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object internal_out(String in) {
+  public static Object internal_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object opaque_out(String in) {
+  public static Object opaque_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object anyelement_out(String in) {
+  public static Object anyelement_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object anynonarray_out(String in) {
+  public static Object anynonarray_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object uuid_out(String in) {
+  public static Object uuid_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object txid_snapshot_out(String in) {
+  public static Object txid_snapshot_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object fdw_handler_out(String in) {
+  public static Object fdw_handler_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object pg_lsn_out(String in) {
+  public static Object pg_lsn_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object tsm_handler_out(String in) {
+  public static Object tsm_handler_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object anyenum_out(String in) {
+  public static Object anyenum_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object tsvectorout(String in) {
+  public static Object tsvectorout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object tsqueryout(String in) {
+  public static Object tsqueryout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object gtsvectorout(String in) {
+  public static Object gtsvectorout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object regconfigout(String in) {
+  public static Object regconfigout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object regdictionaryout(String in) {
+  public static Object regdictionaryout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object jsonb_out(String in) {
+  public static Object jsonb_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object anyrange_out(String in) {
+  public static Object anyrange_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object event_trigger_out(String in) {
+  public static Object event_trigger_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object range_out(String in) {
+  public static Object range_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object regnamespaceout(String in) {
+  public static Object regnamespaceout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object regroleout(String in) {
+  public static Object regroleout(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object array_out(String in) {
+  public static Object array_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object record_out(String in) {
+  public static Object record_out(String in, Class<?> requestedClass) {
     return null;
   }
 
-  public static Object passthrough(String in) {
+  public static Object passthrough(String in, Class<?> requestedClass) {
     return in;
   }
 
