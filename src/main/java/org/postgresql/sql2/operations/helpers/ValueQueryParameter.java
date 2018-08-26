@@ -1,39 +1,48 @@
 package org.postgresql.sql2.operations.helpers;
 
 import jdk.incubator.sql2.SqlType;
-import org.postgresql.sql2.communication.packets.parts.PGAdbaType;
+import org.postgresql.sql2.communication.packets.parts.PgAdbaType;
 
 import java.util.concurrent.ExecutionException;
 
 public class ValueQueryParameter implements QueryParameter {
-  private PGAdbaType type;
+  private PgAdbaType type;
   private Object value;
 
+  /**
+   * parameter that represent one value.
+   * @param value the value
+   */
   public ValueQueryParameter(Object value) {
     this.value = value;
 
     if (value == null) {
-      type = PGAdbaType.NULL;
+      type = PgAdbaType.NULL;
     } else {
-      type = PGAdbaType.guessTypeFromClass(value.getClass());
+      type = PgAdbaType.guessTypeFromClass(value.getClass());
     }
   }
 
+  /**
+   * parameter that represent one value.
+   * @param value the value
+   * @param type the type of the value
+   */
   public ValueQueryParameter(Object value, SqlType type) {
     this.value = value;
     if (type != null) {
-      this.type = PGAdbaType.convert(type);
+      this.type = PgAdbaType.convert(type);
     } else {
       if (value == null) {
-        this.type = PGAdbaType.NULL;
+        this.type = PgAdbaType.NULL;
       } else {
-        this.type = PGAdbaType.guessTypeFromClass(value.getClass());
+        this.type = PgAdbaType.guessTypeFromClass(value.getClass());
       }
     }
   }
 
   @Override
-  public int getOID() {
+  public int getOid() {
     return type.getVendorTypeNumber();
   }
 

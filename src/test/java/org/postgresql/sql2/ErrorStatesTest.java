@@ -1,26 +1,25 @@
 package org.postgresql.sql2;
 
-import jdk.incubator.sql2.Connection;
-import jdk.incubator.sql2.DataSource;
-import jdk.incubator.sql2.SqlException;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.testUtil.ConnectUtil;
-import org.postgresql.sql2.testUtil.DatabaseHolder;
-import org.testcontainers.containers.PostgreSQLContainer;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import jdk.incubator.sql2.Connection;
+import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.SqlException;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.postgresql.sql2.testutil.ConnectUtil;
+import org.postgresql.sql2.testutil.DatabaseHolder;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 public class ErrorStatesTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
@@ -29,7 +28,7 @@ public class ErrorStatesTest {
 
   @BeforeAll
   public static void setUp() {
-    ds = ConnectUtil.openDB(postgres);
+    ds = ConnectUtil.openDb(postgres);
 
     ConnectUtil.createTable(ds, "tab",
         "id int", "name varchar(100)", "answer int");
@@ -67,6 +66,7 @@ public class ErrorStatesTest {
           .submit()
           .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
     } catch (ExecutionException ignore) {
+      //ignored
     }
     assertTrue(onErrorResult[0]);
   }
@@ -96,6 +96,7 @@ public class ErrorStatesTest {
           .submit()
           .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
     } catch (ExecutionException ignore) {
+      //ignored
     }
     assertTrue(onErrorResult[0]);
   }
@@ -109,6 +110,7 @@ public class ErrorStatesTest {
           .submit()
           .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
     } catch (ExecutionException ignore) {
+      //ignored
     }
     assertTrue(onErrorResult[0]);
   }
@@ -122,6 +124,7 @@ public class ErrorStatesTest {
           .submit()
           .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
     } catch (ExecutionException ignore) {
+      //ignored
     }
     assertTrue(onErrorResult[0]);
   }

@@ -8,6 +8,13 @@ public class TableCell {
   private int stop;
   private ColumnDescription columnDescription;
 
+  /**
+   * one cell in the returned result set.
+   * @param bytes the payload
+   * @param start where in the payload the information starts
+   * @param stop where in the payload the information stops
+   * @param columnDescription description of the data type for this cell
+   */
   public TableCell(byte[] bytes, int start, int stop, ColumnDescription columnDescription) {
     this.bytes = bytes;
     this.start = start;

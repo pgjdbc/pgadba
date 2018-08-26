@@ -9,9 +9,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.PGConnectionProperties;
-import org.postgresql.sql2.testUtil.CollectorUtils;
-import org.postgresql.sql2.testUtil.DatabaseHolder;
+import org.postgresql.sql2.PgConnectionProperties;
+import org.postgresql.sql2.testutil.CollectorUtils;
+import org.postgresql.sql2.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import jdk.incubator.sql2.Connection;
@@ -31,7 +31,7 @@ public class NioLoopTest {
 
   private static Builder createDataSource() {
     return DataSourceFactory
-        .newFactory("org.postgresql.sql2.PGDataSourceFactory").builder().url("jdbc:postgresql://"
+        .newFactory("org.postgresql.sql2.PgDataSourceFactory").builder().url("jdbc:postgresql://"
             + postgres.getContainerIpAddress() + ":" + postgres.getMappedPort(5432) + "/" + postgres.getDatabaseName())
         .username(postgres.getUsername()).password(postgres.getPassword());
   }
@@ -50,7 +50,7 @@ public class NioLoopTest {
   @Test
   public void provideNioLoop() throws Exception {
     MockNioLoop loop = new MockNioLoop();
-    try (DataSource dataSource = createDataSource().connectionProperty(PGConnectionProperties.NIO_LOOP, loop).build()) {
+    try (DataSource dataSource = createDataSource().connectionProperty(PgConnectionProperties.NIO_LOOP, loop).build()) {
       Connection connection = dataSource.getConnection();
 
       // Undertake single request
@@ -70,15 +70,15 @@ public class NioLoopTest {
       Connection connection = dataSource.getConnection();
 
       // Run multiple queries over the connection
-      final int QUERY_COUNT = 1000;
-      Submission<Integer>[] submissions = new Submission[QUERY_COUNT];
-      for (int i = 0; i < QUERY_COUNT; i++) {
+      final int queryCount = 1000;
+      Submission<Integer>[] submissions = new Submission[queryCount];
+      for (int i = 0; i < queryCount; i++) {
         submissions[i] = connection.<Integer>rowOperation("SELECT 1 as t")
             .collect(CollectorUtils.singleCollector(Integer.class)).submit();
       }
 
       // Ensure obtain all results
-      for (int i = 0; i < QUERY_COUNT; i++) {
+      for (int i = 0; i < queryCount; i++) {
         Integer result = submissions[i].getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
         assertEquals("Incorrect result", Integer.valueOf(1), result);
       }
@@ -88,19 +88,19 @@ public class NioLoopTest {
   @Test
   public void reuseNioLoopBetweenConnections() throws Exception {
     MockNioLoop loop = new MockNioLoop();
-    try (DataSource dataSource = createDataSource().connectionProperty(PGConnectionProperties.NIO_LOOP, loop).build()) {
+    try (DataSource dataSource = createDataSource().connectionProperty(PgConnectionProperties.NIO_LOOP, loop).build()) {
 
       // Run queries on multiple connections
-      final int CONNECTION_COUNT = 10;
-      Submission<Integer>[] submissions = new Submission[CONNECTION_COUNT];
-      for (int i = 0; i < CONNECTION_COUNT; i++) {
+      final int connectionCount = 10;
+      Submission<Integer>[] submissions = new Submission[connectionCount];
+      for (int i = 0; i < connectionCount; i++) {
         Connection connection = dataSource.getConnection();
         submissions[i] = connection.<Integer>rowOperation("SELECT 1 as t")
             .collect(CollectorUtils.singleCollector(Integer.class)).submit();
       }
 
       // Ensure obtain all results
-      for (int i = 0; i < CONNECTION_COUNT; i++) {
+      for (int i = 0; i < connectionCount; i++) {
         Integer result = submissions[i].getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
         assertEquals("Incorrect result", Integer.valueOf(1), result);
       }
@@ -111,8 +111,8 @@ public class NioLoopTest {
   public void reuseNioLoopBetweenDataSources() throws Exception {
     MockNioLoop loop = new MockNioLoop();
     try (
-        DataSource dataSourceOne = createDataSource().connectionProperty(PGConnectionProperties.NIO_LOOP, loop).build();
-        DataSource dataSourceTwo = createDataSource().connectionProperty(PGConnectionProperties.NIO_LOOP, loop)
+        DataSource dataSourceOne = createDataSource().connectionProperty(PgConnectionProperties.NIO_LOOP, loop).build();
+        DataSource dataSourceTwo = createDataSource().connectionProperty(PgConnectionProperties.NIO_LOOP, loop)
             .build()) {
 
       // Run query via each data source

@@ -5,9 +5,9 @@ import jdk.incubator.sql2.DataSource;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.communication.packets.parts.PGAdbaType;
-import org.postgresql.sql2.testUtil.ConnectUtil;
-import org.postgresql.sql2.testUtil.DatabaseHolder;
+import org.postgresql.sql2.communication.packets.parts.PgAdbaType;
+import org.postgresql.sql2.testutil.ConnectUtil;
+import org.postgresql.sql2.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.math.BigDecimal;
@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.postgresql.sql2.testUtil.CollectorUtils.singleCollector;
+import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
 
 public class BindParameterTypesTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
@@ -35,7 +35,7 @@ public class BindParameterTypesTest {
 
   @BeforeAll
   public static void setUp() {
-    ds = ConnectUtil.openDB(postgres);
+    ds = ConnectUtil.openDb(postgres);
   }
 
   @AfterAll
@@ -47,7 +47,7 @@ public class BindParameterTypesTest {
   public void bindNullAsInteger4() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
-          .set("$1", null, PGAdbaType.INTEGER)
+          .set("$1", null, PgAdbaType.INTEGER)
           .collect(singleCollector(Integer.class))
           .submit()
           .getCompletionStage();
@@ -61,7 +61,7 @@ public class BindParameterTypesTest {
     CompletableFuture<Integer> f = CompletableFuture.supplyAsync(() -> null);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
-          .set("$1", f, PGAdbaType.INTEGER)
+          .set("$1", f, PgAdbaType.INTEGER)
           .collect(singleCollector(Integer.class))
           .submit()
           .getCompletionStage();
@@ -101,7 +101,7 @@ public class BindParameterTypesTest {
   public void bindInteger4() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
-          .set("$1", 100, PGAdbaType.INTEGER)
+          .set("$1", 100, PgAdbaType.INTEGER)
           .collect(singleCollector(Integer.class))
           .submit()
           .getCompletionStage();
@@ -115,7 +115,7 @@ public class BindParameterTypesTest {
     CompletableFuture<Integer> f = CompletableFuture.supplyAsync(() -> 100);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select $1::int4 as t")
-          .set("$1", f, PGAdbaType.INTEGER)
+          .set("$1", f, PgAdbaType.INTEGER)
           .collect(singleCollector(Integer.class))
           .submit()
           .getCompletionStage();
@@ -155,7 +155,7 @@ public class BindParameterTypesTest {
   public void bindInteger2() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Short> idF = conn.<Short>rowOperation("select $1::int2 as t")
-          .set("$1", 100, PGAdbaType.SMALLINT)
+          .set("$1", 100, PgAdbaType.SMALLINT)
           .collect(singleCollector(Short.class))
           .submit()
           .getCompletionStage();
@@ -169,7 +169,7 @@ public class BindParameterTypesTest {
     CompletableFuture<Short> f = CompletableFuture.supplyAsync(() -> (short)100);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Short> idF = conn.<Short>rowOperation("select $1::int2 as t")
-          .set("$1", f, PGAdbaType.SMALLINT)
+          .set("$1", f, PgAdbaType.SMALLINT)
           .collect(singleCollector(Short.class))
           .submit()
           .getCompletionStage();
@@ -209,7 +209,7 @@ public class BindParameterTypesTest {
   public void bindInteger8() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Long> idF = conn.<Long>rowOperation("select $1::int8 as t")
-          .set("$1", 100, PGAdbaType.BIGINT)
+          .set("$1", 100, PgAdbaType.BIGINT)
           .collect(singleCollector(Long.class))
           .submit()
           .getCompletionStage();
@@ -223,7 +223,7 @@ public class BindParameterTypesTest {
     CompletableFuture<Long> f = CompletableFuture.supplyAsync(() -> 100L);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Long> idF = conn.<Long>rowOperation("select $1::int8 as t")
-          .set("$1", f, PGAdbaType.BIGINT)
+          .set("$1", f, PgAdbaType.BIGINT)
           .collect(singleCollector(Long.class))
           .submit()
           .getCompletionStage();
@@ -263,7 +263,7 @@ public class BindParameterTypesTest {
   public void bindVarchar() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
-          .set("$1", "a text I wrote", PGAdbaType.VARCHAR)
+          .set("$1", "a text I wrote", PgAdbaType.VARCHAR)
           .collect(singleCollector(String.class))
           .submit()
           .getCompletionStage();
@@ -277,7 +277,7 @@ public class BindParameterTypesTest {
     CompletableFuture<String> f = CompletableFuture.supplyAsync(() -> "a text I wrote");
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
-          .set("$1", f, PGAdbaType.VARCHAR)
+          .set("$1", f, PgAdbaType.VARCHAR)
           .collect(singleCollector(String.class))
           .submit()
           .getCompletionStage();
@@ -317,7 +317,7 @@ public class BindParameterTypesTest {
   public void bindVarCharNorwegianChar() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
-          .set("$1", "Brød har lenge vore ein viktig del av norsk kosthald.", PGAdbaType.VARCHAR)
+          .set("$1", "Brød har lenge vore ein viktig del av norsk kosthald.", PgAdbaType.VARCHAR)
           .collect(singleCollector(String.class))
           .submit()
           .getCompletionStage();
@@ -331,7 +331,7 @@ public class BindParameterTypesTest {
     CompletableFuture<String> f = CompletableFuture.supplyAsync(() -> "Brød har lenge vore ein viktig del av norsk kosthald.");
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::varchar as t")
-          .set("$1", f, PGAdbaType.VARCHAR)
+          .set("$1", f, PgAdbaType.VARCHAR)
           .collect(singleCollector(String.class))
           .submit()
           .getCompletionStage();
@@ -371,7 +371,7 @@ public class BindParameterTypesTest {
   public void bindChar() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
-          .set("$1", 'R', PGAdbaType.CHAR)
+          .set("$1", 'R', PgAdbaType.CHAR)
           .collect(singleCollector(Character.class))
           .submit()
           .getCompletionStage();
@@ -385,7 +385,7 @@ public class BindParameterTypesTest {
     CompletableFuture<Character> f = CompletableFuture.supplyAsync(() -> 'R');
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
-          .set("$1", f, PGAdbaType.CHAR)
+          .set("$1", f, PgAdbaType.CHAR)
           .collect(singleCollector(Character.class))
           .submit()
           .getCompletionStage();
@@ -425,7 +425,7 @@ public class BindParameterTypesTest {
   public void bindCharNorwegianChar() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
-          .set("$1", 'Ø', PGAdbaType.CHAR)
+          .set("$1", 'Ø', PgAdbaType.CHAR)
           .collect(singleCollector(Character.class))
           .submit()
           .getCompletionStage();
@@ -439,7 +439,7 @@ public class BindParameterTypesTest {
     CompletableFuture<Character> f = CompletableFuture.supplyAsync(() -> 'Ø');
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Character> idF = conn.<Character>rowOperation("select $1::char as t")
-          .set("$1", f, PGAdbaType.CHAR)
+          .set("$1", f, PgAdbaType.CHAR)
           .collect(singleCollector(Character.class))
           .submit()
           .getCompletionStage();
@@ -479,7 +479,7 @@ public class BindParameterTypesTest {
   public void bindLongVarCharNorwegianChar() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::text as t")
-          .set("$1", "Som regel i form av smørbrød til frukost og lunsj.", PGAdbaType.LONGVARCHAR)
+          .set("$1", "Som regel i form av smørbrød til frukost og lunsj.", PgAdbaType.LONGVARCHAR)
           .collect(singleCollector(String.class))
           .submit()
           .getCompletionStage();
@@ -493,7 +493,7 @@ public class BindParameterTypesTest {
     CompletableFuture<String> f = CompletableFuture.supplyAsync(() -> "Som regel i form av smørbrød til frukost og lunsj.");
     try (Connection conn = ds.getConnection()) {
       CompletionStage<String> idF = conn.<String>rowOperation("select $1::text as t")
-          .set("$1", f, PGAdbaType.LONGVARCHAR)
+          .set("$1", f, PgAdbaType.LONGVARCHAR)
           .collect(singleCollector(String.class))
           .submit()
           .getCompletionStage();
@@ -535,7 +535,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalDate> idF = conn.<LocalDate>rowOperation("select $1::date as t")
-          .set("$1", d, PGAdbaType.DATE)
+          .set("$1", d, PgAdbaType.DATE)
           .collect(singleCollector(LocalDate.class))
           .submit()
           .getCompletionStage();
@@ -551,7 +551,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalDate> idF = conn.<LocalDate>rowOperation("select $1::date as t")
-          .set("$1", f, PGAdbaType.DATE)
+          .set("$1", f, PgAdbaType.DATE)
           .collect(singleCollector(LocalDate.class))
           .submit()
           .getCompletionStage();
@@ -597,7 +597,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalTime> idF = conn.<LocalTime>rowOperation("select $1::time as t")
-          .set("$1", d, PGAdbaType.TIME)
+          .set("$1", d, PgAdbaType.TIME)
           .collect(singleCollector(LocalTime.class))
           .submit()
           .getCompletionStage();
@@ -613,7 +613,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalTime> idF = conn.<LocalTime>rowOperation("select $1::time as t")
-          .set("$1", f, PGAdbaType.TIME)
+          .set("$1", f, PgAdbaType.TIME)
           .collect(singleCollector(LocalTime.class))
           .submit()
           .getCompletionStage();
@@ -659,7 +659,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<OffsetTime> idF = conn.<OffsetTime>rowOperation("select $1::time with time zone as t")
-          .set("$1", d, PGAdbaType.TIME_WITH_TIME_ZONE)
+          .set("$1", d, PgAdbaType.TIME_WITH_TIME_ZONE)
           .collect(singleCollector(OffsetTime.class))
           .submit()
           .getCompletionStage();
@@ -675,7 +675,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<OffsetTime> idF = conn.<OffsetTime>rowOperation("select $1::time with time zone as t")
-          .set("$1", f, PGAdbaType.TIME_WITH_TIME_ZONE)
+          .set("$1", f, PgAdbaType.TIME_WITH_TIME_ZONE)
           .collect(singleCollector(OffsetTime.class))
           .submit()
           .getCompletionStage();
@@ -721,7 +721,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalDateTime> idF = conn.<LocalDateTime>rowOperation("select $1::timestamp as t")
-          .set("$1", d, PGAdbaType.TIMESTAMP)
+          .set("$1", d, PgAdbaType.TIMESTAMP)
           .collect(singleCollector(LocalDateTime.class))
           .submit()
           .getCompletionStage();
@@ -737,7 +737,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalDateTime> idF = conn.<LocalDateTime>rowOperation("select $1::timestamp as t")
-          .set("$1", f, PGAdbaType.TIMESTAMP)
+          .set("$1", f, PgAdbaType.TIMESTAMP)
           .collect(singleCollector(LocalDateTime.class))
           .submit()
           .getCompletionStage();
@@ -783,7 +783,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<OffsetDateTime> idF = conn.<OffsetDateTime>rowOperation("select $1::timestamp with time zone as t")
-          .set("$1", d, PGAdbaType.TIMESTAMP_WITH_TIME_ZONE)
+          .set("$1", d, PgAdbaType.TIMESTAMP_WITH_TIME_ZONE)
           .collect(singleCollector(OffsetDateTime.class))
           .submit()
           .getCompletionStage();
@@ -799,7 +799,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<OffsetDateTime> idF = conn.<OffsetDateTime>rowOperation("select $1::timestamp with time zone as t")
-          .set("$1", f, PGAdbaType.TIMESTAMP_WITH_TIME_ZONE)
+          .set("$1", f, PgAdbaType.TIMESTAMP_WITH_TIME_ZONE)
           .collect(singleCollector(OffsetDateTime.class))
           .submit()
           .getCompletionStage();
@@ -845,7 +845,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<BigDecimal> idF = conn.<BigDecimal>rowOperation("select $1::numeric as t")
-          .set("$1", d, PGAdbaType.NUMERIC)
+          .set("$1", d, PgAdbaType.NUMERIC)
           .collect(singleCollector(BigDecimal.class))
           .submit()
           .getCompletionStage();
@@ -861,7 +861,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<BigDecimal> idF = conn.<BigDecimal>rowOperation("select $1::numeric as t")
-          .set("$1", f, PGAdbaType.NUMERIC)
+          .set("$1", f, PgAdbaType.NUMERIC)
           .collect(singleCollector(BigDecimal.class))
           .submit()
           .getCompletionStage();
@@ -907,7 +907,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Float> idF = conn.<Float>rowOperation("select $1::real as t")
-          .set("$1", d, PGAdbaType.REAL)
+          .set("$1", d, PgAdbaType.REAL)
           .collect(singleCollector(Float.class))
           .submit()
           .getCompletionStage();
@@ -923,7 +923,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Float> idF = conn.<Float>rowOperation("select $1::real as t")
-          .set("$1", f, PGAdbaType.REAL)
+          .set("$1", f, PgAdbaType.REAL)
           .collect(singleCollector(Float.class))
           .submit()
           .getCompletionStage();
@@ -969,7 +969,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Double> idF = conn.<Double>rowOperation("select $1::double precision as t")
-          .set("$1", d, PGAdbaType.DOUBLE)
+          .set("$1", d, PgAdbaType.DOUBLE)
           .collect(singleCollector(Double.class))
           .submit()
           .getCompletionStage();
@@ -985,7 +985,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Double> idF = conn.<Double>rowOperation("select $1::double precision as t")
-          .set("$1", f, PGAdbaType.DOUBLE)
+          .set("$1", f, PgAdbaType.DOUBLE)
           .collect(singleCollector(Double.class))
           .submit()
           .getCompletionStage();
@@ -1029,7 +1029,7 @@ public class BindParameterTypesTest {
   public void bindBoolean() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("select $1::boolean as t")
-          .set("$1", true, PGAdbaType.BOOLEAN)
+          .set("$1", true, PgAdbaType.BOOLEAN)
           .collect(singleCollector(Boolean.class))
           .submit()
           .getCompletionStage();
@@ -1043,7 +1043,7 @@ public class BindParameterTypesTest {
     CompletableFuture<Boolean> f = CompletableFuture.supplyAsync(() -> true);
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("select $1::boolean as t")
-          .set("$1", f, PGAdbaType.BOOLEAN)
+          .set("$1", f, PgAdbaType.BOOLEAN)
           .collect(singleCollector(Boolean.class))
           .submit()
           .getCompletionStage();
@@ -1087,7 +1087,7 @@ public class BindParameterTypesTest {
 
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalTime> idF = conn.<LocalTime>rowOperation("select $1::time as t")
-          .set("$1", d, PGAdbaType.TIME)
+          .set("$1", d, PgAdbaType.TIME)
           .collect(singleCollector(LocalTime.class))
           .submit()
           .getCompletionStage();
@@ -1095,7 +1095,7 @@ public class BindParameterTypesTest {
       assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
 
       CompletionStage<LocalTime> idF1 = conn.<LocalTime>rowOperation("select $1::time as t")
-          .set("$1", f, PGAdbaType.TIME)
+          .set("$1", f, PgAdbaType.TIME)
           .collect(singleCollector(LocalTime.class))
           .submit()
           .getCompletionStage();

@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 package org.postgresql.sql2.buffer;
 
 import java.io.IOException;
@@ -22,10 +23,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.postgresql.sql2.communication.NetworkOutputStream;
 
 /**
@@ -75,13 +75,12 @@ public class ByteBufferPoolOutputStream extends NetworkOutputStream {
    * Instantiate.
    * 
    * @param bufferPool {@link ByteBufferPool}.
-   * @param charset    {@link Charset} encoding for text.
    */
   public ByteBufferPoolOutputStream(ByteBufferPool bufferPool) {
     this.bufferPool = bufferPool;
 
     // TODO possibly make charset configurable (if this is required)
-    this.writer = new OutputStreamWriter(this, Charset.forName("UTF-8"));
+    this.writer = new OutputStreamWriter(this, StandardCharsets.UTF_8);
   }
 
   /**

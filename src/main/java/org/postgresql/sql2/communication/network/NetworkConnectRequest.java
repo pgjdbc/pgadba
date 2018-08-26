@@ -1,8 +1,8 @@
 package org.postgresql.sql2.communication.network;
 
 import jdk.incubator.sql2.ConnectionProperty;
-import org.postgresql.sql2.PGConnectionProperties;
-import org.postgresql.sql2.communication.BEFrame;
+import org.postgresql.sql2.PgConnectionProperties;
+import org.postgresql.sql2.communication.BeFrame;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.NetworkConnectContext;
 import org.postgresql.sql2.communication.NetworkOutputStream;
@@ -47,8 +47,8 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
   public void connect(NetworkConnectContext context) throws IOException {
     // Undertake connecting
     Map<ConnectionProperty, Object> properties = context.getProperties();
-    context.getSocketChannel().connect(new InetSocketAddress((String) properties.get(PGConnectionProperties.HOST),
-        (Integer) properties.get(PGConnectionProperties.PORT)));
+    context.getSocketChannel().connect(new InetSocketAddress((String) properties.get(PgConnectionProperties.HOST),
+        (Integer) properties.get(PgConnectionProperties.PORT)));
   }
 
   @Override
@@ -74,9 +74,9 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
     wire.initPacket();
     wire.write(BinaryHelper.writeInt(3 * 65536));
     wire.write("user");
-    wire.write(((String) properties.get(PGConnectionProperties.USER)));
+    wire.write(((String) properties.get(PgConnectionProperties.USER)));
     wire.write("database");
-    wire.write(((String) properties.get(PGConnectionProperties.DATABASE)));
+    wire.write(((String) properties.get(PgConnectionProperties.DATABASE)));
     wire.write("application_name");
     wire.write("java_sql2_client");
     wire.write("client_encoding");
@@ -102,29 +102,29 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
   public NetworkResponse read(NetworkReadContext context) throws IOException {
 
     // Expecting authentication challenge
-    BEFrame frame = context.getBEFrame();
+    BeFrame frame = context.getBeFrame();
     switch (frame.getTag()) {
 
-    case AUTHENTICATION:
-      AuthenticationRequest authentication = new AuthenticationRequest(frame.getPayload());
-      switch (authentication.getType()) {
+      case AUTHENTICATION:
+        AuthenticationRequest authentication = new AuthenticationRequest(frame.getPayload());
+        switch (authentication.getType()) {
 
-      case MD5:
-        // Password authentication required
-        context.write(new PasswordRequest(authentication, this.connectSubmission));
-        return null;
+          case MD5:
+            // Password authentication required
+            context.write(new PasswordRequest(authentication, this.connectSubmission));
+            return null;
 
-      case SUCCESS:
-        // Connected, so trigger any waiting submissions
-        context.writeRequired();
-        return new AuthenticationResponse(this.connectSubmission);
+          case SUCCESS:
+            // Connected, so trigger any waiting submissions
+            context.writeRequired();
+            return new AuthenticationResponse(this.connectSubmission);
+
+          default:
+            throw new IllegalStateException("Unhandled authentication " + authentication.getType());
+        }
 
       default:
-        throw new IllegalStateException("Unhandled authentication " + authentication.getType());
-      }
-
-    default:
-      throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
+        throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
     }
   }
 

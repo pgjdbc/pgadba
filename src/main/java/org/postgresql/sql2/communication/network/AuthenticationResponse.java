@@ -1,7 +1,7 @@
 package org.postgresql.sql2.communication.network;
 
-import org.postgresql.sql2.PGConnectionProperties;
-import org.postgresql.sql2.communication.BEFrame;
+import org.postgresql.sql2.PgConnectionProperties;
+import org.postgresql.sql2.communication.BeFrame;
 import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.NetworkResponse;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
@@ -27,37 +27,37 @@ public class AuthenticationResponse implements NetworkResponse {
   @Override
   public NetworkResponse read(NetworkReadContext context) throws IOException {
     // Expecting authentication challenge
-    BEFrame frame = context.getBEFrame();
+    BeFrame frame = context.getBeFrame();
     switch (frame.getTag()) {
 
-    case AUTHENTICATION:
-      AuthenticationRequest authentication = new AuthenticationRequest(frame.getPayload());
-      switch (authentication.getType()) {
+      case AUTHENTICATION:
+        AuthenticationRequest authentication = new AuthenticationRequest(frame.getPayload());
+        switch (authentication.getType()) {
 
-      case SUCCESS:
-        // Connected, so trigger any waiting submissions
-        this.connectSubmission.finish(null);
+          case SUCCESS:
+            // Connected, so trigger any waiting submissions
+            this.connectSubmission.finish(null);
+            return this;
+
+          default:
+            throw new IllegalStateException("Unhandled authentication " + authentication.getType());
+        }
+
+      case PARAM_STATUS:
+        // Load parameters for connection
+        ParameterStatus paramStatus = new ParameterStatus(frame.getPayload());
+        context.setProperty(PgConnectionProperties.lookup(paramStatus.getName()), paramStatus.getValue());
         return this;
 
+      case CANCELLATION_KEY_DATA:
+        // TODO handle cancellation key
+        return this;
+
+      case READY_FOR_QUERY:
+        return null;
+
       default:
-        throw new IllegalStateException("Unhandled authentication " + authentication.getType());
-      }
-
-    case PARAM_STATUS:
-      // Load parameters for connection
-      ParameterStatus paramStatus = new ParameterStatus(frame.getPayload());
-      context.setProperty(PGConnectionProperties.lookup(paramStatus.getName()), paramStatus.getValue());
-      return this;
-
-    case CANCELLATION_KEY_DATA:
-      // TODO handle cancellation key
-      return this;
-
-    case READY_FOR_QUERY:
-      return null;
-
-    default:
-      throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
+        throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
     }
   }
 

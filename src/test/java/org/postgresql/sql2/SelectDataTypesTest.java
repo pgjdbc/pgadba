@@ -1,13 +1,9 @@
 package org.postgresql.sql2;
 
-import jdk.incubator.sql2.Connection;
-import jdk.incubator.sql2.DataSource;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.testUtil.ConnectUtil;
-import org.postgresql.sql2.testUtil.DatabaseHolder;
-import org.testcontainers.containers.PostgreSQLContainer;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -23,11 +19,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.postgresql.sql2.testUtil.CollectorUtils.singleCollector;
+import jdk.incubator.sql2.Connection;
+import jdk.incubator.sql2.DataSource;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.postgresql.sql2.testutil.ConnectUtil;
+import org.postgresql.sql2.testutil.DatabaseHolder;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 public class SelectDataTypesTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
@@ -36,7 +35,7 @@ public class SelectDataTypesTest {
 
   @BeforeAll
   public static void setUp() {
-    ds = ConnectUtil.openDB(postgres);
+    ds = ConnectUtil.openDb(postgres);
 
     ConnectUtil.createTable(ds, "tab",
         "id int", "name varchar(100)", "answer int");
@@ -183,7 +182,8 @@ public class SelectDataTypesTest {
   @Test
   public void selectTimestampWithoutTimeZone() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<LocalDateTime> idF = conn.<LocalDateTime>rowOperation("select '2018-04-29 20:55:57.692132'::timestamp without time zone as t")
+      CompletionStage<LocalDateTime> idF = conn
+          .<LocalDateTime>rowOperation("select '2018-04-29 20:55:57.692132'::timestamp without time zone as t")
           .collect(singleCollector(LocalDateTime.class))
           .submit()
           .getCompletionStage();
@@ -195,12 +195,14 @@ public class SelectDataTypesTest {
   @Test
   public void selectTimestampWithTimeZone() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<OffsetDateTime> idF = conn.<OffsetDateTime>rowOperation("select '2018-04-29 20:55:57.692132'::timestamp with time zone as t")
+      CompletionStage<OffsetDateTime> idF = conn
+          .<OffsetDateTime>rowOperation("select '2018-04-29 20:55:57.692132'::timestamp with time zone as t")
           .collect(singleCollector(OffsetDateTime.class))
           .submit()
           .getCompletionStage();
 
-      assertEquals(OffsetDateTime.of(2018, 4, 29, 20, 55, 57, 692132000, ZoneOffset.UTC), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(OffsetDateTime.of(2018, 4, 29, 20, 55, 57, 692132000, ZoneOffset.UTC),
+          idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
   }
 
@@ -231,7 +233,8 @@ public class SelectDataTypesTest {
   @Test
   public void selectTimeWithTimeZone() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<OffsetTime> idF = conn.<OffsetTime>rowOperation("select '2018-04-29 20:55:57.692132'::time with time zone as t")
+      CompletionStage<OffsetTime> idF = conn
+          .<OffsetTime>rowOperation("select '2018-04-29 20:55:57.692132'::time with time zone as t")
           .collect(singleCollector(OffsetTime.class))
           .submit()
           .getCompletionStage();

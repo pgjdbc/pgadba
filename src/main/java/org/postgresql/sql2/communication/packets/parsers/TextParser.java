@@ -14,8 +14,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.StringTokenizer;
 
 public class TextParser {
-  private static final DateTimeFormatter timestampWithoutTimeZoneFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
-  private static final DateTimeFormatter timestampWithTimeZoneFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSX");
+  private static final DateTimeFormatter timestampWithoutTimeZoneFormatter = DateTimeFormatter
+      .ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+  private static final DateTimeFormatter timestampWithTimeZoneFormatter = DateTimeFormatter
+      .ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSX");
   private static final DateTimeFormatter localDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
   private static final DateTimeFormatter localTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSS");
   private static final DateTimeFormatter offsetTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSX");
@@ -24,6 +26,11 @@ public class TextParser {
     return in.equals("t");
   }
 
+  /**
+   * reads a hex string into byte array.
+   * @param in the hex string
+   * @return the bytes
+   */
   public static Object byteaout(String in) {
     int len = in.length() - 2;
     byte[] data = new byte[len / 2];
@@ -198,11 +205,16 @@ public class TextParser {
     return OffsetDateTime.parse(in, timestampWithTimeZoneFormatter);
   }
 
+  /**
+   * parses a string representation of an interval.
+   * @param in the string to parse
+   * @return a Duration object
+   */
   public static Object interval_out(String in) {
-    final boolean ISOFormat = !in.startsWith("@");
+    final boolean IsoFormat = !in.startsWith("@");
 
     // Just a simple '0'
-    if (!ISOFormat && in.length() == 3 && in.charAt(2) == '0') {
+    if (!IsoFormat && in.length() == 3 && in.charAt(2) == '0') {
       return Duration.of(0, ChronoUnit.MICROS);
     }
 
@@ -273,13 +285,13 @@ public class TextParser {
       throw new SqlException("Conversion of interval failed", e, "", 0, "", 0);
     }
 
-    if (!ISOFormat && in.endsWith("ago")) {
+    if (!IsoFormat && in.endsWith("ago")) {
       // Inverse the leading sign
-      return Duration.of((long)((years * -31556952000000L) + (months * -2592000000000L) + (days * -86400000000L) + (hours * -3600000000L) +
-          (minutes * -60000000L) + (seconds * -1000000L)), ChronoUnit.MICROS);
+      return Duration.of((long)((years * -31556952000000L) + (months * -2592000000000L) + (days * -86400000000L)
+          + (hours * -3600000000L) + (minutes * -60000000L) + (seconds * -1000000L)), ChronoUnit.MICROS);
     } else {
-      return Duration.of((long)((years * 31556952000000L) + (months * 2592000000000L) + (days * 86400000000L) + (hours * 3600000000L) +
-          (minutes * 60000000L) + (seconds * 1000000L)), ChronoUnit.MICROS);
+      return Duration.of((long)((years * 31556952000000L) + (months * 2592000000000L) + (days * 86400000000L)
+          + (hours * 3600000000L) + (minutes * 60000000L) + (seconds * 1000000L)), ChronoUnit.MICROS);
     }
   }
 
@@ -444,7 +456,7 @@ public class TextParser {
   }
 
   /**
-   * Returns integer value of value or 0 if value is null
+   * Returns integer value of value or 0 if value is null.
    *
    * @param value integer as string value
    * @return integer parsed from string value
@@ -455,7 +467,7 @@ public class TextParser {
   }
 
   /**
-   * Returns double value of value or 0 if value is null
+   * Returns double value of value or 0 if value is null.
    *
    * @param value double as string value
    * @return double parsed from string value

@@ -1,5 +1,6 @@
 package org.postgresql.sql2.submissions;
 
+import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.network.NetworkConnectRequest;
 import org.postgresql.sql2.communication.packets.DataRow;
@@ -14,12 +15,11 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-public class ConnectSubmission implements org.postgresql.sql2.PGSubmission<Void> {
+public class ConnectSubmission implements PgSubmission<Void> {
 
-  final private Supplier<Boolean> cancel;
+  private final Supplier<Boolean> cancel;
   private CompletableFuture<Void> publicStage;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
-  private Types completionType;
 
   private Collector collector;
   private Object collectorHolder;
@@ -29,10 +29,14 @@ public class ConnectSubmission implements org.postgresql.sql2.PGSubmission<Void>
   
   private NetworkConnectRequest request;
 
-  public ConnectSubmission(Supplier<Boolean> cancel, Types completionType, Consumer<Throwable> errorHandler,
-      GroupSubmission groupSubmission) {
+  /**
+   * Creates the connect submission.
+   * @param cancel cancel method
+   * @param errorHandler error handler method
+   * @param groupSubmission group submission this submission is a part of
+   */
+  public ConnectSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, GroupSubmission groupSubmission) {
     this.cancel = cancel;
-    this.completionType = completionType;
     this.errorHandler = errorHandler;
     this.groupSubmission = groupSubmission;
     this.request = new NetworkConnectRequest(this);
@@ -53,8 +57,10 @@ public class ConnectSubmission implements org.postgresql.sql2.PGSubmission<Void>
 
   @Override
   public CompletionStage<Void> getCompletionStage() {
-    if (publicStage == null)
+    if (publicStage == null) {
       publicStage = new CompletableFuture<>();
+    }
+
     return publicStage;
   }
 
@@ -75,7 +81,7 @@ public class ConnectSubmission implements org.postgresql.sql2.PGSubmission<Void>
 
   @Override
   public Types getCompletionType() {
-    return completionType;
+    return BaseSubmission.Types.CONNECT;
   }
 
   @Override

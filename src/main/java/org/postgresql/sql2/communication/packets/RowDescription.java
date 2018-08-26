@@ -8,11 +8,16 @@ import java.nio.charset.StandardCharsets;
 public class RowDescription {
   private ColumnDescription[] descriptions;
 
+  /**
+   * parses a sequence of bytes in to a RowDescription object.
+   *
+   * @param bytes bytes to parse
+   */
   public RowDescription(byte[] bytes) {
     short numOfColumns = BinaryHelper.readShort(bytes[0], bytes[1]);
     int pos = 2;
     descriptions = new ColumnDescription[numOfColumns];
-    for(int i = 0; i < numOfColumns; i++) {
+    for (int i = 0; i < numOfColumns; i++) {
       int nameEnd = BinaryHelper.nextNullBytePos(bytes, pos);
       String name = new String(BinaryHelper.subBytes(bytes, pos, nameEnd), StandardCharsets.UTF_8);
       pos = nameEnd + 1;
@@ -29,7 +34,8 @@ public class RowDescription {
       short formatCode = BinaryHelper.readShort(bytes[pos], bytes[pos + 1]);
       pos += 2;
 
-      descriptions[i] = new ColumnDescription(name, objectIdOfTable, attributeNumberOfColumn, fieldOId, dataTypeSize, typeModifier, formatCode);
+      descriptions[i] = new ColumnDescription(name, objectIdOfTable, attributeNumberOfColumn, fieldOId,
+          dataTypeSize, typeModifier, formatCode);
     }
   }
 

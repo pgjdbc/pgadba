@@ -12,13 +12,13 @@ public class ErrorPacket extends Exception {
     List<ErrorResponseField> fields = new ArrayList<>();
     List<Integer> nullPositions = new ArrayList<>();
 
-    for(int i = 0; i < payload.length; i++) {
-      if(payload[i] == 0) {
+    for (int i = 0; i < payload.length; i++) {
+      if (payload[i] == 0) {
         nullPositions.add(i);
       }
     }
 
-    for(int i = 0; i < nullPositions.size() - 2; i++) {
+    for (int i = 0; i < nullPositions.size() - 2; i++) {
       fields.add(new ErrorResponseField(ErrorResponseField.Types.lookup(payload[nullPositions.get(i) + 1]),
           new String(BinaryHelper.subBytes(payload, nullPositions.get(i) + 2, nullPositions.get(i + 1)))));
     }
@@ -26,8 +26,8 @@ public class ErrorPacket extends Exception {
   }
   
   private static String getField(ErrorResponseField.Types type, List<ErrorResponseField> fields) {
-    for(ErrorResponseField field : fields) {
-      if(type == field.getType()) {
+    for (ErrorResponseField field : fields) {
+      if (type == field.getType()) {
         return field.getMessage();
       }
     }
@@ -50,9 +50,14 @@ public class ErrorPacket extends Exception {
     return fields;
   }
 
+  /**
+   * returns the message of the field that matches the type.
+   * @param type type to search for
+   * @return message of field
+   */
   public String getField(ErrorResponseField.Types type) {
-    for(ErrorResponseField field : fields) {
-      if(type == field.getType()) {
+    for (ErrorResponseField field : fields) {
+      if (type == field.getType()) {
         return field.getMessage();
       }
     }

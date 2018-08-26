@@ -119,10 +119,16 @@ public class ErrorResponseField {
       this.value = value;
     }
 
+    /**
+     * Finds the ErrorResponse object for it's byte.
+     * @param input the int to search for
+     * @return matching ErrorResponse object
+     */
     public static Types lookup(int input) {
-      for(Types t : values()) {
-        if(t.value == input)
+      for (Types t : values()) {
+        if (t.value == input) {
           return t;
+        }
       }
 
       return UNKNOWN;

@@ -1,6 +1,6 @@
 package org.postgresql.sql2.communication.network;
 
-import org.postgresql.sql2.communication.FEFrame;
+import org.postgresql.sql2.communication.FeFrame;
 import org.postgresql.sql2.communication.NetworkOutputStream;
 import org.postgresql.sql2.communication.NetworkRequest;
 import org.postgresql.sql2.communication.NetworkWriteContext;
@@ -25,7 +25,7 @@ public class SyncRequest implements NetworkRequest {
   public NetworkRequest write(NetworkWriteContext context) throws Exception {
 
     NetworkOutputStream wire = context.getOutputStream();
-    wire.write(FEFrame.FrontendTag.SYNC.getByte());
+    wire.write(FeFrame.FrontendTag.SYNC.getByte());
     wire.initPacket();
     wire.completePacket();
 

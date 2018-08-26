@@ -1,5 +1,12 @@
 package org.postgresql.sql2;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collector;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.Result;
@@ -7,18 +14,10 @@ import jdk.incubator.sql2.SqlType;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.communication.packets.parts.PGAdbaType;
-import org.postgresql.sql2.testUtil.ConnectUtil;
-import org.postgresql.sql2.testUtil.DatabaseHolder;
+import org.postgresql.sql2.communication.packets.parts.PgAdbaType;
+import org.postgresql.sql2.testutil.ConnectUtil;
+import org.postgresql.sql2.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collector;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 public class ResultTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
@@ -27,7 +26,7 @@ public class ResultTest {
 
   @BeforeAll
   public static void setUp() {
-    ds = ConnectUtil.openDB(postgres);
+    ds = ConnectUtil.openDb(postgres);
   }
 
   @AfterAll
@@ -64,9 +63,9 @@ public class ResultTest {
           .collect(Collector.of(
               () -> new Integer[] {0},
               (a, r) -> {
-                for(Result.Column rc : r) {
+                for (Result.Column rc : r) {
                   a[0] += rc.get(Integer.class);
-                };
+                }
               },
               (l, r) -> null,
               a -> a[0]))
@@ -158,7 +157,7 @@ public class ResultTest {
           .toCompletableFuture()
           .get(10, TimeUnit.SECONDS);
 
-      assertEquals(PGAdbaType.INTEGER, result);
+      assertEquals(PgAdbaType.INTEGER, result);
     }
   }
 

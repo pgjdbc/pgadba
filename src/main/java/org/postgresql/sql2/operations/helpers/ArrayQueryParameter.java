@@ -1,37 +1,46 @@
 package org.postgresql.sql2.operations.helpers;
 
 import jdk.incubator.sql2.SqlType;
-import org.postgresql.sql2.communication.packets.parts.PGAdbaType;
+import org.postgresql.sql2.communication.packets.parts.PgAdbaType;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 public class ArrayQueryParameter implements QueryParameter {
-  private PGAdbaType type;
+  private PgAdbaType type;
   private List<?> values;
 
+  /**
+   * If a parameter needs an array of values, in order to repeat the query multiple times.
+   * @param values the values
+   */
   public ArrayQueryParameter(List<?> values) {
     this.values = values;
 
     Object value = firstNonNull(values);
     if (value == null) {
-      type = PGAdbaType.NULL;
+      type = PgAdbaType.NULL;
     } else {
-      type = PGAdbaType.guessTypeFromClass(value.getClass());
+      type = PgAdbaType.guessTypeFromClass(value.getClass());
     }
   }
 
+  /**
+   * If a parameter needs an array of values, in order to repeat the query multiple times.
+   * @param values the values
+   * @param type the type these values have
+   */
   public ArrayQueryParameter(List<?> values, SqlType type) {
     this.values = values;
     if (type != null) {
-      this.type = PGAdbaType.convert(type);
+      this.type = PgAdbaType.convert(type);
     } else {
       Object value = firstNonNull(values);
       if (value == null) {
-        this.type = PGAdbaType.NULL;
+        this.type = PgAdbaType.NULL;
       } else {
-        this.type = PGAdbaType.guessTypeFromClass(value.getClass());
+        this.type = PgAdbaType.guessTypeFromClass(value.getClass());
       }
     }
   }
@@ -41,7 +50,7 @@ public class ArrayQueryParameter implements QueryParameter {
   }
 
   @Override
-  public int getOID() {
+  public int getOid() {
     return type.getVendorTypeNumber();
   }
 

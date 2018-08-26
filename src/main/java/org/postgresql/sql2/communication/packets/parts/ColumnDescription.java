@@ -9,6 +9,17 @@ public class ColumnDescription {
   private int typeModifier;
   private FormatCodeTypes formatCode;
 
+  /**
+   * Represents a description of a column in a result set.
+   *
+   * @param name name of the column
+   * @param objectIdOfTable the oid of the table
+   * @param attributeNumberOfColumn the column number
+   * @param fieldOId the oid of the field
+   * @param dataTypeSize the size of the data type
+   * @param typeModifier type modifier
+   * @param formatCode format code
+   */
   public ColumnDescription(String name, int objectIdOfTable, short attributeNumberOfColumn, int fieldOId,
                            short dataTypeSize, int typeModifier, short formatCode) {
     this.name = name;

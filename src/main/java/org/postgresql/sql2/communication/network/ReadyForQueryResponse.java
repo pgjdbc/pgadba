@@ -1,6 +1,6 @@
 package org.postgresql.sql2.communication.network;
 
-import org.postgresql.sql2.communication.BEFrame;
+import org.postgresql.sql2.communication.BeFrame;
 import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.NetworkResponse;
 
@@ -20,14 +20,14 @@ public class ReadyForQueryResponse implements NetworkResponse {
 
   @Override
   public NetworkResponse read(NetworkReadContext context) throws IOException {
-    BEFrame frame = context.getBEFrame();
+    BeFrame frame = context.getBeFrame();
     switch (frame.getTag()) {
 
-    case READY_FOR_QUERY:
-      return null; // Nothing further
+      case READY_FOR_QUERY:
+        return null; // Nothing further
 
-    default:
-      throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
+      default:
+        throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
     }
   }
 }

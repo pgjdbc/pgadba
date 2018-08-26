@@ -1,7 +1,7 @@
 package org.postgresql.sql2.submissions;
 
 import jdk.incubator.sql2.TransactionOutcome;
-import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.communication.packets.CommandComplete;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
@@ -15,14 +15,21 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-public class TransactionSubmission implements PGSubmission<TransactionOutcome> {
-  final private Supplier<Boolean> cancel;
+public class TransactionSubmission implements PgSubmission<TransactionOutcome> {
+  private final Supplier<Boolean> cancel;
   private CompletableFuture<TransactionOutcome> publicStage;
   private String sql;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
   private Consumer<Throwable> errorHandler;
   private ParameterHolder holder = new ParameterHolder();
 
+  /**
+   * Creates the submission object of the transation operations.
+   *
+   * @param cancel cancel method
+   * @param errorHandler error handler method
+   * @param sql the query
+   */
   public TransactionSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, String sql) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
@@ -57,10 +64,10 @@ public class TransactionSubmission implements PGSubmission<TransactionOutcome> {
   @Override
   public Object finish(Object finishObject) {
     CommandComplete.Types type = (CommandComplete.Types)finishObject;
-    if(type == CommandComplete.Types.ROLLBACK) {
+    if (type == CommandComplete.Types.ROLLBACK) {
       ((CompletableFuture<TransactionOutcome>) getCompletionStage())
           .complete(TransactionOutcome.ROLLBACK);
-    } else if(type == CommandComplete.Types.COMMIT) {
+    } else if (type == CommandComplete.Types.COMMIT) {
       ((CompletableFuture<TransactionOutcome>) getCompletionStage())
           .complete(TransactionOutcome.COMMIT);
     } else {
@@ -97,8 +104,10 @@ public class TransactionSubmission implements PGSubmission<TransactionOutcome> {
 
   @Override
   public CompletionStage<TransactionOutcome> getCompletionStage() {
-    if (publicStage == null)
+    if (publicStage == null) {
       publicStage = new CompletableFuture<>();
+    }
+
     return publicStage;
   }
 }

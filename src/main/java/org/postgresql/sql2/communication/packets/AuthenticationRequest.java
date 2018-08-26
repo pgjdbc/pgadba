@@ -22,10 +22,16 @@ public class AuthenticationRequest {
       this.value = value;
     }
 
+    /**
+     * find the corresponding type for the incoming integer value.
+     * @param input integer value to search for
+     * @return the corresponding type
+     */
     public static Types lookup(int input) {
-      for(Types t : values()) {
-        if(t.value == input)
+      for (Types t : values()) {
+        if (t.value == input) {
           return t;
+        }
       }
 
       throw new IllegalArgumentException("unknown authentication packet tag: " + input);
@@ -35,9 +41,13 @@ public class AuthenticationRequest {
   private Types type;
   private byte[] salt = new byte[4];
 
+  /**
+   * describes the authentication type and salt.
+   * @param bytes incoming bytes
+   */
   public AuthenticationRequest(byte[] bytes) {
     type = Types.lookup(BinaryHelper.readInt(bytes[0], bytes[1], bytes[2], bytes[3]));
-    if(type == Types.MD5) {
+    if (type == Types.MD5) {
       salt[0] = bytes[4];
       salt[1] = bytes[5];
       salt[2] = bytes[6];

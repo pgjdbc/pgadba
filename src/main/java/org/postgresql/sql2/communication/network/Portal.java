@@ -1,22 +1,21 @@
 package org.postgresql.sql2.communication.network;
 
-import jdk.incubator.sql2.SqlException;
-import org.postgresql.sql2.PGSubmission;
-import org.postgresql.sql2.communication.packets.CommandComplete;
-import org.postgresql.sql2.communication.packets.DataRow;
-import org.postgresql.sql2.communication.packets.ErrorPacket;
-import org.postgresql.sql2.communication.packets.parts.ErrorResponseField;
-import org.postgresql.sql2.operations.helpers.ParameterHolder;
-import org.postgresql.sql2.submissions.ArrayCountSubmission;
-import org.postgresql.sql2.util.PGCount;
+import static org.postgresql.sql2.PgSubmission.Types.ARRAY_COUNT;
 
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
-
-import static org.postgresql.sql2.PGSubmission.Types.ARRAY_COUNT;
+import jdk.incubator.sql2.SqlException;
+import org.postgresql.sql2.PgSubmission;
+import org.postgresql.sql2.communication.packets.CommandComplete;
+import org.postgresql.sql2.communication.packets.DataRow;
+import org.postgresql.sql2.communication.packets.ErrorPacket;
+import org.postgresql.sql2.communication.packets.parts.ErrorResponseField;
+import org.postgresql.sql2.operations.helpers.ParameterHolder;
+import org.postgresql.sql2.submissions.ArrayCountSubmission;
+import org.postgresql.sql2.util.PgCount;
 
 /**
  * Portal.
@@ -25,7 +24,13 @@ import static org.postgresql.sql2.PGSubmission.Types.ARRAY_COUNT;
  */
 public class Portal {
 
-  public static void doHandleException(PGSubmission<?> submission, Throwable ex) {
+  /**
+   * Handle exception that occurred.
+   *
+   * @param submission the submission that was active when the exception happened
+   * @param ex the exception
+   */
+  public static void doHandleException(PgSubmission<?> submission, Throwable ex) {
     if (ex instanceof ErrorPacket) {
       ErrorPacket e = (ErrorPacket)ex;
       int code = 0;
@@ -33,6 +38,7 @@ public class Portal {
         try {
           code = Integer.parseInt(e.getField(ErrorResponseField.Types.SQLSTATE_CODE));
         } catch (NumberFormatException ignore) {
+          // ignored for now
         }
       }
       int position = 0;
@@ -53,7 +59,7 @@ public class Portal {
 
   private static AtomicLong nameIndex = new AtomicLong(0);
 
-  private final PGSubmission<?> submission;
+  private final PgSubmission<?> submission;
 
   private String name;
 
@@ -67,9 +73,9 @@ public class Portal {
   /**
    * Instantiate.
    * 
-   * @param submission {@link PGSubmission}.
+   * @param submission {@link PgSubmission}.
    */
-  public Portal(PGSubmission<?> submission) {
+  public Portal(PgSubmission<?> submission) {
     this.name = "p" + nameIndex.incrementAndGet();
     this.submission = submission;
   }
@@ -156,7 +162,7 @@ public class Portal {
     try {
       switch (submission.getCompletionType()) {
         case COUNT:
-          submission.finish(new PGCount(complete.getNumberOfRowsAffected()));
+          submission.finish(new PgCount(complete.getNumberOfRowsAffected()));
           break;
         case ROW:
           submission.finish(null);
@@ -188,6 +194,14 @@ public class Portal {
     }
   }
 
+  /**
+   * Some submission types needs multiple rounds of queries before the operation is finished. This function
+   * returns true if more is needed.
+   *
+   * @return true if another query should be sent to the database
+   * @throws ExecutionException if the bound variables are a future that fails
+   * @throws InterruptedException if the bound variables are a future that fails
+   */
   public boolean hasMoreToExecute() throws ExecutionException, InterruptedException {
     if (submission.getCompletionType() == ARRAY_COUNT) {
       return ((ArrayCountSubmission)submission).hasMoreToExecute();

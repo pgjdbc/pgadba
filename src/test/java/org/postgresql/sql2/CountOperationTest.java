@@ -9,9 +9,9 @@ import jdk.incubator.sql2.Submission;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.testUtil.CollectorUtils;
-import org.postgresql.sql2.testUtil.ConnectUtil;
-import org.postgresql.sql2.testUtil.DatabaseHolder;
+import org.postgresql.sql2.testutil.CollectorUtils;
+import org.postgresql.sql2.testutil.ConnectUtil;
+import org.postgresql.sql2.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.concurrent.CompletionStage;
@@ -30,7 +30,7 @@ public class CountOperationTest {
 
   @BeforeAll
   public static void setUp() {
-    ds = ConnectUtil.openDB(postgres);
+    ds = ConnectUtil.openDb(postgres);
   }
 
   @AfterAll

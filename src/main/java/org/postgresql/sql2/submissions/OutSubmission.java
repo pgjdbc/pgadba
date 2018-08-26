@@ -2,7 +2,7 @@ package org.postgresql.sql2.submissions;
 
 import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.SqlType;
-import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
@@ -17,8 +17,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-public class OutSubmission<T> implements PGSubmission<T> {
-  final private Supplier<Boolean> cancel;
+public class OutSubmission<T> implements PgSubmission<T> {
+  private final Supplier<Boolean> cancel;
   private CompletableFuture<T> publicStage;
   private Consumer<Throwable> errorHandler;
   private String sql;
@@ -29,8 +29,20 @@ public class OutSubmission<T> implements PGSubmission<T> {
   private T outParameterValueHolder;
   private Map<String, SqlType> outParameterTypeMap;
 
-  public OutSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, String sql, Map<String, SqlType> outParameterTypes,
-                       Function<Result.OutColumn, ? extends T> processor, GroupSubmission groupSubmission, ParameterHolder holder) {
+  /**
+   * Submission for an Out Operation.
+   *
+   * @param cancel cancel method
+   * @param errorHandler error handler method
+   * @param sql the query
+   * @param outParameterTypes the types of the out parameters
+   * @param processor the processor that will consume the lines
+   * @param groupSubmission group submission this submission is a part of
+   * @param holder holder for parameter values
+   */
+  public OutSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, String sql,
+      Map<String, SqlType> outParameterTypes, Function<Result.OutColumn, ? extends T> processor,
+      GroupSubmission groupSubmission, ParameterHolder holder) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.sql = sql;
@@ -67,7 +79,7 @@ public class OutSubmission<T> implements PGSubmission<T> {
 
   @Override
   public Object finish(Object finishObject) {
-    if(groupSubmission != null) {
+    if (groupSubmission != null) {
       groupSubmission.addGroupResult(outParameterValueHolder);
     }
     ((CompletableFuture<T>) getCompletionStage())
@@ -102,8 +114,10 @@ public class OutSubmission<T> implements PGSubmission<T> {
 
   @Override
   public CompletionStage<T> getCompletionStage() {
-    if (publicStage == null)
+    if (publicStage == null) {
       publicStage = new CompletableFuture<>();
+    }
+
     return publicStage;
   }
 }

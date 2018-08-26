@@ -1,6 +1,6 @@
 package org.postgresql.sql2.communication.network;
 
-import org.postgresql.sql2.communication.FEFrame;
+import org.postgresql.sql2.communication.FeFrame;
 import org.postgresql.sql2.communication.NetworkOutputStream;
 import org.postgresql.sql2.communication.NetworkRequest;
 import org.postgresql.sql2.communication.NetworkResponse;
@@ -29,7 +29,7 @@ public class ExecuteRequest<T> implements NetworkRequest {
 
     // Obtain the query details
     NetworkOutputStream wire = context.getOutputStream();
-    wire.write(FEFrame.FrontendTag.EXECUTE.getByte());
+    wire.write(FeFrame.FrontendTag.EXECUTE.getByte());
     wire.initPacket();
     wire.write(this.portal.getPortalName());
     wire.write(BinaryHelper.writeInt(0)); // number of rows to return, 0 == all

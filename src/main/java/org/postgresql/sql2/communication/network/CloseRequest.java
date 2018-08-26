@@ -1,6 +1,6 @@
 package org.postgresql.sql2.communication.network;
 
-import org.postgresql.sql2.communication.FEFrame;
+import org.postgresql.sql2.communication.FeFrame;
 import org.postgresql.sql2.communication.NetworkOutputStream;
 import org.postgresql.sql2.communication.NetworkRequest;
 import org.postgresql.sql2.communication.NetworkWriteContext;
@@ -17,7 +17,7 @@ public class CloseRequest implements NetworkRequest {
 
     // Send the close
     NetworkOutputStream wire = context.getOutputStream();
-    wire.write(FEFrame.FrontendTag.TERMINATE.getByte());
+    wire.write(FeFrame.FrontendTag.TERMINATE.getByte());
     wire.initPacket();
     wire.completePacket();
 

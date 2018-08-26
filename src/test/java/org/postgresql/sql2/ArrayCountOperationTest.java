@@ -1,17 +1,8 @@
 package org.postgresql.sql2;
 
-import jdk.incubator.sql2.AdbaType;
-import jdk.incubator.sql2.Connection;
-import jdk.incubator.sql2.DataSource;
-import jdk.incubator.sql2.Submission;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.testUtil.CollectorUtils;
-import org.postgresql.sql2.testUtil.ConnectUtil;
-import org.postgresql.sql2.testUtil.DatabaseHolder;
-import org.postgresql.sql2.util.PGCount;
-import org.testcontainers.containers.PostgreSQLContainer;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +11,18 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import jdk.incubator.sql2.AdbaType;
+import jdk.incubator.sql2.Connection;
+import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.Submission;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.postgresql.sql2.testutil.CollectorUtils;
+import org.postgresql.sql2.testutil.ConnectUtil;
+import org.postgresql.sql2.testutil.DatabaseHolder;
+import org.postgresql.sql2.util.PgCount;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 public class ArrayCountOperationTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
@@ -32,7 +31,7 @@ public class ArrayCountOperationTest {
 
   @BeforeAll
   public static void setUp() {
-    ds = ConnectUtil.openDB(postgres);
+    ds = ConnectUtil.openDb(postgres);
   }
 
   @AfterAll
@@ -46,7 +45,8 @@ public class ArrayCountOperationTest {
     try (Connection conn = ds.getConnection()) {
       conn.rowCountOperation("create table tabForInsert(id int)")
           .submit();
-      Submission<List<Integer>> arrayCount = conn.<List<Integer>>arrayRowCountOperation("insert into tabForInsert(id) values ($1)")
+      Submission<List<Integer>> arrayCount =
+          conn.<List<Integer>>arrayRowCountOperation("insert into tabForInsert(id) values ($1)")
           .set("$1", new Integer[]{1, 2, 3}, AdbaType.NUMERIC)
           .submit();
       Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
@@ -55,7 +55,8 @@ public class ArrayCountOperationTest {
       Submission<Object> drop = conn.operation("drop table tabForInsert")
           .submit();
 
-      assertArrayEquals(new PGCount[]{new PGCount(1), new PGCount(1), new PGCount(1)}, arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
+      assertArrayEquals(new PgCount[]{new PgCount(1), new PgCount(1), new PgCount(1)},
+          arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
       assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
       assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
@@ -67,7 +68,8 @@ public class ArrayCountOperationTest {
     try (Connection conn = ds.getConnection()) {
       Submission<Object> noReturn = conn.operation("create table tabForInsert(id int)")
           .submit();
-      Submission<List<Integer>> arrayCount = conn.<List<Integer>>arrayRowCountOperation("insert into tabForInsert(id) values ($1)")
+      Submission<List<Integer>> arrayCount =
+          conn.<List<Integer>>arrayRowCountOperation("insert into tabForInsert(id) values ($1)")
           .set("$1", f, AdbaType.NUMERIC)
           .submit();
       Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
@@ -77,7 +79,8 @@ public class ArrayCountOperationTest {
           .submit();
 
       assertNull(noReturn.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
-      assertArrayEquals(new PGCount[]{new PGCount(1), new PGCount(1), new PGCount(1)}, arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
+      assertArrayEquals(new PgCount[]{new PgCount(1), new PgCount(1), new PgCount(1)},
+          arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
       assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
       assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
     }
@@ -89,7 +92,8 @@ public class ArrayCountOperationTest {
     try (Connection conn = ds.getConnection()) {
       conn.rowCountOperation("create table secondTabForInsert(id int)")
           .submit();
-      Submission<List<Long>> arrayCount = conn.<List<Long>>arrayRowCountOperation("insert into secondTabForInsert(id) values ($1)")
+      Submission<List<Long>> arrayCount =
+          conn.<List<Long>>arrayRowCountOperation("insert into secondTabForInsert(id) values ($1)")
           .set("$1", new Integer[]{1, 2, 3}, AdbaType.NUMERIC)
           .collect(Collector.of(
               () -> new ArrayList<Long>(),
@@ -104,7 +108,8 @@ public class ArrayCountOperationTest {
       Submission<Object> drop = conn.operation("drop table secondTabForInsert")
           .submit();
 
-      assertArrayEquals(new Long[]{1L, 1L, 1L}, arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
+      assertArrayEquals(new Long[]{1L, 1L, 1L},
+          arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
       assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
       assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
     }

@@ -1,5 +1,6 @@
 package org.postgresql.sql2.submissions;
 
+import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
@@ -12,8 +13,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-public class VoidSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
-  final private Supplier<Boolean> cancel;
+public class VoidSubmission<T> implements PgSubmission<T> {
+  private final Supplier<Boolean> cancel;
   private CompletableFuture<T> publicStage;
   private String sql;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
@@ -25,6 +26,15 @@ public class VoidSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
 
   private GroupSubmission groupSubmission;
 
+  /**
+   * Creates the void submission.
+   *
+   * @param cancel cancel method
+   * @param errorHandler error handler method
+   * @param holder holder for parameter values
+   * @param groupSubmission group submission this submission is a part of
+   * @param sql the query
+   */
   public VoidSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder,
       GroupSubmission groupSubmission, String sql) {
     this.cancel = cancel;
@@ -41,8 +51,10 @@ public class VoidSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
 
   @Override
   public CompletionStage<T> getCompletionStage() {
-    if (publicStage == null)
+    if (publicStage == null) {
       publicStage = new CompletableFuture<>();
+    }
+
     return publicStage;
   }
 
@@ -62,12 +74,21 @@ public class VoidSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
     return Types.VOID;
   }
 
+  /**
+   * Sets the collector for the rows.
+   * @param collector collector object, .supplier().get() gets called on this
+   */
   public void setCollector(Collector collector) {
     this.collector = collector;
 
     collectorHolder = collector.supplier().get();
   }
 
+  /**
+   * When all rows in the result set is consumed, this is called.
+   * @param finishObject not in use
+   * @return the result of the operation
+   */
   public Object finish(Object finishObject) {
     Object o = null;
     if (collector != null) {
@@ -79,6 +100,10 @@ public class VoidSubmission<T> implements org.postgresql.sql2.PGSubmission<T> {
     return o;
   }
 
+  /**
+   * Adds another row to the submission.
+   * @param row row to add
+   */
   public void addRow(DataRow row) {
     try {
       if (collector != null) {

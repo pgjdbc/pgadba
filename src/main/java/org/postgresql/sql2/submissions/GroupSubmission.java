@@ -1,6 +1,6 @@
 package org.postgresql.sql2.submissions;
 
-import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
@@ -13,8 +13,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-public class GroupSubmission<T> implements PGSubmission<T> {
-  final private Supplier<Boolean> cancel;
+public class GroupSubmission<T> implements PgSubmission<T> {
+  private final Supplier<Boolean> cancel;
   private CompletableFuture<T> publicStage;
   private CompletionStage<T> membersTail;
   private Consumer<Throwable> errorHandler;
@@ -73,6 +73,10 @@ public class GroupSubmission<T> implements PGSubmission<T> {
 
   }
 
+  /**
+   * A group submission accumulates the results of it's members.
+   * @param result result from a member operation
+   */
   public void addGroupResult(Object result) {
     try {
       collector.accumulator().accept(collectorHolder, result);
@@ -103,14 +107,21 @@ public class GroupSubmission<T> implements PGSubmission<T> {
 
   @Override
   public CompletionStage<T> getCompletionStage() {
-    if (publicStage == null)
+    if (publicStage == null) {
       publicStage = new CompletableFuture<>();
+    }
+
     return publicStage;
   }
 
+  /**
+   * the group submission have a monad of operations, and this adds another on top of it.
+   * @param completionStage operation to add
+   */
   public void stackFuture(CompletableFuture<T> completionStage) {
-    if (membersTail == null)
+    if (membersTail == null) {
       membersTail = getCompletionStage();
+    }
 
     membersTail.exceptionally(e -> {
       completionStage.completeExceptionally(e);

@@ -1,6 +1,6 @@
 package org.postgresql.sql2.communication.network;
 
-import org.postgresql.sql2.communication.BEFrame;
+import org.postgresql.sql2.communication.BeFrame;
 import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.NetworkResponse;
 import org.postgresql.sql2.communication.packets.RowDescription;
@@ -20,22 +20,22 @@ public class DescribeResponse extends AbstractPortalResponse {
 
   @Override
   public NetworkResponse read(NetworkReadContext context) throws IOException {
-    BEFrame frame = context.getBEFrame();
+    BeFrame frame = context.getBeFrame();
     switch (frame.getTag()) {
 
-    case NO_DATA:
-      return null;
+      case NO_DATA:
+        return null;
 
-    case PARAM_DESCRIPTION:
-      return this; // wait on row description
+      case PARAM_DESCRIPTION:
+        return this; // wait on row description
 
-    case ROW_DESCRIPTION:
-      RowDescription rowDescription = new RowDescription(frame.getPayload());
-      this.portal.getQuery().setRowDescription(rowDescription);
-      return null; // nothing further
+      case ROW_DESCRIPTION:
+        RowDescription rowDescription = new RowDescription(frame.getPayload());
+        this.portal.getQuery().setRowDescription(rowDescription);
+        return null; // nothing further
 
-    default:
-      throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
+      default:
+        throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
     }
   }
 

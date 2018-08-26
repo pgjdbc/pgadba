@@ -1,19 +1,19 @@
 package org.postgresql.sql2.communication.network;
 
-import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.communication.NetworkRequest;
 import org.postgresql.sql2.communication.NetworkWriteContext;
 
 /**
- * Immediate completes the {@link PGSubmission}.
+ * Immediate completes the {@link PgSubmission}.
  * 
  * @author Daniel Sagenschneider
  */
 public class ImmediateComplete implements NetworkRequest {
 
-  private final PGSubmission<?> submission;
+  private final PgSubmission<?> submission;
 
-  public ImmediateComplete(PGSubmission<?> submission) {
+  public ImmediateComplete(PgSubmission<?> submission) {
     this.submission = submission;
   }
 

@@ -1,7 +1,7 @@
 package org.postgresql.sql2.communication;
 
 import jdk.incubator.sql2.ConnectionProperty;
-import org.postgresql.sql2.PGConnection;
+import org.postgresql.sql2.PgConnection;
 import org.postgresql.sql2.buffer.ByteBufferPool;
 import org.postgresql.sql2.buffer.ByteBufferPoolOutputStream;
 import org.postgresql.sql2.buffer.PooledByteBuffer;
@@ -28,7 +28,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   private final Map<ConnectionProperty, Object> properties;
 
-  private final PGConnection connection;
+  private final PgConnection connection;
 
   private final NioLoop loop;
 
@@ -40,7 +40,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   private final Queue<NetworkResponse> awaitingResponses = new LinkedList<>();
 
-  private final BEFrameParser parser = new BEFrameParser();
+  private final BeFrameParser parser = new BeFrameParser();
 
   private final PreparedStatementCache preparedStatementCache = new PreparedStatementCache();
 
@@ -69,11 +69,11 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    * Instantiate.
    * 
    * @param properties Connection properties.
-   * @param connection {@link PGConnection}.
+   * @param connection {@link PgConnection}.
    * @param loop       {@link NioLoop}.
    * @param bufferPool {@link ByteBufferPool}.
    */
-  public NetworkConnection(Map<ConnectionProperty, Object> properties, PGConnection connection, NioLoop loop,
+  public NetworkConnection(Map<ConnectionProperty, Object> properties, PgConnection connection, NioLoop loop,
       ByteBufferPool bufferPool) {
     this.properties = properties;
     this.connection = connection;
@@ -270,9 +270,9 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   }
 
   /**
-   * {@link BEFrame} for {@link NetworkReadContext}.
+   * {@link BeFrame} for {@link NetworkReadContext}.
    */
-  private BEFrame beFrame = null;
+  private BeFrame beFrame = null;
 
   /**
    * Allows {@link NetworkReadContext} to specify if write required.
@@ -319,8 +319,8 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
         int position = 0;
 
         // Service the BE frames
-        BEFrame frame;
-        while ((frame = this.parser.parseBEFrame(readBuffer, position, bytesRead)) != null) {
+        BeFrame frame;
+        while ((frame = this.parser.parseBeFrame(readBuffer, position, bytesRead)) != null) {
           position += this.parser.getConsumedBytes();
 
           // Obtain the awaiting response
@@ -334,16 +334,15 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
           // Handle frame
           switch (frame.getTag()) {
+            case ERROR_RESPONSE:
+              // Handle error
+              this.immediateResponse = awaitingResponse.handleException(new ErrorPacket(frame.getPayload()));
+              break;
 
-          case ERROR_RESPONSE:
-            // Handle error
-            this.immediateResponse = awaitingResponse.handleException(new ErrorPacket(frame.getPayload()));
-            break;
-
-          default:
-            // Provide frame to awaiting response
-            this.beFrame = frame;
-            this.immediateResponse = awaitingResponse.read(this);
+            default:
+              // Provide frame to awaiting response
+              this.beFrame = frame;
+              this.immediateResponse = awaitingResponse.read(this);
           }
 
           // Remove if blocking writing
@@ -415,7 +414,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    */
 
   @Override
-  public BEFrame getBEFrame() {
+  public BeFrame getBeFrame() {
     return this.beFrame;
   }
 
