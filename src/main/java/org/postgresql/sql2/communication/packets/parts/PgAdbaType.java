@@ -122,7 +122,7 @@ public enum PgAdbaType implements SqlType {
   /**
    * Identifies the generic SQL type {@code BLOB}.
    */
-  BLOB("bytea", 17, AdbaType.BLOB, BinaryGenerator::fromByteArray, FormatCodeTypes.TEXT),
+  BLOB("bytea", 17, AdbaType.BLOB, BinaryGenerator::fromByteArray, FormatCodeTypes.BINARY),
   /**
    * Identifies the generic SQL type {@code CLOB}.
    */

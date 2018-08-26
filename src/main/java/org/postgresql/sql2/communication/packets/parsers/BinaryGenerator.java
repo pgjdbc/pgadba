@@ -197,6 +197,10 @@ public class BinaryGenerator {
   }
 
   public static byte[] fromByteArray(Object input) {
+    if (input instanceof byte[]) {
+      return (byte[])input;
+    }
+
     return null;
   }
 
