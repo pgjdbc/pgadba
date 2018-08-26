@@ -1,14 +1,10 @@
 package org.postgresql.sql2;
 
-import jdk.incubator.sql2.Connection;
-import jdk.incubator.sql2.DataSource;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.communication.packets.parts.PgAdbaType;
-import org.postgresql.sql2.testutil.ConnectUtil;
-import org.postgresql.sql2.testutil.DatabaseHolder;
-import org.testcontainers.containers.PostgreSQLContainer;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
+import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,13 +16,16 @@ import java.time.ZoneOffset;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
+import jdk.incubator.sql2.Connection;
+import jdk.incubator.sql2.DataSource;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.postgresql.sql2.communication.packets.parts.PgAdbaType;
+import org.postgresql.sql2.testutil.ConnectUtil;
+import org.postgresql.sql2.testutil.DatabaseHolder;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 public class BindParameterTypesTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
@@ -52,7 +51,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertNull(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertNull(get10(idF.toCompletableFuture()));
     }
   }
 
@@ -66,7 +65,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertNull(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertNull(get10(idF.toCompletableFuture()));
     }
   }
 
@@ -79,7 +78,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertNull(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertNull(get10(idF));
     }
   }
 
@@ -93,7 +92,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertNull(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertNull(get10(idF));
     }
   }
 
@@ -106,7 +105,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Integer.valueOf(100), get10(idF));
     }
   }
 
@@ -120,7 +119,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Integer.valueOf(100), get10(idF));
     }
   }
 
@@ -133,7 +132,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Integer.valueOf(100), get10(idF));
     }
   }
 
@@ -147,7 +146,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Integer.valueOf(100), get10(idF));
     }
   }
 
@@ -160,7 +159,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Short.valueOf((short) 100), get10(idF));
     }
   }
 
@@ -174,7 +173,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Short.valueOf((short) 100), get10(idF));
     }
   }
 
@@ -187,7 +186,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Short.valueOf((short) 100), get10(idF));
     }
   }
 
@@ -201,7 +200,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Short.valueOf((short) 100), get10(idF));
     }
   }
 
@@ -214,7 +213,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Long.valueOf(100), get10(idF));
     }
   }
 
@@ -228,7 +227,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Long.valueOf(100), get10(idF));
     }
   }
 
@@ -241,7 +240,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Long.valueOf(100), get10(idF));
     }
   }
 
@@ -255,7 +254,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Long.valueOf(100), get10(idF));
     }
   }
 
@@ -268,7 +267,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("a text I wrote", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("a text I wrote", get10(idF));
     }
   }
 
@@ -282,7 +281,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("a text I wrote", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("a text I wrote", get10(idF));
     }
   }
 
@@ -295,7 +294,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("a text I wrote", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("a text I wrote", get10(idF));
     }
   }
 
@@ -309,7 +308,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("a text I wrote", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("a text I wrote", get10(idF));
     }
   }
 
@@ -322,7 +321,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", get10(idF));
     }
   }
 
@@ -336,7 +335,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", get10(idF));
     }
   }
 
@@ -349,7 +348,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", get10(idF));
     }
   }
 
@@ -363,7 +362,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("Brød har lenge vore ein viktig del av norsk kosthald.", get10(idF));
     }
   }
 
@@ -376,7 +375,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Character.valueOf('R'), get10(idF));
     }
   }
 
@@ -390,7 +389,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Character.valueOf('R'), get10(idF));
     }
   }
 
@@ -403,7 +402,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Character.valueOf('R'), get10(idF));
     }
   }
 
@@ -417,7 +416,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('R'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Character.valueOf('R'), get10(idF));
     }
   }
 
@@ -430,7 +429,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Character.valueOf('Ø'), get10(idF));
     }
   }
 
@@ -444,7 +443,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Character.valueOf('Ø'), get10(idF));
     }
   }
 
@@ -457,7 +456,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Character.valueOf('Ø'), get10(idF));
     }
   }
 
@@ -471,7 +470,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('Ø'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Character.valueOf('Ø'), get10(idF));
     }
   }
 
@@ -484,7 +483,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", get10(idF));
     }
   }
 
@@ -498,7 +497,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", get10(idF));
     }
   }
 
@@ -511,7 +510,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", get10(idF));
     }
   }
 
@@ -525,7 +524,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("Som regel i form av smørbrød til frukost og lunsj.", get10(idF));
     }
   }
 
@@ -540,7 +539,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -556,7 +555,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -571,7 +570,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -587,7 +586,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -602,7 +601,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -618,7 +617,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -633,7 +632,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -649,7 +648,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -664,7 +663,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -680,7 +679,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -695,7 +694,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -711,7 +710,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -726,7 +725,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -742,7 +741,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -757,7 +756,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -773,7 +772,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -788,7 +787,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -804,7 +803,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -819,7 +818,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -835,7 +834,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -850,7 +849,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -866,7 +865,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -881,7 +880,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -897,7 +896,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
     }
   }
 
@@ -912,7 +911,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0001);
+      assertEquals(d, get10(idF), 0.0001);
     }
   }
 
@@ -928,7 +927,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0001);
+      assertEquals(d, get10(idF), 0.0001);
     }
   }
 
@@ -943,7 +942,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0001);
+      assertEquals(d, get10(idF), 0.0001);
     }
   }
 
@@ -959,7 +958,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0001);
+      assertEquals(d, get10(idF), 0.0001);
     }
   }
 
@@ -974,7 +973,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0000001);
+      assertEquals(d, get10(idF), 0.0000001);
     }
   }
 
@@ -990,7 +989,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0000001);
+      assertEquals(d, get10(idF), 0.0000001);
     }
   }
 
@@ -1005,7 +1004,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0000001);
+      assertEquals(d, get10(idF), 0.0000001);
     }
   }
 
@@ -1021,7 +1020,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.0000001);
+      assertEquals(d, get10(idF), 0.0000001);
     }
   }
 
@@ -1034,7 +1033,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertTrue(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertTrue(get10(idF));
     }
   }
 
@@ -1048,7 +1047,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertTrue(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertTrue(get10(idF));
     }
   }
 
@@ -1061,7 +1060,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertTrue(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertTrue(get10(idF));
     }
   }
 
@@ -1075,7 +1074,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertTrue(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertTrue(get10(idF));
     }
   }
 
@@ -1092,7 +1091,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF));
 
       CompletionStage<LocalTime> idF1 = conn.<LocalTime>rowOperation("select $1::time as t")
           .set("$1", f, PgAdbaType.TIME)
@@ -1100,7 +1099,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF1.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF1));
 
       CompletionStage<LocalTime> idF2 = conn.<LocalTime>rowOperation("select $1::time as t")
           .set("$1", d)
@@ -1108,7 +1107,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF2.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF2));
 
       CompletionStage<LocalTime> idF3 = conn.<LocalTime>rowOperation("select $1::time as t")
           .set("$1", f2)
@@ -1116,7 +1115,7 @@ public class BindParameterTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(d, idF3.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(d, get10(idF3));
     }
   }
 

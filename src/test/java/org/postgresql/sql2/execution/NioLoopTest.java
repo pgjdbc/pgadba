@@ -2,23 +2,21 @@ package org.postgresql.sql2.execution;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
 import java.io.IOException;
 import java.nio.channels.SelectableChannel;
-import java.util.concurrent.TimeUnit;
-
+import jdk.incubator.sql2.Connection;
+import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.DataSource.Builder;
+import jdk.incubator.sql2.DataSourceFactory;
+import jdk.incubator.sql2.Submission;
 import org.junit.After;
 import org.junit.jupiter.api.Test;
 import org.postgresql.sql2.PgConnectionProperties;
 import org.postgresql.sql2.testutil.CollectorUtils;
 import org.postgresql.sql2.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
-
-import jdk.incubator.sql2.Connection;
-import jdk.incubator.sql2.DataSource;
-import jdk.incubator.sql2.DataSource.Builder;
-import jdk.incubator.sql2.DataSourceFactory;
-import jdk.incubator.sql2.Submission;
 
 /**
  * Ensures {@link NioLoop} handles communication.
@@ -42,7 +40,7 @@ public class NioLoopTest {
       Connection connection = dataSource.getConnection();
       Submission<Integer> submission = connection.<Integer>rowOperation("SELECT 1 as t")
           .collect(CollectorUtils.singleCollector(Integer.class)).submit();
-      Integer result = submission.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      Integer result = get10(submission.getCompletionStage());
       assertEquals("Incorrect result", Integer.valueOf(1), result);
     }
   }
@@ -56,7 +54,7 @@ public class NioLoopTest {
       // Undertake single request
       Submission<Integer> submission = connection.<Integer>rowOperation("SELECT 1 as t")
           .collect(CollectorUtils.singleCollector(Integer.class)).submit();
-      Integer result = submission.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      Integer result = get10(submission.getCompletionStage());
       assertEquals("Incorrect result", Integer.valueOf(1), result);
 
       // Ensure provided NioLoop used
@@ -79,7 +77,7 @@ public class NioLoopTest {
 
       // Ensure obtain all results
       for (int i = 0; i < queryCount; i++) {
-        Integer result = submissions[i].getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+        Integer result = get10(submissions[i].getCompletionStage());
         assertEquals("Incorrect result", Integer.valueOf(1), result);
       }
     }
@@ -101,7 +99,7 @@ public class NioLoopTest {
 
       // Ensure obtain all results
       for (int i = 0; i < connectionCount; i++) {
-        Integer result = submissions[i].getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+        Integer result = get10(submissions[i].getCompletionStage());
         assertEquals("Incorrect result", Integer.valueOf(1), result);
       }
     }
@@ -126,7 +124,7 @@ public class NioLoopTest {
 
       // Ensure obtain all results
       for (int i = 0; i < dataSources.length; i++) {
-        Integer result = submissions[i].getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+        Integer result = get10(submissions[i].getCompletionStage());
         assertEquals("Incorrect result", Integer.valueOf(1), result);
       }
     }

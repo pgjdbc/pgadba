@@ -3,12 +3,12 @@ package org.postgresql.sql2;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 import jdk.incubator.sql2.AdbaType;
@@ -56,9 +56,9 @@ public class ArrayCountOperationTest {
           .submit();
 
       assertArrayEquals(new PgCount[]{new PgCount(1), new PgCount(1), new PgCount(1)},
-          arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
-      assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
-      assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
+          get10(arrayCount.getCompletionStage()).toArray());
+      assertEquals(Long.valueOf(3), get10(count.getCompletionStage()));
+      assertNull(get10(drop.getCompletionStage()));
     }
   }
 
@@ -78,11 +78,11 @@ public class ArrayCountOperationTest {
       Submission<Object> drop = conn.operation("drop table tabForInsert")
           .submit();
 
-      assertNull(noReturn.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertNull(get10(noReturn.getCompletionStage()));
       assertArrayEquals(new PgCount[]{new PgCount(1), new PgCount(1), new PgCount(1)},
-          arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
-      assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
-      assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
+          get10(arrayCount.getCompletionStage()).toArray());
+      assertEquals(Long.valueOf(3), get10(count.getCompletionStage()));
+      assertNull(get10(drop.getCompletionStage()));
     }
   }
 
@@ -109,9 +109,9 @@ public class ArrayCountOperationTest {
           .submit();
 
       assertArrayEquals(new Long[]{1L, 1L, 1L},
-          arrayCount.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS).toArray());
-      assertEquals(Long.valueOf(3), count.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
-      assertNull(drop.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS));
+          get10(arrayCount.getCompletionStage()).toArray());
+      assertEquals(Long.valueOf(3), get10(count.getCompletionStage()));
+      assertNull(get10(drop.getCompletionStage()));
     }
   }
 }

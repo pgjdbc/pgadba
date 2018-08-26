@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 import jdk.incubator.sql2.Connection;
@@ -46,7 +46,7 @@ public class ErrorStatesTest {
           .submit()
           .getCompletionStage();
 
-      idF.toCompletableFuture().get(10, TimeUnit.SECONDS);
+      get10(idF);
     } catch (ExecutionException e) {
       SqlException ex = (SqlException)e.getCause();
 
@@ -61,10 +61,10 @@ public class ErrorStatesTest {
   public void testRowOperationOnError() throws InterruptedException, TimeoutException {
     final boolean[] onErrorResult = new boolean[] {false};
     try (Connection conn = ds.getConnection()) {
-      conn.rowOperation("select select")
+      get10(conn.rowOperation("select select")
           .onError(t -> onErrorResult[0] = true)
           .submit()
-          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+          .getCompletionStage());
     } catch (ExecutionException ignore) {
       //ignored
     }
@@ -75,11 +75,11 @@ public class ErrorStatesTest {
   public void testRowOperationOnErrorTwice() throws InterruptedException, TimeoutException, ExecutionException {
     final boolean[] onErrorResult = new boolean[] {false};
     try (Connection conn = ds.getConnection()) {
-      conn.rowOperation("select select")
+      get10(conn.rowOperation("select select")
           .onError(t -> onErrorResult[0] = true)
           .onError(t -> onErrorResult[0] = true)
           .submit()
-          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+          .getCompletionStage());
       fail("you are not allowed to call onError twice");
     } catch (IllegalStateException e) {
       assertEquals("you are not allowed to call onError multiple times", e.getMessage());
@@ -91,10 +91,10 @@ public class ErrorStatesTest {
   public void testCountOperationOnError() throws InterruptedException, TimeoutException {
     final boolean[] onErrorResult = new boolean[] {false};
     try (Connection conn = ds.getConnection()) {
-      conn.rowCountOperation("select select")
+      get10(conn.rowCountOperation("select select")
           .onError(t -> onErrorResult[0] = true)
           .submit()
-          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+          .getCompletionStage());
     } catch (ExecutionException ignore) {
       //ignored
     }
@@ -105,10 +105,10 @@ public class ErrorStatesTest {
   public void testOperationOnError() throws InterruptedException, TimeoutException {
     final boolean[] onErrorResult = new boolean[] {false};
     try (Connection conn = ds.getConnection()) {
-      conn.operation("select select")
+      get10(conn.operation("select select")
           .onError(t -> onErrorResult[0] = true)
           .submit()
-          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+          .getCompletionStage());
     } catch (ExecutionException ignore) {
       //ignored
     }
@@ -119,10 +119,10 @@ public class ErrorStatesTest {
   public void testRowProcessorOperationOnError() throws InterruptedException, TimeoutException {
     final boolean[] onErrorResult = new boolean[] {false};
     try (Connection conn = ds.getConnection()) {
-      conn.rowPublisherOperation("select select")
+      get10(conn.rowPublisherOperation("select select")
           .onError(t -> onErrorResult[0] = true)
           .submit()
-          .getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+          .getCompletionStage());
     } catch (ExecutionException ignore) {
       //ignored
     }
@@ -142,7 +142,7 @@ public class ErrorStatesTest {
           .submit()
           .getCompletionStage();
 
-      idF.toCompletableFuture().get(10, TimeUnit.SECONDS);
+      get10(idF);
       fail("the column 'notused' doesn't exist in the result.row and should result in an IllegalArgumentException");
     } catch (ExecutionException e) {
       IllegalArgumentException ex = (IllegalArgumentException)e.getCause();
@@ -164,7 +164,7 @@ public class ErrorStatesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Integer.valueOf(100), get10(idF));
     }
   }
 
@@ -181,7 +181,7 @@ public class ErrorStatesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Integer.valueOf(100), get10(idF));
     }
   }
 }

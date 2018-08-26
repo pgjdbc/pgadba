@@ -3,6 +3,7 @@ package org.postgresql.sql2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -30,10 +31,10 @@ public class FirstLight {
   @BeforeAll
   public static void setup() throws InterruptedException, ExecutionException, TimeoutException {
     try (Connection conn = ConnectUtil.openDb(postgres).getConnection()) {
-      conn.operation("create table emp(id int, empno int, ename varchar(10), deptno int)")
-          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
-      conn.operation("insert into emp(id, empno, ename, deptno) values(1, 2, 'empname', 3)")
-          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      get10(conn.operation("create table emp(id int, empno int, ename varchar(10), deptno int)")
+          .submit().getCompletionStage());
+      get10(conn.operation("insert into emp(id, empno, ename, deptno) values(1, 2, 'empname', 3)")
+          .submit().getCompletionStage());
     }
   }
 

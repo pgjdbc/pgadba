@@ -3,10 +3,10 @@ package org.postgresql.sql2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
+import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
@@ -50,7 +50,7 @@ public class TransactionTest {
       transaction.setRollbackOnly();
       CompletionStage<TransactionOutcome> roll = conn.commitMaybeRollback(transaction);
 
-      assertEquals(TransactionOutcome.ROLLBACK, roll.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(TransactionOutcome.ROLLBACK, get10(roll));
 
       CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("SELECT EXISTS (\n"
           + "   SELECT 1 \n"
@@ -64,7 +64,7 @@ public class TransactionTest {
           .submit()
           .getCompletionStage();
 
-      assertFalse(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertFalse(get10(idF));
     }
   }
 
@@ -80,17 +80,17 @@ public class TransactionTest {
           .submit();
       CompletionStage<TransactionOutcome> roll = conn.commitMaybeRollback(transaction);
 
-      assertEquals(TransactionOutcome.COMMIT, roll.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(TransactionOutcome.COMMIT, get10(roll));
 
       CompletionStage<Long> idF = conn.<Long>rowOperation("select count(*) as t from tab")
           .collect(singleCollector(Long.class))
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf(1), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Long.valueOf(1), get10(idF));
 
-      conn.rowCountOperation("drop table tab")
-          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      get10(conn.rowCountOperation("drop table tab")
+          .submit().getCompletionStage());
     }
   }
 

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
+import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -16,7 +17,6 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 import jdk.incubator.sql2.Connection;
@@ -54,7 +54,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Integer.valueOf(100), get10(idF));
     }
   }
 
@@ -66,7 +66,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Short.valueOf((short) 100), get10(idF));
     }
   }
 
@@ -78,7 +78,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf((short) 100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Long.valueOf((short) 100), get10(idF));
     }
   }
 
@@ -90,7 +90,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(BigDecimal.valueOf(100.505), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(BigDecimal.valueOf(100.505), get10(idF));
     }
   }
 
@@ -102,7 +102,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals((float) 100.505, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.5);
+      assertEquals((float) 100.505, get10(idF), 0.5);
     }
   }
 
@@ -114,7 +114,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals((float) 100.505, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.5);
+      assertEquals((float) 100.505, get10(idF), 0.5);
     }
   }
 
@@ -126,7 +126,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("$100.51", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("$100.51", get10(idF));
     }
   }
 
@@ -138,7 +138,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Sphinx of black quartz, judge my vow", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("Sphinx of black quartz, judge my vow", get10(idF));
     }
   }
 
@@ -150,7 +150,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('H'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Character.valueOf('H'), get10(idF));
     }
   }
 
@@ -162,7 +162,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("How vexingly quick daft zebras jump!", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("How vexingly quick daft zebras jump!", get10(idF));
     }
   }
 
@@ -175,7 +175,7 @@ public class SelectDataTypesTest {
           .getCompletionStage();
 
       byte[] expected = new byte[]{0x44, 0x45, 0x41, 0x44, 0x42, 0x45, 0x45, 0x46};
-      assertArrayEquals(expected, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertArrayEquals(expected, get10(idF));
     }
   }
 
@@ -188,7 +188,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(LocalDateTime.of(2018, 4, 29, 20, 55, 57, 692132000), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(LocalDateTime.of(2018, 4, 29, 20, 55, 57, 692132000), get10(idF));
     }
   }
 
@@ -201,8 +201,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(OffsetDateTime.of(2018, 4, 29, 20, 55, 57, 692132000, ZoneOffset.UTC),
-          idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(OffsetDateTime.of(2018, 4, 29, 20, 55, 57, 692132000, ZoneOffset.UTC), get10(idF));
     }
   }
 
@@ -214,7 +213,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(LocalDate.of(2018, 4, 29), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(LocalDate.of(2018, 4, 29), get10(idF));
     }
   }
 
@@ -226,7 +225,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(LocalTime.of(20, 55, 57, 692132000), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(LocalTime.of(20, 55, 57, 692132000), get10(idF));
     }
   }
 
@@ -239,7 +238,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(OffsetTime.of(20, 55, 57, 692132000, ZoneOffset.UTC), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(OffsetTime.of(20, 55, 57, 692132000, ZoneOffset.UTC), get10(idF));
     }
   }
 
@@ -251,7 +250,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Duration.of(1512, ChronoUnit.HOURS), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Duration.of(1512, ChronoUnit.HOURS), get10(idF));
     }
   }
 
@@ -269,7 +268,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertArrayEquals(new String[] {"happy", "very happy", "ecstatic"}, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertArrayEquals(new String[] {"happy", "very happy", "ecstatic"}, get10(idF));
     }
   }
 
@@ -281,7 +280,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertTrue(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertTrue(get10(idF));
     }
   }
 }

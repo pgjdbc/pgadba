@@ -2,9 +2,9 @@ package org.postgresql.sql2;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
@@ -39,9 +39,9 @@ public class PgConnectionTlsTest {
 
     String sql = "select 1 as t";
     try (Connection conn = ds.getConnection()) {
-      conn.rowOperation(sql)
+      get10(conn.rowOperation(sql)
           .collect(CollectorUtils.singleCollector(Integer.class))
-          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+          .submit().getCompletionStage());
       fail("Exception should have been thrown, as the connection properties doesn't include TLS");
     } catch (ExecutionException e) {
       assertEquals("no pg_hba.conf entry for host \"172.17.0.1\", user \"test\", database \"test\", SSL off",
