@@ -1,9 +1,5 @@
 package org.postgresql.sql2.communication.packets.parts;
 
-import org.postgresql.sql2.communication.packets.parsers.BinaryParser;
-import org.postgresql.sql2.communication.packets.parsers.TextParser;
-import org.postgresql.sql2.util.TriFunction;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,6 +7,9 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.util.function.Function;
+
+import org.postgresql.sql2.communication.packets.parsers.BinaryParser;
+import org.postgresql.sql2.communication.packets.parsers.TextParser;
 
 public enum ColumnTypes {
   BOOL(16, TextParser::boolout, BinaryParser::boolsend, Boolean.class, PGAdbaType.BOOLEAN),
@@ -99,7 +98,8 @@ public enum ColumnTypes {
   _TIMESTAMP(1115, TextParser::array_out, BinaryParser::array_send, LocalDateTime[].class, PGAdbaType.ARRAY),
   _DATE(1182, TextParser::array_out, BinaryParser::array_send, LocalDate[].class, PGAdbaType.ARRAY),
   _TIME(1183, TextParser::array_out, BinaryParser::array_send, LocalTime.class, PGAdbaType.ARRAY),
-  TIMESTAMPTZ(1184, TextParser::timestamptz_out, BinaryParser::timestamptz_send, OffsetDateTime.class, PGAdbaType.TIMESTAMP_WITH_TIME_ZONE),
+  TIMESTAMPTZ(1184, TextParser::timestamptz_out, BinaryParser::timestamptz_send, OffsetDateTime.class,
+      PGAdbaType.TIMESTAMP_WITH_TIME_ZONE),
   _TIMESTAMPTZ(1185, TextParser::array_out, BinaryParser::array_send, OffsetDateTime[].class, PGAdbaType.ARRAY),
   INTERVAL(1186, TextParser::interval_out, BinaryParser::interval_send, null, null),
   _INTERVAL(1187, TextParser::array_out, BinaryParser::array_send, null, null),
@@ -132,8 +132,7 @@ public enum ColumnTypes {
   VOID(2278, TextParser::void_out, BinaryParser::void_send, null, null),
   TRIGGER(2279, TextParser::trigger_out, null, null, null),
   LANGUAGE_HANDLER(2280, TextParser::language_handler_out, null, null, null),
-  INTERNAL(2281, TextParser::internal_out, null, null, null),
-  OPAQUE(2282, TextParser::opaque_out, null, null, null),
+  INTERNAL(2281, TextParser::internal_out, null, null, null), OPAQUE(2282, TextParser::opaque_out, null, null, null),
   ANYELEMENT(2283, TextParser::anyelement_out, null, null, null),
   _RECORD(2287, TextParser::array_out, BinaryParser::array_send, null, null),
   ANYNONARRAY(2776, TextParser::anynonarray_out, null, null, null),
@@ -182,11 +181,12 @@ public enum ColumnTypes {
 
   private final int oid;
   private final Function<String, Object> textParser;
-  private final TriFunction<byte[], Integer, Integer, Object> binaryParser;
+  private final Function<byte[], Object> binaryParser;
   private final Class c;
   private final PGAdbaType type;
 
-  ColumnTypes(int oid, Function<String, Object> textParser, TriFunction<byte[], Integer, Integer, Object> binaryParser, Class c, PGAdbaType type) {
+  ColumnTypes(int oid, Function<String, Object> textParser, Function<byte[], Object> binaryParser, Class c,
+      PGAdbaType type) {
     this.oid = oid;
     this.textParser = textParser;
     this.binaryParser = binaryParser;
@@ -195,8 +195,8 @@ public enum ColumnTypes {
   }
 
   public static ColumnTypes lookup(int oid) {
-    for(ColumnTypes ct : values()) {
-      if(ct.oid == oid)
+    for (ColumnTypes ct : values()) {
+      if (ct.oid == oid)
         return ct;
     }
 
@@ -207,7 +207,7 @@ public enum ColumnTypes {
     return textParser;
   }
 
-  public TriFunction<byte[], Integer, Integer, Object> getBinaryParser() {
+  public Function<byte[], Object> getBinaryParser() {
     return binaryParser;
   }
 

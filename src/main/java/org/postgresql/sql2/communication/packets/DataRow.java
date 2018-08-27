@@ -2,10 +2,14 @@ package org.postgresql.sql2.communication.packets;
 
 import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.SqlType;
+
+import org.postgresql.sql2.communication.NetworkInputStream;
+import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.TableCell;
 import org.postgresql.sql2.communication.packets.parts.ColumnDescription;
 import org.postgresql.sql2.util.BinaryHelper;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,21 +20,19 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
   private long rowNumber;
   private int currentPos = 0;
 
-  public DataRow(byte[] bytes, ColumnDescription[] description, long rowNumber) {
+  public DataRow(NetworkReadContext context, ColumnDescription[] description, long rowNumber) throws IOException {
     this.rowNumber = rowNumber;
+    NetworkInputStream input = context.getPayload();
 
-    short numOfColumns = BinaryHelper.readShort(bytes[0], bytes[1]);
-    int pos = 2;
-    int columnPos = 1;
+    short numOfColumns = input.readShort();
     columns = new HashMap<>(numOfColumns);
     columnNames = new HashMap<>(numOfColumns);
-    for(int i = 0; i < numOfColumns; i++) {
-      int length = BinaryHelper.readInt(bytes[pos], bytes[pos + 1], bytes[pos + 2], bytes[pos + 3]);
-      pos += 4;
-      columnNames.put(description[i].getName().toLowerCase(), columnPos);
-      columns.put(columnPos, new TableCell(bytes, pos, pos + length, description[i]));
-      pos += length;
-      columnPos++;
+    for (int i = 0; i < numOfColumns; i++) {
+      int length = input.readInteger();
+      columnNames.put(description[i].getName().toLowerCase(), i);
+      byte[] cellBytes = new byte[length];
+      input.read(cellBytes);
+      columns.put(i, new TableCell(cellBytes, description[i]));
     }
   }
 
@@ -48,20 +50,21 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
   public <T> T get(Class<T> type) {
     TableCell tc = columns.get(currentPos);
 
-    if(tc == null) {
+    if (tc == null) {
       throw new IllegalArgumentException("no column with position " + currentPos);
     }
 
-    if(tc.getStart() > tc.getStop()) { // handle the null special case
+    // handle the null special case
+    if (tc.getBytes().length == 0) {
       return null;
     }
 
-    switch (tc.getColumnDescription().getFormatCode()){
-      case TEXT:
-        String data = new String(BinaryHelper.subBytes(tc.getBytes(), tc.getStart(), tc.getStop()), StandardCharsets.UTF_8);
-        return (T)tc.getColumnDescription().getColumnType().getTextParser().apply(data);
-      case BINARY:
-        return (T)tc.getColumnDescription().getColumnType().getBinaryParser().apply(tc.getBytes(), tc.getStart(), tc.getStop());
+    switch (tc.getColumnDescription().getFormatCode()) {
+    case TEXT:
+      String data = new String(tc.getBytes(), StandardCharsets.UTF_8);
+      return (T) tc.getColumnDescription().getColumnType().getTextParser().apply(data);
+    case BINARY:
+      return (T) tc.getColumnDescription().getColumnType().getBinaryParser().apply(tc.getBytes());
     }
 
     return null;
@@ -84,7 +87,7 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
 
   @Override
   public SqlType sqlType() {
-    if(!columns.containsKey(currentPos)) {
+    if (!columns.containsKey(currentPos)) {
       throw new IllegalArgumentException("no column with id " + currentPos);
     }
 
@@ -93,7 +96,7 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
 
   @Override
   public <T> Class<T> javaType() {
-    if(!columns.containsKey(currentPos)) {
+    if (!columns.containsKey(currentPos)) {
       throw new IllegalArgumentException("no column with id " + currentPos);
     }
 
@@ -103,7 +106,7 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
   @Override
   public long length() {
     TableCell tc = columns.get(currentPos);
-    return tc.getStop() - tc.getStart();
+    return tc.getBytes().length;
   }
 
   @Override
@@ -115,7 +118,7 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
   public Column at(String id) {
     Integer newPos = columnNames.get(id.toLowerCase());
 
-    if(newPos == null) {
+    if (newPos == null) {
       throw new IllegalArgumentException("no column with id " + id);
     }
 
@@ -125,7 +128,7 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
 
   @Override
   public Column at(int index) {
-    if(!columns.containsKey(index)) {
+    if (!columns.containsKey(index)) {
       throw new IllegalArgumentException("no column with index " + index);
     }
 
@@ -155,4 +158,5 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
 
     return row;
   }
+
 }

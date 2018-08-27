@@ -10,11 +10,25 @@ import jdk.incubator.sql2.ConnectionProperty;
 public interface NetworkReadContext extends NetworkContext {
 
   /**
-   * Obtains the {@link BEFrame} just read.
+   * Obtains the frame tag.
    * 
-   * @return {@link BEFrame} just read.
+   * @return Frame tag.
    */
-  BEFrame getBEFrame();
+  char getFrameTag();
+
+  /**
+   * Obtains the payload length.
+   * 
+   * @return Payload length.
+   */
+  int getPayloadLength();
+
+  /**
+   * Obtains the payload.
+   * 
+   * @return Payload.
+   */
+  NetworkInputStream getPayload();
 
   /**
    * Obtains the {@link PreparedStatementCache}.

@@ -1,35 +1,28 @@
 package org.postgresql.sql2.communication.packets;
 
-import org.postgresql.sql2.communication.packets.parts.ColumnDescription;
-import org.postgresql.sql2.util.BinaryHelper;
+import java.io.IOException;
 
-import java.nio.charset.StandardCharsets;
+import org.postgresql.sql2.communication.NetworkInputStream;
+import org.postgresql.sql2.communication.NetworkReadContext;
+import org.postgresql.sql2.communication.packets.parts.ColumnDescription;
 
 public class RowDescription {
   private ColumnDescription[] descriptions;
 
-  public RowDescription(byte[] bytes) {
-    short numOfColumns = BinaryHelper.readShort(bytes[0], bytes[1]);
-    int pos = 2;
+  public RowDescription(NetworkInputStream input) throws IOException {
+    short numOfColumns = input.readShort();
     descriptions = new ColumnDescription[numOfColumns];
-    for(int i = 0; i < numOfColumns; i++) {
-      int nameEnd = BinaryHelper.nextNullBytePos(bytes, pos);
-      String name = new String(BinaryHelper.subBytes(bytes, pos, nameEnd), StandardCharsets.UTF_8);
-      pos = nameEnd + 1;
-      int objectIdOfTable = BinaryHelper.readInt(bytes[pos], bytes[pos + 1], bytes[pos + 2], bytes[pos + 3]);
-      pos += 4;
-      short attributeNumberOfColumn = BinaryHelper.readShort(bytes[pos], bytes[pos + 1]);
-      pos += 2;
-      int fieldOId = BinaryHelper.readInt(bytes[pos], bytes[pos + 1], bytes[pos + 2], bytes[pos + 3]);
-      pos += 4;
-      short dataTypeSize = BinaryHelper.readShort(bytes[pos], bytes[pos + 1]);
-      pos += 2;
-      int typeModifier = BinaryHelper.readInt(bytes[pos], bytes[pos + 1], bytes[pos + 2], bytes[pos + 3]);
-      pos += 4;
-      short formatCode = BinaryHelper.readShort(bytes[pos], bytes[pos + 1]);
-      pos += 2;
+    for (int i = 0; i < numOfColumns; i++) {
+      String name = input.readString();
+      int objectIdOfTable = input.readInteger();
+      short attributeNumberOfColumn = input.readShort();
+      int fieldOId = input.readInteger();
+      short dataTypeSize = input.readShort();
+      int typeModifier = input.readInteger();
+      short formatCode = input.readShort();
 
-      descriptions[i] = new ColumnDescription(name, objectIdOfTable, attributeNumberOfColumn, fieldOId, dataTypeSize, typeModifier, formatCode);
+      descriptions[i] = new ColumnDescription(name, objectIdOfTable, attributeNumberOfColumn, fieldOId, dataTypeSize,
+          typeModifier, formatCode);
     }
   }
 

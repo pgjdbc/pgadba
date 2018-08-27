@@ -1,13 +1,15 @@
 package org.postgresql.sql2.communication;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
+import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.postgresql.sql2.buffer.PooledByteBuffer;
 
 public class BEFrameReaderTest {
 
@@ -33,15 +35,27 @@ public class BEFrameReaderTest {
 
   @ParameterizedTest
   @MethodSource("data")
-  public void parseNetworkPayload(String packetName, byte[] packet) {
-    BEFrameReader instance = new BEFrameReader();
+  public void parseNetworkPayload(String packetName, byte[] packet) throws IOException {
+    BEFrameParser instance = new BEFrameParser();
 
+    // Load the data
     ByteBuffer bb = ByteBuffer.allocate(1024);
     bb.put(packet);
-    instance.updateState(bb, packet.length);
+    NetworkInputStream input = new NetworkInputStream();
+    input.appendBuffer(new PooledByteBuffer() {      
+      @Override
+      public ByteBuffer getByteBuffer() {
+        return bb;
+      }
+      
+      @Override
+      public void release() {
+      }
 
-    BEFrame sp = instance.popFrame();
+    }, 0, packet.length, false);
+    
+    boolean isFrameAvailable = instance.parseBEFrame(input);
 
-    assertNotNull(sp, packetName + " could not be parsed");
+    assertTrue(packetName + " could not be parsed", isFrameAvailable);
   }
 }

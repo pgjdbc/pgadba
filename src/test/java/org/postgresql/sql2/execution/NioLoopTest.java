@@ -29,6 +29,8 @@ public class NioLoopTest {
 
   public static PostgreSQLContainer<?> postgres = DatabaseHolder.getCached();
 
+  private static final int TIMEOUT = 10000; //
+
   private static Builder createDataSource() {
     return DataSourceFactory
         .newFactory("org.postgresql.sql2.PGDataSourceFactory").builder().url("jdbc:postgresql://"
@@ -42,7 +44,7 @@ public class NioLoopTest {
       Connection connection = dataSource.getConnection();
       Submission<Integer> submission = connection.<Integer>rowOperation("SELECT 1 as t")
           .collect(CollectorUtils.singleCollector(Integer.class)).submit();
-      Integer result = submission.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      Integer result = submission.getCompletionStage().toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS);
       assertEquals("Incorrect result", Integer.valueOf(1), result);
     }
   }
@@ -56,7 +58,7 @@ public class NioLoopTest {
       // Undertake single request
       Submission<Integer> submission = connection.<Integer>rowOperation("SELECT 1 as t")
           .collect(CollectorUtils.singleCollector(Integer.class)).submit();
-      Integer result = submission.getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      Integer result = submission.getCompletionStage().toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS);
       assertEquals("Incorrect result", Integer.valueOf(1), result);
 
       // Ensure provided NioLoop used
@@ -79,7 +81,7 @@ public class NioLoopTest {
 
       // Ensure obtain all results
       for (int i = 0; i < QUERY_COUNT; i++) {
-        Integer result = submissions[i].getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+        Integer result = submissions[i].getCompletionStage().toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS);
         assertEquals("Incorrect result", Integer.valueOf(1), result);
       }
     }
@@ -101,7 +103,7 @@ public class NioLoopTest {
 
       // Ensure obtain all results
       for (int i = 0; i < CONNECTION_COUNT; i++) {
-        Integer result = submissions[i].getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+        Integer result = submissions[i].getCompletionStage().toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS);
         assertEquals("Incorrect result", Integer.valueOf(1), result);
       }
     }
@@ -126,7 +128,7 @@ public class NioLoopTest {
 
       // Ensure obtain all results
       for (int i = 0; i < dataSources.length; i++) {
-        Integer result = submissions[i].getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+        Integer result = submissions[i].getCompletionStage().toCompletableFuture().get(TIMEOUT, TimeUnit.SECONDS);
         assertEquals("Incorrect result", Integer.valueOf(1), result);
       }
     }

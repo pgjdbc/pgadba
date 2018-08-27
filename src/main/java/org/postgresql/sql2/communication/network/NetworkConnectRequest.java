@@ -5,7 +5,7 @@ import java.net.InetSocketAddress;
 import java.util.Map;
 
 import org.postgresql.sql2.PGConnectionProperties;
-import org.postgresql.sql2.communication.BEFrame;
+import org.postgresql.sql2.communication.BEFrameParser;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.NetworkConnectContext;
 import org.postgresql.sql2.communication.NetworkOutputStream;
@@ -25,6 +25,8 @@ import jdk.incubator.sql2.ConnectionProperty;
  * @author Daniel Sagenschneider
  */
 public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, NetworkResponse {
+
+  public static final String CHARSET = "UTF8";
 
   /**
    * {@link ConnectSubmission}.
@@ -81,7 +83,7 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
     wire.write("application_name");
     wire.write("java_sql2_client");
     wire.write("client_encoding");
-    wire.write("UTF8");
+    wire.write(CHARSET);
     wire.writeTerminator();
     wire.completePacket();
 
@@ -103,11 +105,10 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
   public NetworkResponse read(NetworkReadContext context) throws IOException {
 
     // Expecting authentication challenge
-    BEFrame frame = context.getBEFrame();
-    switch (frame.getTag()) {
+    switch (context.getFrameTag()) {
 
-    case AUTHENTICATION:
-      AuthenticationRequest authentication = new AuthenticationRequest(frame.getPayload());
+    case BEFrameParser.AUTHENTICATION:
+      AuthenticationRequest authentication = new AuthenticationRequest(context);
       switch (authentication.getType()) {
 
       case MD5:
@@ -125,7 +126,8 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
       }
 
     default:
-      throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
+      throw new IllegalStateException(
+          "Invalid tag '" + context.getFrameTag() + "' for " + this.getClass().getSimpleName());
     }
   }
 

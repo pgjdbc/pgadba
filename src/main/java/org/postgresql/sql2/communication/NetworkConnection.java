@@ -33,6 +33,10 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   private final NioLoop loop;
 
+  private final NetworkInputStream inputStream = new NetworkInputStream();
+
+  private final ByteBufferPool bufferPool;
+
   private final ByteBufferPoolOutputStream outputStream;
 
   private final Queue<NetworkRequest> priorityRequestQueue = new LinkedList<>();
@@ -79,6 +83,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     this.properties = properties;
     this.connection = connection;
     this.loop = loop;
+    this.bufferPool = bufferPool;
     this.outputStream = new ByteBufferPoolOutputStream(bufferPool);
   }
 
@@ -271,9 +276,9 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   }
 
   /**
-   * {@link BEFrame} for {@link NetworkReadContext}.
+   * Current {@link PooledByteBuffer} for reading data.
    */
-  private BEFrame beFrame = null;
+  private PooledByteBuffer currentReadBuffer = null;
 
   /**
    * Allows {@link NetworkReadContext} to specify if write required.
@@ -304,8 +309,11 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   @Override
   public void handleRead() throws IOException {
 
-    // TODO use pooled byte buffers
-    ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+    // Ensure have read buffer
+    if (this.currentReadBuffer == null) {
+      this.currentReadBuffer = this.bufferPool.getPooledByteBuffer();
+      this.currentReadBuffer.getByteBuffer().clear();
+    }
 
     // Reset for reads
     int bytesRead = -1;
@@ -313,16 +321,28 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     try {
 
       // Consume data on the socket
-      while ((bytesRead = this.socketChannel.read(readBuffer)) > 0) {
+      int position = this.currentReadBuffer.getByteBuffer().position();
+      while ((bytesRead = this.socketChannel.read(this.currentReadBuffer.getByteBuffer().slice())) > 0) {
 
-        // Setup for consuming parts
-        readBuffer.flip();
-        int position = 0;
+        // Update position (as slice required for direct buffers)
+        this.currentReadBuffer.getByteBuffer().position(this.currentReadBuffer.getByteBuffer().position() + bytesRead);
+
+        // Determine if filled the read buffer
+        boolean isFilled = this.currentReadBuffer.getByteBuffer().remaining() == 0;
+
+        // Add the buffer to input stream
+        this.inputStream.appendBuffer(this.currentReadBuffer, position, bytesRead, isFilled);
+
+        // Obtain new current buffer if filled
+        if (isFilled) {
+          this.currentReadBuffer = this.bufferPool.getPooledByteBuffer();
+        }
 
         // Service the BE frames
-        BEFrame frame;
-        while ((frame = this.parser.parseBEFrame(readBuffer, position, bytesRead)) != null) {
-          position += this.parser.getConsumedBytes();
+        while (this.parser.parseBEFrame(this.inputStream)) {
+
+          // Specify frame size
+          this.inputStream.setBytesToEndOfStream(this.parser.getPayloadLength());
 
           // Obtain the awaiting response
           NetworkResponse awaitingResponse = this.getAwaitingResponse();
@@ -330,20 +350,19 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
           // Ensure have awaiting response
           if (awaitingResponse == null) {
             throw new IllegalStateException(
-                "No awaiting " + NetworkResponse.class.getSimpleName() + " for tag " + frame.getTag());
+                "No awaiting " + NetworkResponse.class.getSimpleName() + " for tag " + this.parser.getTag());
           }
 
           // Handle frame
-          switch (frame.getTag()) {
+          switch (this.parser.getTag()) {
 
-          case ERROR_RESPONSE:
+          case BEFrameParser.ERROR_RESPONSE:
             // Handle error
-            this.immediateResponse = awaitingResponse.handleException(new ErrorPacket(frame.getPayload()));
+            this.immediateResponse = awaitingResponse.handleException(new ErrorPacket(this));
             break;
 
           default:
             // Provide frame to awaiting response
-            this.beFrame = frame;
             this.immediateResponse = awaitingResponse.read(this);
           }
 
@@ -354,10 +373,10 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
             // Flag to write (as very likely have writes)
             this.isWriteRequired = true;
           }
-        }
 
-        // Clear buffer for re-use
-        readBuffer.clear();
+          // Clear frame size to parse next frame
+          this.inputStream.clearFrame();
+        }
       }
     } catch (NotYetConnectedException | ClosedChannelException ignore) {
       ignore.printStackTrace();
@@ -416,8 +435,18 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    */
 
   @Override
-  public BEFrame getBEFrame() {
-    return this.beFrame;
+  public char getFrameTag() {
+    return this.parser.getTag();
+  }
+
+  @Override
+  public int getPayloadLength() {
+    return this.parser.getPayloadLength();
+  }
+
+  @Override
+  public NetworkInputStream getPayload() {
+    return this.inputStream;
   }
 
   @Override

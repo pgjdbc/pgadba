@@ -1,20 +1,14 @@
 package org.postgresql.sql2.communication.packets;
 
-import org.postgresql.sql2.util.BinaryHelper;
+import java.io.IOException;
+
+import org.postgresql.sql2.communication.NetworkInputStream;
+import org.postgresql.sql2.communication.NetworkReadContext;
 
 public class AuthenticationRequest {
   public enum Types {
-    SUCCESS(0),
-    KERBEROS_V5(2),
-    CLEAR_TEXT(3),
-    MD5(5),
-    SCM_CREDENTIAL(6),
-    GSS(7),
-    GSS_CONTINUE(8),
-    SSPI(9),
-    SASL(10),
-    SASL_CONTINUE(11),
-    SASL_FINAL(12);
+    SUCCESS(0), KERBEROS_V5(2), CLEAR_TEXT(3), MD5(5), SCM_CREDENTIAL(6), GSS(7), GSS_CONTINUE(8), SSPI(9), SASL(10),
+    SASL_CONTINUE(11), SASL_FINAL(12);
 
     private int value;
 
@@ -23,8 +17,8 @@ public class AuthenticationRequest {
     }
 
     public static Types lookup(int input) {
-      for(Types t : values()) {
-        if(t.value == input)
+      for (Types t : values()) {
+        if (t.value == input)
           return t;
       }
 
@@ -35,13 +29,14 @@ public class AuthenticationRequest {
   private Types type;
   private byte[] salt = new byte[4];
 
-  public AuthenticationRequest(byte[] bytes) {
-    type = Types.lookup(BinaryHelper.readInt(bytes[0], bytes[1], bytes[2], bytes[3]));
-    if(type == Types.MD5) {
-      salt[0] = bytes[4];
-      salt[1] = bytes[5];
-      salt[2] = bytes[6];
-      salt[3] = bytes[7];
+  public AuthenticationRequest(NetworkReadContext context) throws IOException {
+    NetworkInputStream input = context.getPayload();
+    type = Types.lookup(input.readInteger());
+    if (type == Types.MD5) {
+      salt[0] = (byte) input.read();
+      salt[1] = (byte) input.read();
+      salt[2] = (byte) input.read();
+      salt[3] = (byte) input.read();
     }
   }
 

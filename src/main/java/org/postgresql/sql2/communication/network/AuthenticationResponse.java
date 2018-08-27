@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.function.Consumer;
 
 import org.postgresql.sql2.PGConnectionProperties;
-import org.postgresql.sql2.communication.BEFrame;
+import org.postgresql.sql2.communication.BEFrameParser;
 import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.NetworkResponse;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
@@ -27,11 +27,10 @@ public class AuthenticationResponse implements NetworkResponse {
   @Override
   public NetworkResponse read(NetworkReadContext context) throws IOException {
     // Expecting authentication challenge
-    BEFrame frame = context.getBEFrame();
-    switch (frame.getTag()) {
+    switch (context.getFrameTag()) {
 
-    case AUTHENTICATION:
-      AuthenticationRequest authentication = new AuthenticationRequest(frame.getPayload());
+    case BEFrameParser.AUTHENTICATION:
+      AuthenticationRequest authentication = new AuthenticationRequest(context);
       switch (authentication.getType()) {
 
       case SUCCESS:
@@ -43,21 +42,22 @@ public class AuthenticationResponse implements NetworkResponse {
         throw new IllegalStateException("Unhandled authentication " + authentication.getType());
       }
 
-    case PARAM_STATUS:
+    case BEFrameParser.PARAM_STATUS:
       // Load parameters for connection
-      ParameterStatus paramStatus = new ParameterStatus(frame.getPayload());
+      ParameterStatus paramStatus = new ParameterStatus(context);
       context.setProperty(PGConnectionProperties.lookup(paramStatus.getName()), paramStatus.getValue());
       return this;
 
-    case CANCELLATION_KEY_DATA:
+    case BEFrameParser.CANCELLATION_KEY_DATA:
       // TODO handle cancellation key
       return this;
 
-    case READY_FOR_QUERY:
+    case BEFrameParser.READY_FOR_QUERY:
       return null;
 
     default:
-      throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
+      throw new IllegalStateException(
+          "Invalid tag '" + context.getFrameTag() + "' for " + this.getClass().getSimpleName());
     }
   }
 
