@@ -1,15 +1,5 @@
 package org.postgresql.sql2.communication;
 
-import jdk.incubator.sql2.ConnectionProperty;
-import org.postgresql.sql2.PGConnection;
-import org.postgresql.sql2.buffer.ByteBufferPool;
-import org.postgresql.sql2.buffer.ByteBufferPoolOutputStream;
-import org.postgresql.sql2.buffer.PooledByteBuffer;
-import org.postgresql.sql2.communication.packets.ErrorPacket;
-import org.postgresql.sql2.execution.NioLoop;
-import org.postgresql.sql2.execution.NioService;
-import org.postgresql.sql2.execution.NioServiceContext;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -22,13 +12,24 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.buffer.ByteBufferPool;
+import org.postgresql.sql2.buffer.ByteBufferPoolOutputStream;
+import org.postgresql.sql2.buffer.PooledByteBuffer;
+import org.postgresql.sql2.communication.packets.ErrorPacket;
+import org.postgresql.sql2.execution.NioLoop;
+import org.postgresql.sql2.execution.NioService;
+import org.postgresql.sql2.execution.NioServiceContext;
+
+import jdk.incubator.sql2.ConnectionProperty;
+
 public class NetworkConnection implements NioService, NetworkConnectContext, NetworkWriteContext, NetworkReadContext {
 
   private static ClosedChannelException CLOSE_EXCEPTION = new ClosedChannelException();
 
   private final Map<ConnectionProperty, Object> properties;
 
-  private final PGConnection connection;
+  private final PgConnection connection;
 
   private final NioLoop loop;
 
@@ -57,27 +58,19 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   /**
    * Possible blocking {@link NetworkResponse}.
    */
-  private NetworkResponse blockingResponse = new NetworkResponse() {
-    @Override
-    public NetworkResponse read(NetworkReadContext context) throws IOException {
-      throw new IllegalStateException("Should not read until connected");
-    }
+  private NetworkResponse blockingResponse=new NetworkResponse(){@Override public NetworkResponse read(NetworkReadContext context)throws IOException{throw new IllegalStateException("Should not read until connected");}
 
-    @Override
-    public NetworkResponse handleException(Throwable ex) {
-      throw new IllegalStateException("Should not read until connected");
-    }
-  };
+  @Override public NetworkResponse handleException(Throwable ex){throw new IllegalStateException("Should not read until connected");}};
 
   /**
    * Instantiate.
    * 
    * @param properties Connection properties.
-   * @param connection {@link PGConnection}.
+   * @param connection {@link PgConnection}.
    * @param loop       {@link NioLoop}.
    * @param bufferPool {@link ByteBufferPool}.
    */
-  public NetworkConnection(Map<ConnectionProperty, Object> properties, PGConnection connection, NioLoop loop,
+  public NetworkConnection(Map<ConnectionProperty, Object> properties, PgConnection connection, NioLoop loop,
       ByteBufferPool bufferPool) {
     this.properties = properties;
     this.connection = connection;
@@ -296,11 +289,11 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    */
   private NetworkResponse getAwaitingResponse() {
     NetworkResponse awaitingResponse;
-    if (this.immediateResponse != null) {
-      awaitingResponse = this.immediateResponse;
-      this.immediateResponse = null;
+    if (immediateResponse != null) {
+      awaitingResponse = immediateResponse;
+      immediateResponse = null;
     } else {
-      awaitingResponse = this.awaitingResponses.poll();
+      awaitingResponse = awaitingResponses.poll();
     }
     return awaitingResponse;
   }

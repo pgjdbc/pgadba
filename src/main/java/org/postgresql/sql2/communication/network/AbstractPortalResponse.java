@@ -25,8 +25,7 @@ public abstract class AbstractPortalResponse implements NetworkResponse {
 
   @Override
   public NetworkResponse handleException(Throwable ex) {
-    this.portal.handleException(ex);
+    portal.handleException(ex);
     return new ReadyForQueryResponse();
   }
-
 }

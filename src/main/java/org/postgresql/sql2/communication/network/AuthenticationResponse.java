@@ -3,7 +3,7 @@ package org.postgresql.sql2.communication.network;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-import org.postgresql.sql2.PGConnectionProperties;
+import org.postgresql.sql2.PgConnectionProperties;
 import org.postgresql.sql2.communication.BEFrameParser;
 import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.NetworkResponse;
@@ -45,7 +45,7 @@ public class AuthenticationResponse implements NetworkResponse {
     case BEFrameParser.PARAM_STATUS:
       // Load parameters for connection
       ParameterStatus paramStatus = new ParameterStatus(context);
-      context.setProperty(PGConnectionProperties.lookup(paramStatus.getName()), paramStatus.getValue());
+      context.setProperty(PgConnectionProperties.lookup(paramStatus.getName()), paramStatus.getValue());
       return this;
 
     case BEFrameParser.CANCELLATION_KEY_DATA:
@@ -59,6 +59,7 @@ public class AuthenticationResponse implements NetworkResponse {
       throw new IllegalStateException(
           "Invalid tag '" + context.getFrameTag() + "' for " + this.getClass().getSimpleName());
     }
+
   }
 
   @Override

@@ -21,7 +21,7 @@ public class ErrorPacket extends Exception {
       String message = input.readString();
       fields.add(new ErrorResponseField(ErrorResponseField.Types.lookup(errorType), message));
     }
-    
+
     // Return the fields
     return fields;
   }
@@ -51,6 +51,12 @@ public class ErrorPacket extends Exception {
     return fields;
   }
 
+  /**
+   * returns the message of the field that matches the type.
+   * 
+   * @param type type to search for
+   * @return message of field
+   */
   public String getField(ErrorResponseField.Types type) {
     for (ErrorResponseField field : fields) {
       if (type == field.getType()) {

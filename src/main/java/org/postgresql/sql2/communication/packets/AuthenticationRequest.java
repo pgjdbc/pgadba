@@ -16,10 +16,17 @@ public class AuthenticationRequest {
       this.value = value;
     }
 
+    /**
+     * find the corresponding type for the incoming integer value.
+     * 
+     * @param input integer value to search for
+     * @return the corresponding type
+     */
     public static Types lookup(int input) {
       for (Types t : values()) {
-        if (t.value == input)
+        if (t.value == input) {
           return t;
+        }
       }
 
       throw new IllegalArgumentException("unknown authentication packet tag: " + input);

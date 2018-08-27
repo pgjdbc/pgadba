@@ -1,5 +1,13 @@
 package org.postgresql.sql2;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
+import static org.postgresql.sql2.testutil.FutureUtil.get10;
+
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.Transaction;
@@ -7,18 +15,9 @@ import jdk.incubator.sql2.TransactionOutcome;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.testUtil.ConnectUtil;
-import org.postgresql.sql2.testUtil.DatabaseHolder;
+import org.postgresql.sql2.testutil.ConnectUtil;
+import org.postgresql.sql2.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
-
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.postgresql.sql2.testUtil.CollectorUtils.singleCollector;
 
 public class TransactionTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
@@ -27,7 +26,7 @@ public class TransactionTest {
 
   @BeforeAll
   public static void setUp() {
-    ds = ConnectUtil.openDB(postgres);
+    ds = ConnectUtil.openDb(postgres);
 
     ConnectUtil.createTable(ds, "tab",
         "id int", "name varchar(100)", "answer int");
@@ -51,21 +50,21 @@ public class TransactionTest {
       transaction.setRollbackOnly();
       CompletionStage<TransactionOutcome> roll = conn.commitMaybeRollback(transaction);
 
-      assertEquals(TransactionOutcome.ROLLBACK, roll.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(TransactionOutcome.ROLLBACK, get10(roll));
 
-      CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("SELECT EXISTS (\n" +
-          "   SELECT 1 \n" +
-          "   FROM   pg_catalog.pg_class c\n" +
-          "   JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n" +
-          "   WHERE  n.nspname = 'public'\n" +
-          "   AND    c.relname = 'tab'\n" +
-          "   AND    c.relkind = 'r'    -- only tables\n" +
-          "   ) as t")
+      CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("SELECT EXISTS (\n"
+          + "   SELECT 1 \n"
+          + "   FROM   pg_catalog.pg_class c\n"
+          + "   JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
+          + "   WHERE  n.nspname = 'public'\n"
+          + "   AND    c.relname = 'tab'\n"
+          + "   AND    c.relkind = 'r'    -- only tables\n"
+          + "   ) as t")
           .collect(singleCollector(Boolean.class))
           .submit()
           .getCompletionStage();
 
-      assertFalse(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertFalse(get10(idF));
     }
   }
 
@@ -81,17 +80,17 @@ public class TransactionTest {
           .submit();
       CompletionStage<TransactionOutcome> roll = conn.commitMaybeRollback(transaction);
 
-      assertEquals(TransactionOutcome.COMMIT, roll.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(TransactionOutcome.COMMIT, get10(roll));
 
       CompletionStage<Long> idF = conn.<Long>rowOperation("select count(*) as t from tab")
           .collect(singleCollector(Long.class))
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf(1), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Long.valueOf(1), get10(idF));
 
-      conn.rowCountOperation("drop table tab")
-          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+      get10(conn.rowCountOperation("drop table tab")
+          .submit().getCompletionStage());
     }
   }
 

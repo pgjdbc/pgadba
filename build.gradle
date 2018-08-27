@@ -3,11 +3,19 @@ version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
 apply plugin: "maven"
+apply plugin: 'checkstyle'
 
 compileJava.options.encoding = 'UTF-8'
 
 sourceCompatibility = "1.10"
 targetCompatibility = "1.10"
+
+checkstyle {
+    configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+    toolVersion = '8.12'
+    ignoreFailures = false
+    maxWarnings = 0
+}
 
 repositories {
     mavenLocal()
@@ -17,8 +25,8 @@ repositories {
 dependencies {
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.2.0'
     testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: '5.2.0'
-    testCompile group: 'org.mockito', name: 'mockito-core', version: '2.19.0'
-    testCompile group: 'org.testcontainers', name: 'postgresql', version: '1.8.0'
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '2.21.0'
+    testCompile group: 'org.testcontainers', name: 'postgresql', version: '1.8.3'
 
     testRuntimeOnly(
             'org.junit.jupiter:junit-jupiter-engine:5.2.0'

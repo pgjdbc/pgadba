@@ -3,7 +3,7 @@ package org.postgresql.sql2.operations.helpers;
 import java.util.concurrent.ExecutionException;
 
 public interface QueryParameter {
-  int getOID() throws ExecutionException, InterruptedException;
+  int getOid() throws ExecutionException, InterruptedException;
 
   short getParameterFormatCode() throws ExecutionException, InterruptedException;
 

@@ -60,7 +60,7 @@ public class DefaultNioLoop implements NioLoop, Runnable {
     return new NioServiceAttachment(channel, nioServiceFactory).service;
   }
 
-  /**
+  /*
    * ============== Runnable ==============
    */
 

@@ -1,13 +1,11 @@
 package org.postgresql.sql2;
 
-import jdk.incubator.sql2.Connection;
-import jdk.incubator.sql2.DataSource;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.testUtil.ConnectUtil;
-import org.postgresql.sql2.testUtil.DatabaseHolder;
-import org.testcontainers.containers.PostgreSQLContainer;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
+import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -20,14 +18,17 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.postgresql.sql2.testUtil.CollectorUtils.singleCollector;
+import jdk.incubator.sql2.Connection;
+import jdk.incubator.sql2.DataSource;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.postgresql.sql2.communication.packets.parts.PgAdbaType;
+import org.postgresql.sql2.testutil.ConnectUtil;
+import org.postgresql.sql2.testutil.DatabaseHolder;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 public class SelectDataTypesTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
@@ -36,7 +37,7 @@ public class SelectDataTypesTest {
 
   @BeforeAll
   public static void setUp() {
-    ds = ConnectUtil.openDB(postgres);
+    ds = ConnectUtil.openDb(postgres);
 
     ConnectUtil.createTable(ds, "tab",
         "id int", "name varchar(100)", "answer int");
@@ -55,7 +56,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Integer.valueOf(100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Integer.valueOf(100), get10(idF));
     }
   }
 
@@ -67,7 +68,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Short.valueOf((short) 100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Short.valueOf((short) 100), get10(idF));
     }
   }
 
@@ -79,7 +80,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf((short) 100), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Long.valueOf((short) 100), get10(idF));
     }
   }
 
@@ -91,7 +92,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(BigDecimal.valueOf(100.505), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(BigDecimal.valueOf(100.505), get10(idF));
     }
   }
 
@@ -103,7 +104,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals((float) 100.505, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.5);
+      assertEquals((float) 100.505, get10(idF), 0.5);
     }
   }
 
@@ -115,7 +116,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals((float) 100.505, idF.toCompletableFuture().get(10, TimeUnit.SECONDS), 0.5);
+      assertEquals((float) 100.505, get10(idF), 0.5);
     }
   }
 
@@ -127,7 +128,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("$100.51", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("$100.51", get10(idF));
     }
   }
 
@@ -139,7 +140,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("Sphinx of black quartz, judge my vow", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("Sphinx of black quartz, judge my vow", get10(idF));
     }
   }
 
@@ -151,7 +152,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Character.valueOf('H'), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Character.valueOf('H'), get10(idF));
     }
   }
 
@@ -163,7 +164,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals("How vexingly quick daft zebras jump!", idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals("How vexingly quick daft zebras jump!", get10(idF));
     }
   }
 
@@ -176,31 +177,33 @@ public class SelectDataTypesTest {
           .getCompletionStage();
 
       byte[] expected = new byte[]{0x44, 0x45, 0x41, 0x44, 0x42, 0x45, 0x45, 0x46};
-      assertArrayEquals(expected, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertArrayEquals(expected, get10(idF));
     }
   }
 
   @Test
   public void selectTimestampWithoutTimeZone() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<LocalDateTime> idF = conn.<LocalDateTime>rowOperation("select '2018-04-29 20:55:57.692132'::timestamp without time zone as t")
+      CompletionStage<LocalDateTime> idF = conn
+          .<LocalDateTime>rowOperation("select '2018-04-29 20:55:57.692132'::timestamp without time zone as t")
           .collect(singleCollector(LocalDateTime.class))
           .submit()
           .getCompletionStage();
 
-      assertEquals(LocalDateTime.of(2018, 4, 29, 20, 55, 57, 692132000), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(LocalDateTime.of(2018, 4, 29, 20, 55, 57, 692132000), get10(idF));
     }
   }
 
   @Test
   public void selectTimestampWithTimeZone() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<OffsetDateTime> idF = conn.<OffsetDateTime>rowOperation("select '2018-04-29 20:55:57.692132'::timestamp with time zone as t")
+      CompletionStage<OffsetDateTime> idF = conn
+          .<OffsetDateTime>rowOperation("select '2018-04-29 20:55:57.692132'::timestamp with time zone as t")
           .collect(singleCollector(OffsetDateTime.class))
           .submit()
           .getCompletionStage();
 
-      assertEquals(OffsetDateTime.of(2018, 4, 29, 20, 55, 57, 692132000, ZoneOffset.UTC), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(OffsetDateTime.of(2018, 4, 29, 20, 55, 57, 692132000, ZoneOffset.UTC), get10(idF));
     }
   }
 
@@ -212,7 +215,19 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(LocalDate.of(2018, 4, 29), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(LocalDate.of(2018, 4, 29), get10(idF));
+    }
+  }
+
+  @Test
+  public void selectDateAsTime() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<LocalTime> idF = conn.<LocalTime>rowOperation("select '2018-04-29 20:55:57.692132'::timestamp as t")
+          .collect(singleCollector(LocalTime.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(LocalTime.of(20, 55, 57, 692132000), get10(idF));
     }
   }
 
@@ -224,19 +239,20 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(LocalTime.of(20, 55, 57, 692132000), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(LocalTime.of(20, 55, 57, 692132000), get10(idF));
     }
   }
 
   @Test
   public void selectTimeWithTimeZone() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<OffsetTime> idF = conn.<OffsetTime>rowOperation("select '2018-04-29 20:55:57.692132'::time with time zone as t")
+      CompletionStage<OffsetTime> idF = conn
+          .<OffsetTime>rowOperation("select '2018-04-29 20:55:57.692132'::time with time zone as t")
           .collect(singleCollector(OffsetTime.class))
           .submit()
           .getCompletionStage();
 
-      assertEquals(OffsetTime.of(20, 55, 57, 692132000, ZoneOffset.UTC), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(OffsetTime.of(20, 55, 57, 692132000, ZoneOffset.UTC), get10(idF));
     }
   }
 
@@ -248,7 +264,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Duration.of(1512, ChronoUnit.HOURS), idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertEquals(Duration.of(1512, ChronoUnit.HOURS), get10(idF));
     }
   }
 
@@ -266,7 +282,7 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertArrayEquals(new String[] {"happy", "very happy", "ecstatic"}, idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertArrayEquals(new String[] {"happy", "very happy", "ecstatic"}, get10(idF));
     }
   }
 
@@ -278,7 +294,57 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertTrue(idF.toCompletableFuture().get(10, TimeUnit.SECONDS));
+      assertTrue(get10(idF));
+    }
+  }
+
+  @Test
+  public void insertAndSelectByteArray() throws ExecutionException, InterruptedException, TimeoutException {
+    byte[] insertData = new byte[] { 0, 1, 2, 3, 4, 5};
+
+    try (Connection conn = ds.getConnection()) {
+      get10(conn.rowCountOperation("create table insertAndSelectByteArray(t bytea)").submit().getCompletionStage());
+      get10(conn.rowCountOperation("insert into insertAndSelectByteArray(t) values($1)")
+          .set("$1", insertData, PgAdbaType.BLOB).submit().getCompletionStage());
+      CompletionStage<byte[]> idF = conn.<byte[]>rowOperation("select t from insertAndSelectByteArray")
+          .collect(singleCollector(byte[].class))
+          .submit()
+          .getCompletionStage();
+      get10(conn.rowCountOperation("drop table insertAndSelectByteArray").submit().getCompletionStage());
+
+      assertArrayEquals(insertData, get10(idF));
+    }
+  }
+
+  /*
+  @Test
+  public void selectVeryLargeNumberOfRequests() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection connection = ds.getConnection()) {
+
+      //Thread.sleep(60000);
+
+      // Run multiple queries over the connection
+      final int queryCount = 100000;
+      Submission<Integer>[] submissions = new Submission[queryCount];
+      for (int i = 0; i < queryCount; i++) {
+        submissions[i] = connection.<Integer>rowOperation("SELECT " + i + " as t")
+            .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+      }
+
+      // Ensure obtain all results
+      for (int i = 0; i < queryCount; i++) {
+        Integer result = get10(submissions[i].getCompletionStage());
+        Assert.assertEquals("Incorrect result", Integer.valueOf(i), result);
+      }
+    }
+  }
+  */
+
+  @Test
+  public void ensureMultipleQueriesAreNotAllowed() {
+    try (Connection connection = ds.getConnection()) {
+      assertThrows(ExecutionException.class, () -> get10(connection.<Integer>rowOperation("select 0 as t;select 1 as t")
+          .submit().getCompletionStage()));
     }
   }
 }

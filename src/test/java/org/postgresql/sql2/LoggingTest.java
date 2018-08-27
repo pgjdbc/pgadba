@@ -5,8 +5,8 @@ import jdk.incubator.sql2.DataSource;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.testUtil.ConnectUtil;
-import org.postgresql.sql2.testUtil.DatabaseHolder;
+import org.postgresql.sql2.testutil.ConnectUtil;
+import org.postgresql.sql2.testutil.DatabaseHolder;
 import org.postgresql.sql2.util.TestLogHandler;
 import org.testcontainers.containers.PostgreSQLContainer;
 
@@ -22,7 +22,7 @@ public class LoggingTest {
 
   @BeforeAll
   public static void setUp() {
-    ds = ConnectUtil.openDB(postgres);
+    ds = ConnectUtil.openDb(postgres);
   }
 
   @AfterAll

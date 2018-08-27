@@ -26,7 +26,7 @@ public class ProtocolV3States {
     COMMAND_COMPLETE;
   }
 
-  private final static Map<States, Map<Events, States>> transitions = new HashMap<>();
+  private static final Map<States, Map<Events, States>> transitions = new HashMap<>();
 
   static {
     addTransition(States.NOT_CONNECTED, Events.CONNECTION, States.STARTUP_PACKET_SENT);
@@ -48,12 +48,20 @@ public class ProtocolV3States {
   }
 
   private static void addTransition(States start, Events event, States end) {
-    if(!transitions.containsKey(start))
+    if (!transitions.containsKey(start)) {
       transitions.put(start, new HashMap<>());
+    }
 
     transitions.get(start).put(event, end);
   }
 
+  /**
+   * Used to transition the state from an initial state using an event, returns the new state according to the
+   * transition rules.
+   * @param state current state
+   * @param event the event that happened
+   * @return the new state that we are in after the event
+   */
   public static States lookup(States state, Events event) {
     States targetState = transitions.get(state).get(event);
 

@@ -1,5 +1,16 @@
 package org.postgresql.sql2;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.postgresql.sql2.testutil.FutureUtil.get10;
+
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collector;
 import jdk.incubator.sql2.AdbaType;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
@@ -8,20 +19,9 @@ import jdk.incubator.sql2.SqlException;
 import jdk.incubator.sql2.Transaction;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.testUtil.ConnectUtil;
-import org.postgresql.sql2.testUtil.DatabaseHolder;
+import org.postgresql.sql2.testutil.ConnectUtil;
+import org.postgresql.sql2.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
-
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collector;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
 
 public class FirstLight {
   public static final String TRIVIAL = "SELECT 1";
@@ -30,20 +30,20 @@ public class FirstLight {
 
   @BeforeAll
   public static void setup() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ConnectUtil.openDB(postgres).getConnection()) {
-      conn.operation("create table emp(id int, empno int, ename varchar(10), deptno int)")
-          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
-      conn.operation("insert into emp(id, empno, ename, deptno) values(1, 2, 'empname', 3)")
-          .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
+    try (Connection conn = ConnectUtil.openDb(postgres).getConnection()) {
+      get10(conn.operation("create table emp(id int, empno int, ename varchar(10), deptno int)")
+          .submit().getCompletionStage());
+      get10(conn.operation("insert into emp(id, empno, ename, deptno) values(1, 2, 'empname', 3)")
+          .submit().getCompletionStage());
     }
   }
 
   /**
-   * create a Connection and send a SQL to the database
+   * create a Connection and send a SQL to the database.
    */
   @Test
   public void sqlOperation() {
-    DataSource ds = ConnectUtil.openDB(postgres);
+    DataSource ds = ConnectUtil.openDb(postgres);
     Connection conn = ds.getConnection(t -> fail("ERROR: " + t.getMessage()));
     try (conn) {
       assertNotNull(conn);
@@ -57,7 +57,7 @@ public class FirstLight {
    */
   @Test
   public void rowOperation() {
-    try (DataSource ds = ConnectUtil.openDB(postgres);
+    try (DataSource ds = ConnectUtil.openDb(postgres);
          Connection conn = ds.getConnection(t -> fail("ERROR: " + t.getMessage()))) {
       assertNotNull(conn);
       conn.<Void>rowOperation(TRIVIAL)
@@ -69,13 +69,13 @@ public class FirstLight {
           .collect(Collector.<Result.RowColumn, int[], Integer>of(
               () -> new int[1],
               (int[] a, Result.RowColumn r) -> {
-                a[0] = a[0]+r.at("sal").get(Integer.class);
+                a[0] = a[0] + r.at("sal").get(Integer.class);
               },
               (l, r) -> l,
               a -> (Integer)a[0]))
           .submit()
           .getCompletionStage()
-          .thenAccept( n -> assertEquals(Integer.valueOf(2), n))
+          .thenAccept(n -> assertEquals(Integer.valueOf(2), n))
           .toCompletableFuture();
       conn.<Integer>rowOperation("select * from emp where empno = $1")
           .set("$1", 7782)
@@ -91,21 +91,21 @@ public class FirstLight {
   }
 
   /**
-   * check does error handling do anything
+   * check does error handling do anything.
    */
   @Test
   public void errorHandling() {
-    try (DataSource ds = ConnectUtil.openDB(postgres);
+    try (DataSource ds = ConnectUtil.openDb(postgres);
          Connection conn = ds.getConnection(t -> fail("ERROR: " + t.toString()))) {
       conn.<Void>rowOperation(TRIVIAL)
           .collect(Collector.of(() -> null,
               (a, r) -> assertEquals(Integer.valueOf(1), r.at("1").get(Integer.class)),
               (x, y) -> null))
-          .onError( t -> { fail(t.toString()); })
+          .onError(t -> fail(t.toString()))
           .submit();
     }
 
-    try (DataSource ds = ConnectUtil.openDB(postgres);
+    try (DataSource ds = ConnectUtil.openDb(postgres);
          Connection conn = ds.getConnection(t -> System.out.println("ERROR: " + t.toString()))) {
       conn.<Integer>rowOperation("select * from emp where empno = $1")
           .set("$1", 7782)
@@ -113,7 +113,7 @@ public class FirstLight {
               () -> null,
               (a, r) -> assertEquals(Integer.valueOf(1), r.at("sal").get(Integer.class)),
               (l, r) -> null))
-          .onError( t -> { fail(t.getMessage()); } )
+          .onError(t -> fail(t.getMessage()))
           .submit();
     }
     ForkJoinPool.commonPool().awaitQuiescence(1, TimeUnit.MINUTES);
@@ -125,20 +125,20 @@ public class FirstLight {
    */
   @Test
   public void transaction() {
-    try (DataSource ds = ConnectUtil.openDB(postgres);
+    try (DataSource ds = ConnectUtil.openDb(postgres);
          Connection conn = ds.getConnection(t -> fail("ERROR: " + t.toString()))) {
       Transaction trans = conn.transaction();
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select empno, ename from emp where ename = $1 for update")
           .set("$1", "CLARK", AdbaType.VARCHAR)
           .collect(Collector.of(
               () -> new int[1],
-              (a, r) -> {a[0] = r.at("empno").get(Integer.class); },
+              (a, r) -> a[0] = r.at("empno").get(Integer.class),
               (l, r) -> null,
               a -> a[0])
           )
           .submit()
           .getCompletionStage();
-      idF.thenAccept( id -> { assertEquals(Integer.valueOf(1), id); } );
+      idF.thenAccept(id -> assertEquals(Integer.valueOf(1), id));
       conn.<Long>rowCountOperation("update emp set deptno = $1 where empno = $2")
           .set("$1", 50, AdbaType.INTEGER)
           .set("$2", idF, AdbaType.INTEGER)
@@ -152,7 +152,7 @@ public class FirstLight {
           .onError(t -> fail(t.getMessage()))
           .submit()
           .getCompletionStage()
-          .thenAccept( c -> { assertEquals(Long.valueOf(1), c); } );
+          .thenAccept(c -> assertEquals(Long.valueOf(1), c));
       conn.catchErrors();
       conn.commitMaybeRollback(trans);
     }

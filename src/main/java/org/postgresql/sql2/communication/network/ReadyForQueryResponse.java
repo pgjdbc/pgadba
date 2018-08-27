@@ -30,5 +30,4 @@ public class ReadyForQueryResponse implements NetworkResponse {
           "Invalid tag '" + context.getFrameTag() + "' for " + this.getClass().getSimpleName());
     }
   }
-
 }

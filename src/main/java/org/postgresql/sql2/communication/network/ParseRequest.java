@@ -1,6 +1,6 @@
 package org.postgresql.sql2.communication.network;
 
-import org.postgresql.sql2.communication.FEFrame;
+import org.postgresql.sql2.communication.FeFrame;
 import org.postgresql.sql2.communication.NetworkOutputStream;
 import org.postgresql.sql2.communication.NetworkRequest;
 import org.postgresql.sql2.communication.NetworkResponse;
@@ -55,13 +55,13 @@ public class ParseRequest<T> implements NetworkRequest {
 
       // Send the prepare packet
       NetworkOutputStream wire = context.getOutputStream();
-      wire.write(FEFrame.FrontendTag.PARSE.getByte());
+      wire.write(FeFrame.FrontendTag.PARSE.getByte());
       wire.initPacket();
       wire.write(query.getQueryName());
       wire.write(sql);
       wire.write(BinaryHelper.writeShort(holder.size()));
       for (QueryParameter qp : holder.parameters()) {
-        wire.write(BinaryHelper.writeInt(qp.getOID()));
+        wire.write(BinaryHelper.writeInt(qp.getOid()));
       }
       wire.completePacket();
     }

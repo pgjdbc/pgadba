@@ -17,5 +17,4 @@ public interface NetworkResponse extends NetworkErrorHandler {
    * @throws IOException If failure in handling the read.
    */
   NetworkResponse read(NetworkReadContext context) throws IOException;
-
 }

@@ -12,6 +12,11 @@ public class BinaryHelper {
     return (short) (((b1 & 255) << 8) + ((b2 & 255)));
   }
 
+  /**
+   * writes a long to a byte array in network byte order.
+   * @param val long to write
+   * @return the byte array, size 8
+   */
   public static byte[] writeLong(long val) {
     byte[] bb = new byte[8];
     bb[0] = (byte) (val >>> 56);
@@ -25,6 +30,11 @@ public class BinaryHelper {
     return bb;
   }
 
+  /**
+   * writes an int to a byte array in network byte order.
+   * @param val the int to write
+   * @return the byte array, size 4
+   */
   public static byte[] writeInt(int val) {
     byte[] bb = new byte[4];
     bb[0] = (byte) (val >>> 24);
@@ -34,6 +44,11 @@ public class BinaryHelper {
     return bb;
   }
 
+  /**
+   * writes a short to a byte array in network byte order.
+   * @param val the short to write
+   * @return the byte array, size 2
+   */
   public static byte[] writeShort(short val) {
     byte[] bb = new byte[2];
     bb[0] = (byte) (val >>> 8);
@@ -41,8 +56,8 @@ public class BinaryHelper {
     return bb;
   }
 
-  /*
-   * Turn 16-byte stream into a human-readable 32-byte hex string
+  /**
+   * Turn 16-byte stream into a human-readable 32-byte hex string.
    */
   public static void bytesToHex(byte[] bytes, byte[] hex, int offset) {
     final char[] lookup =
@@ -62,48 +77,66 @@ public class BinaryHelper {
     }
   }
 
+  /**
+   * hashes the users password together with a salt, for authentication with postgresql.
+   * @param user username
+   * @param password password
+   * @param salt salt value
+   * @return hashed byte array
+   */
   public static byte[] encode(byte[] user, byte[] password, byte[] salt) {
     MessageDigest md;
-    byte[] temp_digest;
-    byte[] pass_digest;
-    byte[] hex_digest = new byte[35];
+    byte[] tempDigest;
+    byte[] passDigest;
+    byte[] hexDigest = new byte[35];
 
     try {
       md = MessageDigest.getInstance("MD5");
 
       md.update(password);
       md.update(user);
-      temp_digest = md.digest();
+      tempDigest = md.digest();
 
-      bytesToHex(temp_digest, hex_digest, 0);
-      md.update(hex_digest, 0, 32);
+      bytesToHex(tempDigest, hexDigest, 0);
+      md.update(hexDigest, 0, 32);
       md.update(salt);
-      pass_digest = md.digest();
+      passDigest = md.digest();
 
-      bytesToHex(pass_digest, hex_digest, 3);
-      hex_digest[0] = (byte) 'm';
-      hex_digest[1] = (byte) 'd';
-      hex_digest[2] = (byte) '5';
+      bytesToHex(passDigest, hexDigest, 3);
+      hexDigest[0] = (byte) 'm';
+      hexDigest[1] = (byte) 'd';
+      hexDigest[2] = (byte) '5';
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("Unable to encode password with MD5", e);
     }
 
-    return hex_digest;
+    return hexDigest;
   }
 
 
+  /**
+   * returns a subset of an array.
+   * @param source source of the array
+   * @param srcBegin start
+   * @param srcEnd end
+   * @return the new smaller array
+   */
   public static byte[] subBytes(byte[] source, int srcBegin, int srcEnd) {
-    byte destination[];
-
-    destination = new byte[srcEnd - srcBegin];
+    byte[] destination = new byte[srcEnd - srcBegin];
     System.arraycopy(source, srcBegin, destination, 0, srcEnd - srcBegin);
 
     return destination;
   }
 
+  /**
+   * finds the next null byte.
+   * @param bytes bytes to search in
+   * @param pos start position to search from
+   * @return next null byte position
+   */
   public static int nextNullBytePos(byte[] bytes, int pos) {
-    for(int i = pos; i < bytes.length; i++) {
-      if(bytes[i] == 0) {
+    for (int i = pos; i < bytes.length; i++) {
+      if (bytes[i] == 0) {
         return i;
       }
     }

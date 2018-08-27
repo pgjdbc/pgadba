@@ -22,16 +22,28 @@ public class ParameterHolder {
     parameterMap.put(Integer.parseInt(id.substring(1)), queryParameter);
   }
 
+  /**
+   * get a list of oid's for the parameters for this query.
+   * @return a list of oid's
+   * @throws ExecutionException if the parameters are futures that throw during resolving
+   * @throws InterruptedException if the parameters are futures that throw during resolving
+   */
   public List<Integer> getParamTypes() throws ExecutionException, InterruptedException {
     List<Integer> types = new ArrayList<>();
 
     for (Map.Entry<Integer, QueryParameter> entry : parameterMap.entrySet()) {
-      types.add(entry.getValue().getOID());
+      types.add(entry.getValue().getOid());
     }
 
     return types;
   }
 
+  /**
+   * some operations repeats, and those have lists of parameters instead of just values.
+   * @return the number of repetitions
+   * @throws ExecutionException if the parameters are futures that throw during resolving
+   * @throws InterruptedException if the parameters are futures that throw during resolving
+   */
   public int numberOfQueryRepetitions() throws ExecutionException, InterruptedException {
     if (parameterMap.size() == 0) {
       return 1;

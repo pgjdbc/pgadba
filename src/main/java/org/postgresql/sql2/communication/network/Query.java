@@ -38,8 +38,6 @@ public class Query {
 
   /**
    * Instantiate.
-   * 
-   * @param name Name.
    */
   public Query() {
     this.name = "q" + nameIndex.incrementAndGet();

@@ -1,18 +1,17 @@
 package org.postgresql.sql2.communication.packets;
 
-import jdk.incubator.sql2.Result;
-import jdk.incubator.sql2.SqlType;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.postgresql.sql2.communication.NetworkInputStream;
 import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.TableCell;
 import org.postgresql.sql2.communication.packets.parts.ColumnDescription;
-import org.postgresql.sql2.util.BinaryHelper;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+import jdk.incubator.sql2.Result;
+import jdk.incubator.sql2.SqlType;
 
 public class DataRow implements Result.RowColumn, Result.OutColumn {
   private Map<String, Integer> columnNames;
@@ -62,12 +61,10 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
     switch (tc.getColumnDescription().getFormatCode()) {
     case TEXT:
       String data = new String(tc.getBytes(), StandardCharsets.UTF_8);
-      return (T) tc.getColumnDescription().getColumnType().getTextParser().apply(data);
-    case BINARY:
-      return (T) tc.getColumnDescription().getColumnType().getBinaryParser().apply(tc.getBytes());
+      return (T) tc.getColumnDescription().getColumnType().getTextParser().apply(data, type);
+    default:
+      return (T) tc.getColumnDescription().getColumnType().getBinaryParser().apply(tc.getBytes(), type);
     }
-
-    return null;
   }
 
   @Override

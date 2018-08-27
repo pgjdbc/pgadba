@@ -1,7 +1,7 @@
 package org.postgresql.sql2.submissions;
 
 import jdk.incubator.sql2.Result;
-import org.postgresql.sql2.PGSubmission;
+import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.communication.packets.DataRow;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
@@ -15,8 +15,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
-public class ProcessorSubmission<T> implements PGSubmission<T> {
-  final private Supplier<Boolean> cancel;
+public class ProcessorSubmission<T> implements PgSubmission<T> {
+  private final Supplier<Boolean> cancel;
   private CompletableFuture<T> publicStage;
   private Consumer<Throwable> errorHandler;
   private String sql;
@@ -25,8 +25,18 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
   private GroupSubmission groupSubmission;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
 
+  /**
+   * A submission for a Processor operation.
+   *
+   * @param cancel cancel method
+   * @param errorHandler error handler method
+   * @param sql the query
+   * @param publisher publisher that consumes rows
+   * @param holder holder for parameter values
+   * @param groupSubmission group submission this submission is a part of
+   */
   public ProcessorSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, String sql,
-                             SubmissionPublisher<Result.RowColumn> publisher, ParameterHolder holder, GroupSubmission groupSubmission) {
+      SubmissionPublisher<Result.RowColumn> publisher, ParameterHolder holder, GroupSubmission groupSubmission) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.sql = sql;
@@ -52,7 +62,7 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
 
   @Override
   public Types getCompletionType() {
-    return PGSubmission.Types.PROCESSOR;
+    return PgSubmission.Types.PROCESSOR;
   }
 
   @Override
@@ -96,8 +106,10 @@ public class ProcessorSubmission<T> implements PGSubmission<T> {
 
   @Override
   public CompletionStage<T> getCompletionStage() {
-    if (publicStage == null)
+    if (publicStage == null) {
       publicStage = new CompletableFuture<>();
+    }
+
     return publicStage;
   }
 }

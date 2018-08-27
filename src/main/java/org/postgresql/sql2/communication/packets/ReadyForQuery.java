@@ -12,10 +12,16 @@ public class ReadyForQuery {
       this.code = (byte)code;
     }
 
+    /**
+     * find the transaction status that matches the supplied byte.
+     * @param b byte to search for
+     * @return the matching TransactionStatus
+     */
     public static TransactionStatus lookup(byte b) {
-      for(TransactionStatus ts : values()) {
-        if(ts.code == b)
+      for (TransactionStatus ts : values()) {
+        if (ts.code == b) {
           return ts;
+        }
       }
 
       throw new IllegalArgumentException("unknown ready for query packet tag: " + b);

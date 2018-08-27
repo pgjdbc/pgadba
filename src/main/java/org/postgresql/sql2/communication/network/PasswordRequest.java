@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import org.postgresql.sql2.PGConnectionProperties;
-import org.postgresql.sql2.communication.FEFrame;
+import org.postgresql.sql2.PgConnectionProperties;
+import org.postgresql.sql2.communication.FeFrame;
 import org.postgresql.sql2.communication.NetworkOutputStream;
 import org.postgresql.sql2.communication.NetworkRequest;
 import org.postgresql.sql2.communication.NetworkResponse;
@@ -43,14 +43,14 @@ public class PasswordRequest implements NetworkRequest {
     Map<ConnectionProperty, Object> properties = context.getProperties();
 
     // Create the payload (TODO determine if can reduce object creation)
-    String username = (String) properties.get(PGConnectionProperties.USER);
-    String password = (String) properties.get(PGConnectionProperties.PASSWORD);
+    String username = (String) properties.get(PgConnectionProperties.USER);
+    String password = (String) properties.get(PgConnectionProperties.PASSWORD);
     byte[] content = BinaryHelper.encode(username.getBytes(StandardCharsets.UTF_8),
         password.getBytes(StandardCharsets.UTF_8), this.authentication.getSalt());
 
     // Write the request
     NetworkOutputStream wire = context.getOutputStream();
-    wire.write(FEFrame.FrontendTag.PASSWORD_MESSAGE.getByte());
+    wire.write(FeFrame.FrontendTag.PASSWORD_MESSAGE.getByte());
     wire.initPacket();
     wire.write(content);
     wire.writeTerminator();

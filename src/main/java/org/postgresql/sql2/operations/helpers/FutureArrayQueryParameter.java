@@ -1,7 +1,7 @@
 package org.postgresql.sql2.operations.helpers;
 
 import jdk.incubator.sql2.SqlType;
-import org.postgresql.sql2.communication.packets.parts.PGAdbaType;
+import org.postgresql.sql2.communication.packets.parts.PgAdbaType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 
 public class FutureArrayQueryParameter implements QueryParameter {
-  private PGAdbaType type;
+  private PgAdbaType type;
   private List<?> values;
   private CompletionStage<?> valueHolder;
 
@@ -20,26 +20,26 @@ public class FutureArrayQueryParameter implements QueryParameter {
 
   public FutureArrayQueryParameter(CompletionStage<?> valueHolder, SqlType type) {
     this.valueHolder = valueHolder;
-    this.type = PGAdbaType.convert(type);
+    this.type = PgAdbaType.convert(type);
   }
 
   private void resolveType() throws ExecutionException, InterruptedException {
     if (type == null && values == null && valueHolder == null) {
-      type = PGAdbaType.NULL;
+      type = PgAdbaType.NULL;
     } else if (type == null && valueHolder != null) {
       Object value = valueHolder.toCompletableFuture().get();
       valueHolder = null;
 
       if (value == null) {
-        type = PGAdbaType.NULL;
+        type = PgAdbaType.NULL;
       } else {
         assignValues(value);
 
         Object firstNonNull = firstNonNull(values);
         if (firstNonNull == null) {
-          type = PGAdbaType.NULL;
+          type = PgAdbaType.NULL;
         } else {
-          type = PGAdbaType.guessTypeFromClass(firstNonNull.getClass());
+          type = PgAdbaType.guessTypeFromClass(firstNonNull.getClass());
         }
       }
     } else if (values == null && valueHolder != null) {
@@ -63,7 +63,7 @@ public class FutureArrayQueryParameter implements QueryParameter {
   }
 
   @Override
-  public int getOID() throws ExecutionException, InterruptedException {
+  public int getOid() throws ExecutionException, InterruptedException {
     resolveType();
 
     return type.getVendorTypeNumber();
