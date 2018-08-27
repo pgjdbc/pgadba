@@ -35,7 +35,7 @@ public class PgDataSource implements DataSource {
     this.properties = properties;
 
     // Obtain the NIO loop
-    NioLoop loop = (NioLoop) this.properties.get(PgConnectionProperties.NIO_LOOP);
+    NioLoop loop = (NioLoop) this.properties.get(PgConnectionProperty.NIO_LOOP);
     if (loop == null) {
       // Provide default loop
       this.defaultLoop = new DefaultNioLoop();
@@ -45,7 +45,7 @@ public class PgDataSource implements DataSource {
     this.loop = loop;
     
     // Obtain the byte buffer pool
-    ByteBufferPool pool = (ByteBufferPool) this.properties.get(PgConnectionProperties.BYTE_BUFFER_POOL);
+    ByteBufferPool pool = (ByteBufferPool) this.properties.get(PgConnectionProperty.BYTE_BUFFER_POOL);
     if (pool == null) {
       // Provide default pool
       pool = new DefaultByteBufferPool(properties);

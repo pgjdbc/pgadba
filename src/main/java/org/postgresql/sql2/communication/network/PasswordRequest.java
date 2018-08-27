@@ -3,8 +3,8 @@ package org.postgresql.sql2.communication.network;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-
-import org.postgresql.sql2.PgConnectionProperties;
+import jdk.incubator.sql2.AdbaConnectionProperty;
+import jdk.incubator.sql2.ConnectionProperty;
 import org.postgresql.sql2.communication.FeFrame;
 import org.postgresql.sql2.communication.NetworkOutputStream;
 import org.postgresql.sql2.communication.NetworkRequest;
@@ -13,8 +13,6 @@ import org.postgresql.sql2.communication.NetworkWriteContext;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
 import org.postgresql.sql2.submissions.ConnectSubmission;
 import org.postgresql.sql2.util.BinaryHelper;
-
-import jdk.incubator.sql2.ConnectionProperty;
 
 /**
  * {@link NetworkRequest} to provide password authentication.
@@ -43,8 +41,8 @@ public class PasswordRequest implements NetworkRequest {
     Map<ConnectionProperty, Object> properties = context.getProperties();
 
     // Create the payload (TODO determine if can reduce object creation)
-    String username = (String) properties.get(PgConnectionProperties.USER);
-    String password = (String) properties.get(PgConnectionProperties.PASSWORD);
+    String username = (String) properties.get(AdbaConnectionProperty.USER);
+    String password = (String) properties.get(AdbaConnectionProperty.PASSWORD);
     byte[] content = BinaryHelper.encode(username.getBytes(StandardCharsets.UTF_8),
         password.getBytes(StandardCharsets.UTF_8), this.authentication.getSalt());
 

@@ -1,6 +1,7 @@
 package org.postgresql.sql2.communication.network;
 
-import org.postgresql.sql2.PgConnectionProperties;
+import java.util.concurrent.CompletableFuture;
+import org.postgresql.sql2.PgConnectionProperty;
 import org.postgresql.sql2.communication.BeFrame;
 import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.NetworkResponse;
@@ -46,7 +47,7 @@ public class AuthenticationResponse implements NetworkResponse {
       case PARAM_STATUS:
         // Load parameters for connection
         ParameterStatus paramStatus = new ParameterStatus(frame.getPayload());
-        context.setProperty(PgConnectionProperties.lookup(paramStatus.getName()), paramStatus.getValue());
+        context.setProperty(PgConnectionProperty.lookup(paramStatus.getName()), paramStatus.getValue());
         return this;
 
       case CANCELLATION_KEY_DATA:
@@ -66,10 +67,8 @@ public class AuthenticationResponse implements NetworkResponse {
     Consumer<Throwable> errorHandler = this.connectSubmission.getErrorHandler();
     if (errorHandler != null) {
       this.connectSubmission.getErrorHandler().accept(ex);
-    } else {
-      // TODO handle connection error
-      ex.printStackTrace();
     }
+    ((CompletableFuture<Void>)connectSubmission.getCompletionStage()).completeExceptionally(ex);
     return null;
   }
 
