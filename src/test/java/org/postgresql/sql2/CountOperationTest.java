@@ -56,8 +56,7 @@ public class CountOperationTest {
       ((CompletableFuture) sub.getCompletionStage()).join();
       fail("table 'tab' doesn't exist, so an exception should be thrown");
     } catch (CompletionException e) {
-      assertEquals("jdk.incubator.sql2.SqlException: Severity: ERROR\n" +
-          "Message: relation \"tab\" does not exist", e.getMessage());
+      assertEquals("jdk.incubator.sql2.SqlException: relation \"tab\" does not exist", e.getMessage());
     }
   }
 

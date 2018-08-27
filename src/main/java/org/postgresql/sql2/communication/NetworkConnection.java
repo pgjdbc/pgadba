@@ -1,5 +1,15 @@
 package org.postgresql.sql2.communication;
 
+import jdk.incubator.sql2.ConnectionProperty;
+import org.postgresql.sql2.PGConnection;
+import org.postgresql.sql2.buffer.ByteBufferPool;
+import org.postgresql.sql2.buffer.ByteBufferPoolOutputStream;
+import org.postgresql.sql2.buffer.PooledByteBuffer;
+import org.postgresql.sql2.communication.packets.ErrorPacket;
+import org.postgresql.sql2.execution.NioLoop;
+import org.postgresql.sql2.execution.NioService;
+import org.postgresql.sql2.execution.NioServiceContext;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -11,17 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
-import org.postgresql.sql2.PGConnection;
-import org.postgresql.sql2.buffer.ByteBufferPool;
-import org.postgresql.sql2.buffer.ByteBufferPoolOutputStream;
-import org.postgresql.sql2.buffer.PooledByteBuffer;
-import org.postgresql.sql2.communication.packets.ErrorPacket;
-import org.postgresql.sql2.execution.NioLoop;
-import org.postgresql.sql2.execution.NioService;
-import org.postgresql.sql2.execution.NioServiceContext;
-
-import jdk.incubator.sql2.ConnectionProperty;
 
 public class NetworkConnection implements NioService, NetworkConnectContext, NetworkWriteContext, NetworkReadContext {
 
