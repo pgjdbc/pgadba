@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.postgresql</groupId>
+	<artifactId>pgsql2</artifactId>
+	<version>0.0.1</version>
+	<name>PostgreSql ADBA</name>
+	<description>Deploys the PostgreSql pgsql2 to OfficeFloor sourceforge for use</description>
+	<!-- Steps to deploy: -->
+	<!-- ssh -t sagenschneider@shell.sourceforge.net create -->
+	<!-- mvn -f deploy-pom.xml validate -->
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<pgsql2.version>1.0-SNAPSHOT</pgsql2.version>
+	</properties>
+	<distributionManagement>
+		<repository>
+			<id>repo.officefloor.sf.net</id>
+			<name>Maven repository on SourceForge - http://www.officefloor.net/maven2</name>
+			<url>scp://sagenschneider@shell.sourceforge.net:/home/frs/project/officefloor/maven/maven2</url>
+		</repository>
+	</distributionManagement>
+	<build>
+		<extensions>
+			<extension>
+				<groupId>org.apache.maven.wagon</groupId>
+				<artifactId>wagon-ssh</artifactId>
+				<version>3.1.0</version>
+			</extension>
+		</extensions>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<version>2.8.2</version>
+				<executions>
+					<execution>
+						<id>Upload pgsql2</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>deploy-file</goal>
+						</goals>
+						<configuration>
+							<file>${settings.localRepository}/org/postgresql/pgsql2/${pgsql2.version}/pgsql2-${pgsql2.version}.jar</file>
+							<repositoryId>repo.officefloor.sf.net</repositoryId>
+							<url>scp://sagenschneider@shell.sourceforge.net:/home/frs/project/officefloor/maven/maven2</url>
+							<groupId>org.postgresql</groupId>
+							<artifactId>pgsql2</artifactId>
+							<version>0.0.1</version>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
