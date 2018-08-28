@@ -49,11 +49,39 @@ public class TextParser {
     return null;
   }
 
+  /**
+   * Converts the string from the database to the requested class.
+   * @param in the number as a string
+   * @param requestedClass the class that the user wanted
+   * @return a Number
+   */
   public static Object int8out(String in, Class<?> requestedClass) {
+    if (Integer.class.equals(requestedClass)) {
+      return Integer.parseInt(in);
+    }
+
+    if (Short.class.equals(requestedClass)) {
+      return Short.parseShort(in);
+    }
+
     return Long.parseLong(in);
   }
 
+  /**
+   * Converts the string from the database to the requested class.
+   * @param in the number as a string
+   * @param requestedClass the class that the user wanted
+   * @return a Number
+   */
   public static Object int2out(String in, Class<?> requestedClass) {
+    if (Long.class.equals(requestedClass)) {
+      return Long.parseLong(in);
+    }
+
+    if (Integer.class.equals(requestedClass)) {
+      return Integer.parseInt(in);
+    }
+
     return Short.parseShort(in);
   }
 
@@ -61,7 +89,21 @@ public class TextParser {
     return null;
   }
 
+  /**
+   * Converts the string from the database to the requested class.
+   * @param in the number as a string
+   * @param requestedClass the class that the user wanted
+   * @return a Number
+   */
   public static Object int4out(String in, Class<?> requestedClass) {
+    if (Long.class.equals(requestedClass)) {
+      return Long.parseLong(in);
+    }
+
+    if (Short.class.equals(requestedClass)) {
+      return Short.parseShort(in);
+    }
+
     return Integer.parseInt(in);
   }
 

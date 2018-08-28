@@ -61,6 +61,30 @@ public class SelectDataTypesTest {
   }
 
   @Test
+  public void selectInteger4asInteger8() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Long> idF = conn.<Long>rowOperation("select 100 as t")
+          .collect(singleCollector(Long.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Long.valueOf(100), get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger4AsShort() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Short> idF = conn.<Short>rowOperation("select 100 as t")
+          .collect(singleCollector(Short.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Short.valueOf((short)100), get10(idF));
+    }
+  }
+
+  @Test
   public void selectInteger2() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Short> idF = conn.<Short>rowOperation("select 100::int2 as t")
@@ -73,6 +97,30 @@ public class SelectDataTypesTest {
   }
 
   @Test
+  public void selectInteger2AsLong() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Long> idF = conn.<Long>rowOperation("select 100::int2 as t")
+          .collect(singleCollector(Long.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Long.valueOf(100), get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger2AsInteger() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100::int2 as t")
+          .collect(singleCollector(Integer.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Integer.valueOf(100), get10(idF));
+    }
+  }
+
+  @Test
   public void selectInteger8() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Long> idF = conn.<Long>rowOperation("select 100::int8 as t")
@@ -80,7 +128,43 @@ public class SelectDataTypesTest {
           .submit()
           .getCompletionStage();
 
-      assertEquals(Long.valueOf((short) 100), get10(idF));
+      assertEquals(Long.valueOf(100), get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger8AsInteger() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100::int8 as t")
+          .collect(singleCollector(Integer.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Integer.valueOf(100), get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger8AsIntegerTooLarge() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select " + Long.MAX_VALUE + "::int8 as t")
+          .collect(singleCollector(Integer.class))
+          .submit()
+          .getCompletionStage();
+
+      assertThrows(ExecutionException.class, () -> get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger8AsShort() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Short> idF = conn.<Short>rowOperation("select 100::int8 as t")
+          .collect(singleCollector(Short.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Short.valueOf((short)100), get10(idF));
     }
   }
 
@@ -334,7 +418,7 @@ public class SelectDataTypesTest {
       // Ensure obtain all results
       for (int i = 0; i < queryCount; i++) {
         Integer result = get10(submissions[i].getCompletionStage());
-        Assert.assertEquals("Incorrect result", Integer.valueOf(i), result);
+        assertEquals(Integer.valueOf(i), result, "Incorrect result");
       }
     }
   }
