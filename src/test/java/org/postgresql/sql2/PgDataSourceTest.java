@@ -78,4 +78,26 @@ public class PgDataSourceTest {
       assertEquals("password authentication failed for user \"test\"", ee.getCause().getMessage());
     }
   }
+
+  @Test
+  public void loginWithIncorrectUsername() throws InterruptedException, ExecutionException, TimeoutException {
+    DataSource ds = DataSourceFactory.newFactory("org.postgresql.sql2.PgDataSourceFactory")
+        .builder()
+        .url("jdbc:postgresql://" + postgres.getContainerIpAddress() + ":" + postgres.getMappedPort(5432)
+            + "/" + postgres.getDatabaseName())
+        .username("wrong username " + postgres.getUsername())
+        .password(postgres.getPassword())
+        .connectionProperty(AdbaConnectionProperty.TRANSACTION_ISOLATION,
+            AdbaConnectionProperty.TransactionIsolation.REPEATABLE_READ)
+        .build();
+
+    Connection c = ds.getConnection();
+
+    try {
+      get10(c.<Integer>rowOperation("select 1").submit().getCompletionStage());
+      fail("shouldn't be possible to log in with the wrong password");
+    } catch (ExecutionException ee) {
+      assertEquals("password authentication failed for user \"wrong username test\"", ee.getCause().getMessage());
+    }
+  }
 }
