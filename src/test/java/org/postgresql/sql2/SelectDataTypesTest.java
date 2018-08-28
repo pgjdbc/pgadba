@@ -400,6 +400,66 @@ public class SelectDataTypesTest {
     }
   }
 
+  @Test
+  public void selectInteger2Array() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<short[]> idF = conn.<short[]>rowOperation("select ARRAY[100::int2, 200::int2, 300::int2] as t")
+          .collect(singleCollector(short[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new short[] {100, 200, 300}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger4Array() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<int[]> idF = conn.<int[]>rowOperation("select ARRAY[100, 200, 300] as t")
+          .collect(singleCollector(int[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new int[] {100, 200, 300}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger8Array() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<long[]> idF = conn.<long[]>rowOperation("select ARRAY[100::int8, 200::int8, 300::int8] as t")
+          .collect(singleCollector(long[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new long[] {100, 200, 300}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectFloatArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<float[]> idF = conn.<float[]>rowOperation("select ARRAY[100::float4, 200::float4, 300::float4] as t")
+          .collect(singleCollector(float[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new float[] {100, 200, 300}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectDoubleArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<double[]> idF = conn.<double[]>rowOperation("select ARRAY[100::float8, 200::float8, 300::float8] as t")
+          .collect(singleCollector(double[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new double[] {100, 200, 300}, get10(idF));
+    }
+  }
+
   /*
   @Test
   public void selectVeryLargeNumberOfRequests() throws ExecutionException, InterruptedException, TimeoutException {

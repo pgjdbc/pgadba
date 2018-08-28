@@ -501,6 +501,96 @@ public class TextParser {
     return null;
   }
 
+  /**
+   * Converts the string from the database to an array of shorts.
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of shorts
+   */
+  public static Object int2ArrayOut(String in, Class<?> requestedClass) {
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    short[] result = new short[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      result[i] = Short.parseShort(parts[i]);
+    }
+
+    return result;
+  }
+
+  /**
+   * Converts the string from the database to an array of ints.
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of ints
+   */
+  public static Object int4ArrayOut(String in, Class<?> requestedClass) {
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    int[] result = new int[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      result[i] = Integer.parseInt(parts[i]);
+    }
+
+    return result;
+  }
+
+  /**
+   * Converts the string from the database to an array of longs.
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of longs
+   */
+  public static Object int8ArrayOut(String in, Class<?> requestedClass) {
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    long[] result = new long[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      result[i] = Long.parseLong(parts[i]);
+    }
+
+    return result;
+  }
+
+  /**
+   * Converts the string from the database to an array of floats.
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of floats
+   */
+  public static Object floatArrayOut(String in, Class<?> requestedClass) {
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    float[] result = new float[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      result[i] = Float.parseFloat(parts[i]);
+    }
+
+    return result;
+  }
+
+  /**
+   * Converts the string from the database to an array of doubles.
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of doubles
+   */
+  public static Object doubleArrayOut(String in, Class<?> requestedClass) {
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    double[] result = new double[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      result[i] = Double.parseDouble(parts[i]);
+    }
+
+    return result;
+  }
+
   public static Object record_out(String in, Class<?> requestedClass) {
     return null;
   }
