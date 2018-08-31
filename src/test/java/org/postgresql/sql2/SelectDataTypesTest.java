@@ -2,6 +2,7 @@ package org.postgresql.sql2;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
@@ -383,6 +384,18 @@ public class SelectDataTypesTest {
   }
 
   @Test
+  public void selectBooleanNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("select null::bool as t")
+          .collect(singleCollector(Boolean.class))
+          .submit()
+          .getCompletionStage();
+
+      assertNull(get10(idF));
+    }
+  }
+
+  @Test
   public void insertAndSelectByteArray() throws ExecutionException, InterruptedException, TimeoutException {
     byte[] insertData = new byte[] { 0, 1, 2, 3, 4, 5};
 
@@ -403,60 +416,252 @@ public class SelectDataTypesTest {
   @Test
   public void selectInteger2Array() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<short[]> idF = conn.<short[]>rowOperation("select ARRAY[100::int2, 200::int2, 300::int2] as t")
-          .collect(singleCollector(short[].class))
+      CompletionStage<Short[]> idF = conn.<Short[]>rowOperation("select ARRAY[100::int2, 200::int2, 300::int2] as t")
+          .collect(singleCollector(Short[].class))
           .submit()
           .getCompletionStage();
 
-      assertArrayEquals(new short[] {100, 200, 300}, get10(idF));
+      assertArrayEquals(new Short[] {100, 200, 300}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger2ArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Short[]> idF = conn.<Short[]>rowOperation("select ARRAY[]::int2[] as t")
+          .collect(singleCollector(Short[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Short[] {}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger2ArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Short[]> idF = conn.<Short[]>rowOperation("select ARRAY[null::int2] as t")
+          .collect(singleCollector(Short[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Short[] {null}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger4ArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Integer[]> idF = conn.<Integer[]>rowOperation("select ARRAY[null::int4] as t")
+          .collect(singleCollector(Integer[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Integer[] {null}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger4ArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Integer[]> idF = conn.<Integer[]>rowOperation("select ARRAY[]::int4[] as t")
+          .collect(singleCollector(Integer[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Integer[] {}, get10(idF));
     }
   }
 
   @Test
   public void selectInteger4Array() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<int[]> idF = conn.<int[]>rowOperation("select ARRAY[100, 200, 300] as t")
-          .collect(singleCollector(int[].class))
+      CompletionStage<Integer[]> idF = conn.<Integer[]>rowOperation("select ARRAY[100, 200, 300] as t")
+          .collect(singleCollector(Integer[].class))
           .submit()
           .getCompletionStage();
 
-      assertArrayEquals(new int[] {100, 200, 300}, get10(idF));
+      assertArrayEquals(new Integer[] {100, 200, 300}, get10(idF));
     }
   }
 
   @Test
   public void selectInteger8Array() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<long[]> idF = conn.<long[]>rowOperation("select ARRAY[100::int8, 200::int8, 300::int8] as t")
-          .collect(singleCollector(long[].class))
+      CompletionStage<Long[]> idF = conn.<Long[]>rowOperation("select ARRAY[100::int8, 200::int8, 300::int8] as t")
+          .collect(singleCollector(Long[].class))
           .submit()
           .getCompletionStage();
 
-      assertArrayEquals(new long[] {100, 200, 300}, get10(idF));
+      assertArrayEquals(new Long[] {100L, 200L, 300L}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger8ArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Long[]> idF = conn.<Long[]>rowOperation("select ARRAY[null::int8] as t")
+          .collect(singleCollector(Long[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Long[] {null}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectInteger8ArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Long[]> idF = conn.<Long[]>rowOperation("select ARRAY[]::int8[] as t")
+          .collect(singleCollector(Long[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Long[] {}, get10(idF));
     }
   }
 
   @Test
   public void selectFloatArray() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<float[]> idF = conn.<float[]>rowOperation("select ARRAY[100::float4, 200::float4, 300::float4] as t")
-          .collect(singleCollector(float[].class))
+      CompletionStage<Float[]> idF = conn.<Float[]>rowOperation("select ARRAY[100::float4, 200::float4, 300::float4] as t")
+          .collect(singleCollector(Float[].class))
           .submit()
           .getCompletionStage();
 
-      assertArrayEquals(new float[] {100, 200, 300}, get10(idF));
+      assertArrayEquals(new Float[] {100.0f, 200.0f, 300.0f}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectFloatArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Float[]> idF = conn.<Float[]>rowOperation("select ARRAY[null::float4, 200::float4, 300::float4] as t")
+          .collect(singleCollector(Float[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Float[] {null, 200.0f, 300.0f}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectFloatArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Float[]> idF = conn.<Float[]>rowOperation("select ARRAY[]::float4[] as t")
+          .collect(singleCollector(Float[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Float[] {}, get10(idF));
     }
   }
 
   @Test
   public void selectDoubleArray() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
-      CompletionStage<double[]> idF = conn.<double[]>rowOperation("select ARRAY[100::float8, 200::float8, 300::float8] as t")
-          .collect(singleCollector(double[].class))
+      CompletionStage<Double[]> idF = conn.<Double[]>rowOperation("select ARRAY[100::float8, 200::float8, 300::float8] as t")
+          .collect(singleCollector(Double[].class))
           .submit()
           .getCompletionStage();
 
-      assertArrayEquals(new double[] {100, 200, 300}, get10(idF));
+      assertArrayEquals(new Double[] {100.0, 200.0, 300.0}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectDoubleArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Double[]> idF = conn.<Double[]>rowOperation("select ARRAY[]::float8[] as t")
+          .collect(singleCollector(Double[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Double[] {}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectDoubleArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Double[]> idF = conn.<Double[]>rowOperation("select ARRAY[null::float8] as t")
+          .collect(singleCollector(Double[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Double[] {null}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectBooleanArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Boolean[]> idF = conn.<Boolean[]>rowOperation("select ARRAY[true, false, true] as t")
+          .collect(singleCollector(Boolean[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Boolean[] {true, false, true}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectBooleanArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Boolean[]> idF = conn.<Boolean[]>rowOperation("select ARRAY[null::boolean] as t")
+          .collect(singleCollector(Boolean[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Boolean[] {null}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectBooleanArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Boolean[]> idF = conn.<Boolean[]>rowOperation("select ARRAY[]::boolean[] as t")
+          .collect(singleCollector(Boolean[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Boolean[] {}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectStringArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<String[]> idF = conn.<String[]>rowOperation("select ARRAY['first', '\"second', 'th,ird', 'NULL'] as t")
+          .collect(singleCollector(String[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new String[] {"first", "\"second", "th,ird", "NULL"}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectStringArrayEmptyArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<String[]> idF = conn.<String[]>rowOperation("select ARRAY[]::varchar[] as t")
+          .collect(singleCollector(String[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new String[] {}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectStringArrayOnlyNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<String[]> idF = conn.<String[]>rowOperation("select ARRAY[null]::varchar[] as t")
+          .collect(singleCollector(String[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new String[] {null}, get10(idF));
     }
   }
 

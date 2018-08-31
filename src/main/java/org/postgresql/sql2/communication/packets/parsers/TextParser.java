@@ -1,7 +1,5 @@
 package org.postgresql.sql2.communication.packets.parsers;
 
-import jdk.incubator.sql2.SqlException;
-
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -11,7 +9,10 @@ import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
+import jdk.incubator.sql2.SqlException;
 
 public class TextParser {
   private static final DateTimeFormatter timestampWithoutTimeZoneFormatter = DateTimeFormatter
@@ -508,12 +509,20 @@ public class TextParser {
    * @return an array of shorts
    */
   public static Object int2ArrayOut(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new Short[] {};
+    }
+
     String[] parts = in.substring(1, in.length() - 1).split(",");
 
-    short[] result = new short[parts.length];
+    Short[] result = new Short[parts.length];
 
     for (int i = 0; i < parts.length; i++) {
-      result[i] = Short.parseShort(parts[i]);
+      if ("NULL".equals(parts[i])) {
+        result[i] = null;
+      } else {
+        result[i] = Short.parseShort(parts[i]);
+      }
     }
 
     return result;
@@ -526,12 +535,20 @@ public class TextParser {
    * @return an array of ints
    */
   public static Object int4ArrayOut(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new Integer[] {};
+    }
+
     String[] parts = in.substring(1, in.length() - 1).split(",");
 
-    int[] result = new int[parts.length];
+    Integer[] result = new Integer[parts.length];
 
     for (int i = 0; i < parts.length; i++) {
-      result[i] = Integer.parseInt(parts[i]);
+      if ("NULL".equals(parts[i])) {
+        result[i] = null;
+      } else {
+        result[i] = Integer.parseInt(parts[i]);
+      }
     }
 
     return result;
@@ -544,12 +561,20 @@ public class TextParser {
    * @return an array of longs
    */
   public static Object int8ArrayOut(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new Long[] {};
+    }
+
     String[] parts = in.substring(1, in.length() - 1).split(",");
 
-    long[] result = new long[parts.length];
+    Long[] result = new Long[parts.length];
 
     for (int i = 0; i < parts.length; i++) {
-      result[i] = Long.parseLong(parts[i]);
+      if ("NULL".equals(parts[i])) {
+        result[i] = null;
+      } else {
+        result[i] = Long.parseLong(parts[i]);
+      }
     }
 
     return result;
@@ -562,12 +587,20 @@ public class TextParser {
    * @return an array of floats
    */
   public static Object floatArrayOut(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new Float[] {};
+    }
+
     String[] parts = in.substring(1, in.length() - 1).split(",");
 
-    float[] result = new float[parts.length];
+    Float[] result = new Float[parts.length];
 
     for (int i = 0; i < parts.length; i++) {
-      result[i] = Float.parseFloat(parts[i]);
+      if ("NULL".equals(parts[i])) {
+        result[i] = null;
+      } else {
+        result[i] = Float.parseFloat(parts[i]);
+      }
     }
 
     return result;
@@ -580,15 +613,112 @@ public class TextParser {
    * @return an array of doubles
    */
   public static Object doubleArrayOut(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new Double[] {};
+    }
+
     String[] parts = in.substring(1, in.length() - 1).split(",");
 
-    double[] result = new double[parts.length];
+    Double[] result = new Double[parts.length];
 
     for (int i = 0; i < parts.length; i++) {
-      result[i] = Double.parseDouble(parts[i]);
+      if ("NULL".equals(parts[i])) {
+        result[i] = null;
+      } else {
+        result[i] = Double.parseDouble(parts[i]);
+      }
     }
 
     return result;
+  }
+
+  /**
+   * Converts the string from the database to an array of doubles.
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of doubles
+   */
+  public static Object booleanArrayOut(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new Boolean[] {};
+    }
+
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    Boolean[] result = new Boolean[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if ("NULL".equals(parts[i])) {
+        result[i] = null;
+      } else {
+        result[i] = "t".equals(parts[i]);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Converts the string from the database to an array of strings.
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of strings
+   */
+  public static Object textArrayOut(String in, Class<?> requestedClass) {
+    List<String> result = new ArrayList<>();
+
+    StringBuilder sb = new StringBuilder();
+    boolean stringStarted = false;
+    boolean insideQuotes = false;
+    boolean escapeNext = false;
+    for(int i = 0; i < in.length(); i++) {
+      if (!stringStarted) {
+        if (in.charAt(i) == '{' && in.charAt(i + 1) != '"') {
+          stringStarted = true;
+        } else if (in.charAt(i) == ',' && in.charAt(i + 1) != '"') {
+          stringStarted = true;
+        } else if (in.charAt(i) == '"') {
+          stringStarted = true;
+          insideQuotes = true;
+        }
+      } else {
+        if (escapeNext) {
+          sb.append(in.charAt(i));
+          escapeNext = false;
+        } else if (in.charAt(i) == '\\') {
+          escapeNext = true;
+        } else if (in.charAt(i) == '"' && insideQuotes) {
+          result.add(sb.toString());
+          sb.setLength(0);
+          insideQuotes = false;
+          stringStarted = false;
+        } else if (in.charAt(i) == ',' && !insideQuotes) {
+          String str = sb.toString();
+          if ("NULL".equals(str)) {
+            result.add(null);
+          } else {
+            result.add(str);
+          }
+          sb.setLength(0);
+          stringStarted = false;
+        } else if (in.charAt(i) == '}' && !insideQuotes && in.charAt(i - 1) == '{') {
+          stringStarted = false;
+        } else if (in.charAt(i) == '}' && !insideQuotes) {
+          String str = sb.toString();
+          if ("NULL".equals(str)) {
+            result.add(null);
+          } else {
+            result.add(str);
+          }
+          sb.setLength(0);
+          stringStarted = false;
+        } else {
+          sb.append(in.charAt(i));
+        }
+      }
+    }
+
+    return result.toArray();
   }
 
   public static Object record_out(String in, Class<?> requestedClass) {
