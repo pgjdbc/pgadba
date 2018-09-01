@@ -17,6 +17,7 @@ import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -146,7 +147,7 @@ public class SelectDataTypesTest {
   }
 
   @Test
-  public void selectInteger8AsIntegerTooLarge() throws ExecutionException, InterruptedException, TimeoutException {
+  public void selectInteger8AsIntegerTooLarge() {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<Integer> idF = conn.<Integer>rowOperation("select " + Long.MAX_VALUE + "::int8 as t")
           .collect(singleCollector(Integer.class))
@@ -305,6 +306,18 @@ public class SelectDataTypesTest {
   }
 
   @Test
+  public void selectDateNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<LocalDate> idF = conn.<LocalDate>rowOperation("select null::date as t")
+          .collect(singleCollector(LocalDate.class))
+          .submit()
+          .getCompletionStage();
+
+      assertNull(get10(idF));
+    }
+  }
+
+  @Test
   public void selectDateAsTime() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection conn = ds.getConnection()) {
       CompletionStage<LocalTime> idF = conn.<LocalTime>rowOperation("select '2018-04-29 20:55:57.692132'::timestamp as t")
@@ -392,6 +405,31 @@ public class SelectDataTypesTest {
           .getCompletionStage();
 
       assertNull(get10(idF));
+    }
+  }
+
+  @Test
+  public void selectUuid() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<UUID> idF = conn.<UUID>rowOperation("select 'a81bc81b-dead-4e5d-abff-90865d1e13b1'::uuid as t")
+          .collect(singleCollector(UUID.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(UUID.fromString("a81bc81b-dead-4e5d-abff-90865d1e13b1"), get10(idF));
+    }
+  }
+
+  @Test
+  public void selectChar() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      // select from one of the systems tables, as ::char returns a bpchar (oid 1042) instead of a char (oid 18)
+      CompletionStage<Character> idF = conn.<Character>rowOperation("select aggkind as t from pg_aggregate limit 1")
+          .collect(singleCollector(Character.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Character.valueOf('n'), get10(idF));
     }
   }
 
@@ -662,6 +700,312 @@ public class SelectDataTypesTest {
           .getCompletionStage();
 
       assertArrayEquals(new String[] {null}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectDateArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<LocalDate[]> idF = conn.<LocalDate[]>rowOperation("select ARRAY['2018-04-29 20:55:57.692132'::date, "
+          + "'2018-05-30 20:55:57.692132'::date] as t")
+          .collect(singleCollector(LocalDate[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new LocalDate[] {LocalDate.of(2018, 4, 29),
+          LocalDate.of(2018, 5, 30)}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectDateArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<LocalDate[]> idF = conn.<LocalDate[]>rowOperation("select ARRAY[null::date, "
+          + "'2018-05-30 20:55:57.692132'::date] as t")
+          .collect(singleCollector(LocalDate[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new LocalDate[] {null, LocalDate.of(2018, 5, 30)}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectDateArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<LocalDate[]> idF = conn.<LocalDate[]>rowOperation("select ARRAY[]::date[] as t")
+          .collect(singleCollector(LocalDate[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new LocalDate[] {}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectTimeArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<LocalTime[]> idF = conn.<LocalTime[]>rowOperation("select ARRAY['2018-04-29 20:55:57.692132'::time, "
+          + "'2018-04-29 08:15:00.223344'::time] as t")
+          .collect(singleCollector(LocalTime[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new LocalTime[] {LocalTime.of(20, 55, 57, 692132000),
+          LocalTime.of(8, 15, 0, 223344000)}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectTimeArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<LocalTime[]> idF = conn.<LocalTime[]>rowOperation("select ARRAY[null, "
+          + "'2018-04-29 08:15:00.223344'::time] as t")
+          .collect(singleCollector(LocalTime[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new LocalTime[] {null,
+          LocalTime.of(8, 15, 0, 223344000)}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectTimeArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<LocalTime[]> idF = conn.<LocalTime[]>rowOperation("select ARRAY[]::time[] as t")
+          .collect(singleCollector(LocalTime[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new LocalTime[] {}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectTimestampWithoutTimeZoneArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<LocalDateTime[]> idF = conn
+          .<LocalDateTime[]>rowOperation("select ARRAY['2018-04-29 20:55:57.692132'::timestamp without time zone] as t")
+          .collect(singleCollector(LocalDateTime[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new LocalDateTime[] {LocalDateTime.of(2018, 4, 29, 20, 55, 57, 692132000)}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectTimestampWithoutTimeZoneArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<LocalDateTime[]> idF = conn
+          .<LocalDateTime[]>rowOperation("select ARRAY[null::timestamp without time zone] as t")
+          .collect(singleCollector(LocalDateTime[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new LocalDateTime[] {null}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectTimestampWithoutTimeZoneArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<LocalDateTime[]> idF = conn
+          .<LocalDateTime[]>rowOperation("select ARRAY[]::timestamp without time zone[] as t")
+          .collect(singleCollector(LocalDateTime[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new LocalDateTime[] {}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectTimestampWithTimeZoneArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<OffsetDateTime[]> idF = conn
+          .<OffsetDateTime[]>rowOperation("select ARRAY['2018-04-29 20:55:57.692132'::timestamp with time zone] as t")
+          .collect(singleCollector(OffsetDateTime[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new OffsetDateTime[] {OffsetDateTime.of(2018, 4, 29, 20, 55, 57, 692132000, ZoneOffset.UTC)}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectTimestampWithTimeZoneArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<OffsetDateTime[]> idF = conn
+          .<OffsetDateTime[]>rowOperation("select ARRAY[null, '2018-04-29 20:55:57.692132'::timestamp with time zone] as t")
+          .collect(singleCollector(OffsetDateTime[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new OffsetDateTime[] {null,
+          OffsetDateTime.of(2018, 4, 29, 20, 55, 57, 692132000, ZoneOffset.UTC)}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectTimestampWithTimeZoneArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<OffsetDateTime[]> idF = conn
+          .<OffsetDateTime[]>rowOperation("select ARRAY[]::timestamp with time zone[] as t")
+          .collect(singleCollector(OffsetDateTime[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new OffsetDateTime[] {}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectNumericArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<BigDecimal[]> idF = conn.<BigDecimal[]>rowOperation("select ARRAY[100.505::numeric, 200.505::numeric] as t")
+          .collect(singleCollector(BigDecimal[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new BigDecimal[] {BigDecimal.valueOf(100.505), BigDecimal.valueOf(200.505)}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectNumericArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<BigDecimal[]> idF = conn.<BigDecimal[]>rowOperation("select ARRAY[null, 200.505::numeric] as t")
+          .collect(singleCollector(BigDecimal[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new BigDecimal[] {null, BigDecimal.valueOf(200.505)}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectNumericArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<BigDecimal[]> idF = conn.<BigDecimal[]>rowOperation("select ARRAY[]::numeric[] as t")
+          .collect(singleCollector(BigDecimal[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new BigDecimal[] {}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectTimeWithTimeZoneArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<OffsetTime[]> idF = conn
+          .<OffsetTime[]>rowOperation("select ARRAY['2018-04-29 20:55:57.692132'::time with time zone] as t")
+          .collect(singleCollector(OffsetTime[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new OffsetTime[] {OffsetTime.of(20, 55, 57, 692132000, ZoneOffset.UTC)}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectTimeWithTimeZoneArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<OffsetTime[]> idF = conn
+          .<OffsetTime[]>rowOperation("select ARRAY[null, '2018-04-29 20:55:57.692132'::time with time zone] as t")
+          .collect(singleCollector(OffsetTime[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new OffsetTime[] {null, OffsetTime.of(20, 55, 57, 692132000, ZoneOffset.UTC)}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectTimeWithTimeZoneArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<OffsetTime[]> idF = conn
+          .<OffsetTime[]>rowOperation("select ARRAY[]::time with time zone[] as t")
+          .collect(singleCollector(OffsetTime[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new OffsetTime[] {}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectUuidArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<UUID[]> idF = conn.<UUID[]>rowOperation("select ARRAY['a81bc81b-dead-4e5d-abff-90865d1e13b1'::uuid] as t")
+          .collect(singleCollector(UUID[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new UUID[] {UUID.fromString("a81bc81b-dead-4e5d-abff-90865d1e13b1")}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectUuidArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<UUID[]> idF = conn.<UUID[]>rowOperation("select ARRAY[null, "
+          + "'a81bc81b-dead-4e5d-abff-90865d1e13b1'::uuid] as t")
+          .collect(singleCollector(UUID[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new UUID[] {null, UUID.fromString("a81bc81b-dead-4e5d-abff-90865d1e13b1")}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectUuidArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<UUID[]> idF = conn.<UUID[]>rowOperation("select ARRAY[]::uuid[] as t")
+          .collect(singleCollector(UUID[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new UUID[] {}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectCharacterArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Character[]> idF = conn.<Character[]>rowOperation("select ARRAY['H'::character] as t")
+          .collect(singleCollector(Character[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Character[] {'H'}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectCharacterArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Character[]> idF = conn.<Character[]>rowOperation("select ARRAY[null, 'H'::character] as t")
+          .collect(singleCollector(Character[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Character[] {null, 'H'}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectCharacterArrayEmpty() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      CompletionStage<Character[]> idF = conn.<Character[]>rowOperation("select ARRAY[]::character[] as t")
+          .collect(singleCollector(Character[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new Character[] {}, get10(idF));
     }
   }
 
