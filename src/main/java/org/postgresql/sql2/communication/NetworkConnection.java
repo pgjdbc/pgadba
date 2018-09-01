@@ -1,5 +1,15 @@
 package org.postgresql.sql2.communication;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.NotYetConnectedException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import jdk.incubator.sql2.ConnectionProperty;
 import org.postgresql.sql2.PgConnection;
 import org.postgresql.sql2.buffer.ByteBufferPool;
@@ -9,18 +19,6 @@ import org.postgresql.sql2.communication.packets.ErrorPacket;
 import org.postgresql.sql2.execution.NioLoop;
 import org.postgresql.sql2.execution.NioService;
 import org.postgresql.sql2.execution.NioServiceContext;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException;
-import java.nio.channels.NotYetConnectedException;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class NetworkConnection implements NioService, NetworkConnectContext, NetworkWriteContext, NetworkReadContext {
 
@@ -244,29 +242,35 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     }
 
     // Write data to network
-    List<PooledByteBuffer> writtenBuffers = this.outputStream.getWrittenBuffers();
-    for (int i = 0; i < writtenBuffers.size(); i++) {
-      PooledByteBuffer pooledBuffer = writtenBuffers.get(i);
-      ByteBuffer byteBuffer = pooledBuffer.getByteBuffer();
+    PooledByteBuffer pooledBuffer = this.outputStream.getNextWrittenBuffer();
+    if (pooledBuffer == null) {
+      //System.out.println("pooledBuffer = " + null);
+      this.context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+      return;
+    } else {
+      //System.out.println("pooledBuffer = " + pooledBuffer);
+    }
+    ByteBuffer byteBuffer = pooledBuffer.getByteBuffer();
 
-      // Write the buffer
-      byteBuffer.flip();
-      this.socketChannel.write(byteBuffer);
-      if (byteBuffer.hasRemaining()) {
-        // Socket buffer full (clear written buffers)
-        this.incompleteWriteBuffer = pooledBuffer;
-        this.outputStream.removeBuffers(i);
-        this.context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-        return;
-      }
-
-      // Buffer written so release
-      pooledBuffer.release();
+    // Write the buffer
+    byteBuffer.flip();
+    this.socketChannel.write(byteBuffer);
+    if (byteBuffer.hasRemaining()) {
+      // Socket buffer full (clear written buffers)
+      this.incompleteWriteBuffer = pooledBuffer;
+      this.context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+      return;
     }
 
+    // Buffer written so release
+    pooledBuffer.release();
+
     // As here all data written
-    writtenBuffers.clear();
-    this.context.setInterestedOps(SelectionKey.OP_READ);
+    if (outputStream.hasMoreToWrite()) {
+      this.context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+    } else {
+      this.context.setInterestedOps(SelectionKey.OP_READ);
+    }
   }
 
   /**

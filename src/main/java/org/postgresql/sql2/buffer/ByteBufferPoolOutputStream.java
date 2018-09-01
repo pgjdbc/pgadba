@@ -70,18 +70,20 @@ public class ByteBufferPoolOutputStream extends NetworkOutputStream {
    * 
    * @return List of written {@link PooledByteBuffer} instances.
    */
-  public List<PooledByteBuffer> getWrittenBuffers() {
-    return this.writtenByteBuffers;
+  public PooledByteBuffer getNextWrittenBuffer() {
+    synchronized (writtenByteBuffers) {
+      if (writtenByteBuffers.isEmpty()) {
+        return null;
+      }
+
+      PooledByteBuffer pbb = writtenByteBuffers.get(0);
+      writtenByteBuffers.remove(0);
+      return pbb;
+    }
   }
 
-  /**
-   * Removes specified number of {@link PooledByteBuffer} instances.
-   * 
-   * @param numberOfBuffers Number of {@link PooledByteBuffer} instances to remove
-   *                        from front of list.
-   */
-  public void removeBuffers(int numberOfBuffers) {
-    this.writtenByteBuffers.removeRange(0, numberOfBuffers);
+  public boolean hasMoreToWrite() {
+    return !writtenByteBuffers.isEmpty();
   }
 
   /**
@@ -90,10 +92,12 @@ public class ByteBufferPoolOutputStream extends NetworkOutputStream {
    * @return {@link PooledByteBuffer}.
    */
   private PooledByteBuffer addWriteBuffer() {
-    PooledByteBuffer buffer = this.bufferPool.getPooledByteBuffer();
-    buffer.getByteBuffer().clear();
-    this.writtenByteBuffers.add(buffer);
-    return buffer;
+    synchronized (writtenByteBuffers) {
+      PooledByteBuffer buffer = this.bufferPool.getPooledByteBuffer();
+      buffer.getByteBuffer().clear();
+      this.writtenByteBuffers.add(buffer);
+      return buffer;
+    }
   }
 
   /**
@@ -102,25 +106,27 @@ public class ByteBufferPoolOutputStream extends NetworkOutputStream {
    * @return Current {@link PooledByteBuffer} to write further data.
    */
   private PooledByteBuffer getCurrentBuffer() {
+    synchronized (writtenByteBuffers) {
 
-    // Ensure have current pooled buffer
-    PooledByteBuffer buffer;
-    if (this.writtenByteBuffers.size() == 0) {
-      // First byte buffer
-      buffer = this.addWriteBuffer();
-    } else {
-      // Obtain the last buffer
-      buffer = this.writtenByteBuffers.get(this.writtenByteBuffers.size() - 1);
-
-      // Ensure space in last buffer
-      if (!buffer.getByteBuffer().hasRemaining()) {
-        // No space, so add another buffer
+      // Ensure have current pooled buffer
+      PooledByteBuffer buffer;
+      if (this.writtenByteBuffers.size() == 0) {
+        // First byte buffer
         buffer = this.addWriteBuffer();
-      }
-    }
+      } else {
+        // Obtain the last buffer
+        buffer = this.writtenByteBuffers.get(this.writtenByteBuffers.size() - 1);
 
-    // Return the buffer
-    return buffer;
+        // Ensure space in last buffer
+        if (!buffer.getByteBuffer().hasRemaining()) {
+          // No space, so add another buffer
+          buffer = this.addWriteBuffer();
+        }
+      }
+
+      // Return the buffer
+      return buffer;
+    }
   }
 
   /**
@@ -129,7 +135,9 @@ public class ByteBufferPoolOutputStream extends NetworkOutputStream {
    * @param byteBuffer {@link ByteBuffer}.
    */
   public void write(ByteBuffer byteBuffer) {
-    this.getCurrentBuffer().getByteBuffer().put(byteBuffer);
+    synchronized (writtenByteBuffers) {
+      this.getCurrentBuffer().getByteBuffer().put(byteBuffer);
+    }
   }
 
   /*
@@ -138,67 +146,77 @@ public class ByteBufferPoolOutputStream extends NetworkOutputStream {
 
   @Override
   public void initPacket() throws IOException {
+    synchronized (writtenByteBuffers) {
 
-    // Obtain the buffer to write packet length
-    PooledByteBuffer pooledBuffer = this.getCurrentBuffer();
-    ByteBuffer buffer = pooledBuffer.getByteBuffer();
+      // Obtain the buffer to write packet length
+      PooledByteBuffer pooledBuffer = this.getCurrentBuffer();
+      ByteBuffer buffer = pooledBuffer.getByteBuffer();
 
-    // Obtain the position of packet length
-    this.packetStartBuffer = this.writtenByteBuffers.size() - 1;
-    this.packetStartPosition = buffer.position();
-    this.packetSize = 0;
+      // Obtain the position of packet length
+      this.packetStartBuffer = this.writtenByteBuffers.size() - 1;
+      this.packetStartPosition = buffer.position();
+      this.packetSize = 0;
 
-    // Make space for place holder packet length bytes
-    this.write(PACKET_LENGTH_PLACE_HOLDER);
+      // Make space for place holder packet length bytes
+      this.write(PACKET_LENGTH_PLACE_HOLDER);
+    }
   }
 
   @Override
   public void write(int b) throws IOException {
-    this.getCurrentBuffer().getByteBuffer().put((byte) b);
-    this.packetSize++;
+    synchronized (writtenByteBuffers) {
+      this.getCurrentBuffer().getByteBuffer().put((byte) b);
+      this.packetSize++;
+    }
   }
 
   @Override
   public void write(byte[] bytes, int off, int len) throws IOException {
+    synchronized (writtenByteBuffers) {
 
-    // Increasing packet size
-    this.packetSize += (len - off);
+      // Increasing packet size
+      this.packetSize += (len - off);
 
-    // Ensure have current pooled buffer
-    PooledByteBuffer buffer = this.getCurrentBuffer();
+      // Ensure have current pooled buffer
+      PooledByteBuffer buffer = this.getCurrentBuffer();
 
-    // Keep writing to buffers until complete
-    do {
+      // Keep writing to buffers until complete
+      do {
 
-      // Determine bytes to write to buffer
-      int available = buffer.getByteBuffer().remaining();
-      int bytesToWrite = available < len ? available : len;
+        // Determine bytes to write to buffer
+        int available = buffer.getByteBuffer().remaining();
+        int bytesToWrite = available < len ? available : len;
 
-      // Write the bytes to buffer
-      buffer.getByteBuffer().put(bytes, off, bytesToWrite);
+        // Write the bytes to buffer
+        buffer.getByteBuffer().put(bytes, off, bytesToWrite);
 
-      // Determine number of bytes remaining
-      len -= bytesToWrite;
+        // Determine number of bytes remaining
+        len -= bytesToWrite;
 
-      // Adjust for potential another write
-      if (len > 0) {
-        off += bytesToWrite;
-        buffer = this.addWriteBuffer();
-      }
+        // Adjust for potential another write
+        if (len > 0) {
+          off += bytesToWrite;
+          buffer = this.addWriteBuffer();
+        }
 
-    } while (len > 0);
+      } while (len > 0);
+    }
   }
 
   @Override
   public void write(String text) throws IOException {
-    this.writer.write(text);
-    this.writer.flush();
-    this.writeTerminator();
+    synchronized (writtenByteBuffers) {
+      this.writer.write(text);
+      this.writer.flush();
+      this.writeTerminator();
+    }
   }
 
   @Override
   public void completePacket() {
-    this.doCompletePacket(0, this.packetSize);
+    synchronized (writtenByteBuffers) {
+      this.doCompletePacket(0, this.packetSize);
+    }
   }
 
   /**
@@ -208,28 +226,30 @@ public class ByteBufferPoolOutputStream extends NetworkOutputStream {
    * @param length Current length to write.
    */
   private void doCompletePacket(int depth, int length) {
+    synchronized (writtenByteBuffers) {
 
-    // Drop out once written all bytes
-    if (depth >= 4) {
-      return;
+      // Drop out once written all bytes
+      if (depth >= 4) {
+        return;
+      }
+
+      // Obtain the byte length and remove for next length byte
+      byte byteLengthValue = (byte) (length & 0xFF);
+      length >>= 8;
+
+      // Undertake recursion (so writes top bytes first)
+      this.doCompletePacket(depth + 1, length);
+
+      // Write the byte
+      PooledByteBuffer pooledByteBuffer = this.writtenByteBuffers.get(this.packetStartBuffer);
+      if (this.packetStartPosition >= pooledByteBuffer.getByteBuffer().capacity()) {
+        // Writing past buffer end, so start with next buffer
+        this.packetStartBuffer++;
+        this.packetStartPosition = 0;
+        pooledByteBuffer = this.writtenByteBuffers.get(this.packetStartBuffer);
+      }
+      pooledByteBuffer.getByteBuffer().put(this.packetStartPosition++, byteLengthValue);
     }
-
-    // Obtain the byte length and remove for next length byte
-    byte byteLengthValue = (byte) (length & 0xFF);
-    length >>= 8;
-
-    // Undertake recursion (so writes top bytes first)
-    this.doCompletePacket(depth + 1, length);
-
-    // Write the byte
-    PooledByteBuffer pooledByteBuffer = this.writtenByteBuffers.get(this.packetStartBuffer);
-    if (this.packetStartPosition >= pooledByteBuffer.getByteBuffer().capacity()) {
-      // Writing past buffer end, so start with next buffer
-      this.packetStartBuffer++;
-      this.packetStartPosition = 0;
-      pooledByteBuffer = this.writtenByteBuffers.get(this.packetStartBuffer);
-    }
-    pooledByteBuffer.getByteBuffer().put(this.packetStartPosition++, byteLengthValue);
   }
 
   /**

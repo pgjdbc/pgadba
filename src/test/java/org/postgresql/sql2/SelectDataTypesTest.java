@@ -24,10 +24,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.Submission;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.postgresql.sql2.communication.packets.parts.PgAdbaType;
+import org.postgresql.sql2.testutil.CollectorUtils;
 import org.postgresql.sql2.testutil.ConnectUtil;
 import org.postgresql.sql2.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -1009,7 +1011,6 @@ public class SelectDataTypesTest {
     }
   }
 
-  /*
   @Test
   public void selectVeryLargeNumberOfRequests() throws ExecutionException, InterruptedException, TimeoutException {
     try (Connection connection = ds.getConnection()) {
@@ -1031,7 +1032,6 @@ public class SelectDataTypesTest {
       }
     }
   }
-  */
 
   @Test
   public void ensureMultipleQueriesAreNotAllowed() {
