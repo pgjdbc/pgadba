@@ -233,7 +233,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
     // Write the previous incomplete write buffer
     if (this.incompleteWriteBuffer != null) {
-      this.outputStream.write(this.incompleteWriteBuffer.getByteBuffer());
+      this.socketChannel.write(this.incompleteWriteBuffer.getByteBuffer());
       if (this.incompleteWriteBuffer.getByteBuffer().hasRemaining()) {
         // Further writes required
         this.context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
