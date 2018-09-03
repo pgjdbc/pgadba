@@ -23,7 +23,7 @@ public class PgConnectionBuilder implements Connection.Builder {
    */
   public PgConnectionBuilder(PgDataSource dataSource) {
     this.dataSource = dataSource;
-    for (PgConnectionProperties prop : PgConnectionProperties.values()) {
+    for (PgConnectionProperty prop : PgConnectionProperty.values()) {
       properties.put(prop, prop.defaultValue());
     }
 
@@ -34,7 +34,7 @@ public class PgConnectionBuilder implements Connection.Builder {
 
   @Override
   public Connection.Builder property(ConnectionProperty p, Object v) {
-    if (!(p instanceof PgConnectionProperties)) {
+    if (!(p instanceof PgConnectionProperty)) {
       throw new PropertyException("Please make sure that the ConnectionProperty is of type PGConnectionProperties");
     }
 
@@ -96,7 +96,7 @@ public class PgConnectionBuilder implements Connection.Builder {
       if (slash == -1) {
         return null;
       }
-      urlProps.put(PgConnectionProperties.DATABASE,
+      urlProps.put(PgConnectionProperty.DATABASE,
           URLDecoder.decode(urlServer.substring(slash + 1), StandardCharsets.UTF_8));
 
       String[] addresses = urlServer.substring(0, slash).split(",");
@@ -124,21 +124,21 @@ public class PgConnectionBuilder implements Connection.Builder {
       }
       ports.setLength(ports.length() - 1);
       hosts.setLength(hosts.length() - 1);
-      urlProps.put(PgConnectionProperties.PORT, Integer.parseInt(ports.toString()));
-      urlProps.put(PgConnectionProperties.HOST, hosts.toString());
+      urlProps.put(PgConnectionProperty.PORT, Integer.parseInt(ports.toString()));
+      urlProps.put(PgConnectionProperty.HOST, hosts.toString());
     } else {
       /*
        * if there are no defaults set or any one of PORT, HOST, DBNAME not set then
        * set it to default
        */
-      if (defaults == null || !defaults.containsKey(PgConnectionProperties.PORT.name())) {
-        urlProps.put(PgConnectionProperties.PORT, 5432);
+      if (defaults == null || !defaults.containsKey(PgConnectionProperty.PORT.name())) {
+        urlProps.put(PgConnectionProperty.PORT, 5432);
       }
-      if (defaults == null || !defaults.containsKey(PgConnectionProperties.HOST.name())) {
-        urlProps.put(PgConnectionProperties.HOST, "localhost");
+      if (defaults == null || !defaults.containsKey(PgConnectionProperty.HOST.name())) {
+        urlProps.put(PgConnectionProperty.HOST, "localhost");
       }
-      if (defaults == null || !defaults.containsKey(PgConnectionProperties.DATABASE.name())) {
-        urlProps.put(PgConnectionProperties.DATABASE, URLDecoder.decode(urlServer, StandardCharsets.UTF_8));
+      if (defaults == null || !defaults.containsKey(PgConnectionProperty.DATABASE.name())) {
+        urlProps.put(PgConnectionProperty.DATABASE, URLDecoder.decode(urlServer, StandardCharsets.UTF_8));
       }
     }
 
@@ -150,9 +150,9 @@ public class PgConnectionBuilder implements Connection.Builder {
       }
       int pos = token.indexOf('=');
       if (pos == -1) {
-        urlProps.put(PgConnectionProperties.lookup(token), "");
+        urlProps.put(PgConnectionProperty.lookup(token), "");
       } else {
-        urlProps.put(PgConnectionProperties.lookup(token.substring(0, pos)),
+        urlProps.put(PgConnectionProperty.lookup(token.substring(0, pos)),
             URLDecoder.decode(token.substring(pos + 1), StandardCharsets.UTF_8));
       }
     }

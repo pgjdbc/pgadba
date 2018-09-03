@@ -1,15 +1,14 @@
 package org.postgresql.sql2;
 
-import jdk.incubator.sql2.ConnectionProperty;
-
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
-
+import jdk.incubator.sql2.AdbaConnectionProperty;
+import jdk.incubator.sql2.ConnectionProperty;
 import org.postgresql.sql2.buffer.ByteBufferPool;
 import org.postgresql.sql2.execution.NioLoop;
 
-public enum PgConnectionProperties implements ConnectionProperty {
+public enum PgConnectionProperty implements ConnectionProperty {
   /**
    * The host name of the server. Defaults to localhost. To specify an IPv6 address your must enclose the host parameter
    * with square brackets, for example:
@@ -27,16 +26,6 @@ public enum PgConnectionProperties implements ConnectionProperty {
    * The database name. The default is to connect to a database with the same name as the user name.
    */
   DATABASE(String.class, "", false),
-
-  /**
-   * The database user on whose behalf the connection is being made.
-   */
-  USER(String.class, "test", false),
-
-  /**
-   * The database user's password.
-   */
-  PASSWORD(String.class, "test", true),
 
   /**
    * Connect using SSL. The driver must have been compiled with SSL support. This property does not need a value associated
@@ -381,7 +370,7 @@ public enum PgConnectionProperties implements ConnectionProperty {
   private Object defaultValue;
   private boolean sensitive;
 
-  PgConnectionProperties(Class range, Object defaultValue, boolean sensitive) {
+  PgConnectionProperty(Class range, Object defaultValue, boolean sensitive) {
     this.range = range;
     this.defaultValue = defaultValue;
     this.sensitive = sensitive;
@@ -408,8 +397,14 @@ public enum PgConnectionProperties implements ConnectionProperty {
    * @param name name to search for
    * @return the matching property
    */
-  public static PgConnectionProperties lookup(String name) {
-    for (PgConnectionProperties prop : values()) {
+  public static ConnectionProperty lookup(String name) {
+    for (PgConnectionProperty prop : values()) {
+      if (prop.toString().equalsIgnoreCase(name)) {
+        return prop;
+      }
+    }
+
+    for (AdbaConnectionProperty prop : AdbaConnectionProperty.values()) {
       if (prop.toString().equalsIgnoreCase(name)) {
         return prop;
       }

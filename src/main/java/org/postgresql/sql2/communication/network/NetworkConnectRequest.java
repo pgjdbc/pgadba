@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
-import org.postgresql.sql2.PgConnectionProperties;
+import org.postgresql.sql2.PgConnectionProperty;
 import org.postgresql.sql2.communication.BEFrameParser;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.NetworkConnectContext;
@@ -17,6 +17,7 @@ import org.postgresql.sql2.communication.packets.AuthenticationRequest;
 import org.postgresql.sql2.submissions.ConnectSubmission;
 import org.postgresql.sql2.util.BinaryHelper;
 
+import jdk.incubator.sql2.AdbaConnectionProperty;
 import jdk.incubator.sql2.ConnectionProperty;
 
 /**
@@ -50,8 +51,8 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
   public void connect(NetworkConnectContext context) throws IOException {
     // Undertake connecting
     Map<ConnectionProperty, Object> properties = context.getProperties();
-    context.getSocketChannel().connect(new InetSocketAddress((String) properties.get(PgConnectionProperties.HOST),
-        (Integer) properties.get(PgConnectionProperties.PORT)));
+    context.getSocketChannel().connect(new InetSocketAddress((String) properties.get(PgConnectionProperty.HOST),
+        (Integer) properties.get(PgConnectionProperty.PORT)));
   }
 
   @Override
@@ -77,9 +78,9 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
     wire.initPacket();
     wire.write(BinaryHelper.writeInt(3 * 65536));
     wire.write("user");
-    wire.write(((String) properties.get(PgConnectionProperties.USER)));
+    wire.write(((String) properties.get(AdbaConnectionProperty.USER)));
     wire.write("database");
-    wire.write(((String) properties.get(PgConnectionProperties.DATABASE)));
+    wire.write(((String) properties.get(PgConnectionProperty.DATABASE)));
     wire.write("application_name");
     wire.write("java_sql2_client");
     wire.write("client_encoding");
