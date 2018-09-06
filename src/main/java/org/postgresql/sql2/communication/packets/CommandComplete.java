@@ -7,6 +7,7 @@ public class CommandComplete {
     INSERT,
     DELETE,
     CREATE_TABLE,
+    DROP_TABLE,
     CREATE_TYPE,
     START_TRANSACTION,
     ROLLBACK,
@@ -36,6 +37,9 @@ public class CommandComplete {
       numberOfRowsAffected = Integer.parseInt(message.substring(message.lastIndexOf(" ") + 1, message.length() - 1));
     } else if (message.startsWith("CREATE TABLE")) {
       type = Types.CREATE_TABLE;
+      numberOfRowsAffected = 0;
+    } else if (message.startsWith("DROP TABLE")) {
+      type = Types.DROP_TABLE;
       numberOfRowsAffected = 0;
     } else if (message.startsWith("CREATE TYPE")) {
       type = Types.CREATE_TYPE;

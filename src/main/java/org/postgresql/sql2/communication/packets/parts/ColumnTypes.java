@@ -60,7 +60,7 @@ public enum ColumnTypes {
   MACADDR(829, TextParser::macaddr_out, BinaryParser::macaddr_send, null, null),
   INET(869, TextParser::inet_out, BinaryParser::inet_send, null, null),
   _BOOL(1000, TextParser::booleanArrayOut, BinaryParser::array_send, boolean[].class, PgAdbaType.ARRAY),
-  _BYTEA(1001, TextParser::array_out, BinaryParser::array_send, byte[].class, PgAdbaType.BINARY),
+  _BYTEA(1001, TextParser::byteaArrayOut, BinaryParser::array_send, byte[].class, PgAdbaType.BINARY),
   _CHAR(1002, TextParser::array_out, BinaryParser::array_send, char[].class, PgAdbaType.ARRAY),
   _NAME(1003, TextParser::array_out, BinaryParser::array_send, String[].class, PgAdbaType.ARRAY),
   _INT2(1005, TextParser::int2ArrayOut, BinaryParser::array_send, short[].class, PgAdbaType.ARRAY),

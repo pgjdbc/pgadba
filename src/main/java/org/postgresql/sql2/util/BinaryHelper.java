@@ -45,6 +45,17 @@ public class BinaryHelper {
   }
 
   /**
+   * writes an int to a byte array in network byte order.
+   * @param val the int to write
+   */
+  public static void writeIntAtPos(int val, int pos, byte[] bb) {
+    bb[pos] = (byte) (val >>> 24);
+    bb[pos + 1] = (byte) (val >>> 16);
+    bb[pos + 2] = (byte) (val >>> 8);
+    bb[pos + 3] = (byte) (val);
+  }
+
+  /**
    * writes a short to a byte array in network byte order.
    * @param val the short to write
    * @return the byte array, size 2

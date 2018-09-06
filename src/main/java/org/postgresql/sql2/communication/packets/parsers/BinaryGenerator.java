@@ -1,5 +1,6 @@
 package org.postgresql.sql2.communication.packets.parsers;
 
+import java.util.Arrays;
 import org.postgresql.sql2.util.BinaryHelper;
 
 import java.io.ByteArrayOutputStream;
@@ -118,6 +119,72 @@ public class BinaryGenerator {
    */
   public static byte[] fromString(Object input) {
     return ((String)input).getBytes(StandardCharsets.UTF_8);
+  }
+
+  /**
+   * parses an array into to a byte array.
+   * @param input the Array to convert
+   * @return a byte array
+   */
+  public static byte[] fromByteaArray(Object input) {
+    if (input instanceof byte[][]) {
+      byte[][] in = (byte[][]) input;
+      int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(a -> a.length).sum();
+      byte[] data = new byte[size];
+      int pos = 0;
+      BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
+      pos += 4;
+      BinaryHelper.writeIntAtPos(0, pos, data); // flags
+      pos += 4;
+      BinaryHelper.writeIntAtPos(17, pos, data); // oid of bytea
+      pos += 4;
+      BinaryHelper.writeIntAtPos(in.length, pos, data); // flags
+      pos += 4;
+      BinaryHelper.writeIntAtPos(1, pos, data); // flags
+      pos += 4;
+      for (int i = 0; i < in.length; i++) {
+        BinaryHelper.writeIntAtPos(in[i].length, pos, data);
+        pos += 4;
+        System.arraycopy(in[i], 0, data, pos, in[i].length);
+        pos += in[i].length;
+      }
+      return data;
+    }
+
+    return new byte[] {};
+  }
+
+  /**
+   * parses an array into to a byte array.
+   * @param input the Array to convert
+   * @return a byte array
+   */
+  public static byte[] fromIntegerArray(Object input) {
+    if (input instanceof Integer[]) {
+      Integer[] in = (Integer[]) input;
+      int size = 20 + in.length * 8;
+      byte[] data = new byte[size];
+      int pos = 0;
+      BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
+      pos += 4;
+      BinaryHelper.writeIntAtPos(0, pos, data); // flags
+      pos += 4;
+      BinaryHelper.writeIntAtPos(23, pos, data); // oid of int4
+      pos += 4;
+      BinaryHelper.writeIntAtPos(in.length, pos, data); // length of first dimension
+      pos += 4;
+      BinaryHelper.writeIntAtPos(1, pos, data); // lower b
+      pos += 4;
+      for (int i = 0; i < in.length; i++) {
+        BinaryHelper.writeIntAtPos(4, pos, data);
+        pos += 4;
+        BinaryHelper.writeIntAtPos(in[i], pos, data);
+        pos += 4;
+      }
+      return data;
+    }
+
+    return new byte[] {};
   }
 
   /**

@@ -28,7 +28,6 @@ import jdk.incubator.sql2.Submission;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.communication.packets.parts.PgAdbaType;
 import org.postgresql.sql2.testutil.CollectorUtils;
 import org.postgresql.sql2.testutil.ConnectUtil;
 import org.postgresql.sql2.testutil.DatabaseHolder;
@@ -432,24 +431,6 @@ public class SelectDataTypesTest {
           .getCompletionStage();
 
       assertEquals(Character.valueOf('n'), get10(idF));
-    }
-  }
-
-  @Test
-  public void insertAndSelectByteArray() throws ExecutionException, InterruptedException, TimeoutException {
-    byte[] insertData = new byte[] { 0, 1, 2, 3, 4, 5};
-
-    try (Connection conn = ds.getConnection()) {
-      get10(conn.rowCountOperation("create table insertAndSelectByteArray(t bytea)").submit().getCompletionStage());
-      get10(conn.rowCountOperation("insert into insertAndSelectByteArray(t) values($1)")
-          .set("$1", insertData, PgAdbaType.BLOB).submit().getCompletionStage());
-      CompletionStage<byte[]> idF = conn.<byte[]>rowOperation("select t from insertAndSelectByteArray")
-          .collect(singleCollector(byte[].class))
-          .submit()
-          .getCompletionStage();
-      get10(conn.rowCountOperation("drop table insertAndSelectByteArray").submit().getCompletionStage());
-
-      assertArrayEquals(insertData, get10(idF));
     }
   }
 

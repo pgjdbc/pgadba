@@ -868,6 +868,36 @@ public class TextParser {
   }
 
   /**
+   * Converts the string from the database to an array of doubles.
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of doubles
+   */
+  public static Object byteaArrayOut(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new byte[][] {};
+    }
+
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    byte[][] result = new byte[parts.length][];
+
+    for (int i = 0; i < parts.length; i++) {
+      if ("NULL".equals(parts[i])) {
+        result[i] = null;
+      } else {
+        result[i] = new byte[(parts[i].length() - 4) / 2];
+        for (int j = 0; j < parts[i].length() - 6; j += 2) {
+          result[i][j / 2] = (byte) ((Character.digit(parts[i].charAt(j + 4), 16) << 4)
+              + Character.digit(parts[i].charAt(j + 5), 16));
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Converts the string from the database to an array of strings.
    * @param in the array as a string
    * @param requestedClass the class that the user wanted

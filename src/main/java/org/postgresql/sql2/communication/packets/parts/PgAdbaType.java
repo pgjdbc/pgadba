@@ -120,6 +120,14 @@ public enum PgAdbaType implements SqlType {
    */
   ARRAY("anyarray", 2277, AdbaType.ARRAY, BinaryGenerator::fromString, FormatCodeTypes.TEXT),
   /**
+   * Identifies an array of bytea objects.
+   */
+  BYTEA_ARRAY("_bytea", 1001, AdbaType.ARRAY, BinaryGenerator::fromByteaArray, FormatCodeTypes.BINARY),
+  /**
+   * Identifies an array of bytea objects.
+   */
+  INTEGER_ARRAY("_int4", 1007, AdbaType.ARRAY, BinaryGenerator::fromIntegerArray, FormatCodeTypes.BINARY),
+  /**
    * Identifies the generic SQL type {@code BLOB}.
    */
   BLOB("bytea", 17, AdbaType.BLOB, BinaryGenerator::fromByteArray, FormatCodeTypes.BINARY),
@@ -217,6 +225,8 @@ public enum PgAdbaType implements SqlType {
     //classToDb.put(.class, STRUCT);
     //classToDb.put(.class, ARRAY);
     classToDb.put(byte[].class, BLOB);
+    classToDb.put(byte[][].class, BYTEA_ARRAY);
+    classToDb.put(Integer[].class, INTEGER_ARRAY);
     classToDb.put(char[].class, CLOB);
     //classToDb.put(.class, REF);
     //classToDb.put(.class, DATALINK);
@@ -261,7 +271,16 @@ public enum PgAdbaType implements SqlType {
     throw new IllegalArgumentException("unknown type " + type);
   }
 
+  /**
+   * Guesses what database type we should use for an java class.
+   * @param clazz java class to guess for
+   * @return database type
+   */
   public static PgAdbaType guessTypeFromClass(Class clazz) {
+    if (clazz.isArray() && !classToDb.containsKey(clazz)) {
+      return ARRAY;
+    }
+
     return classToDb.computeIfAbsent(clazz, c -> OTHER);
   }
 
