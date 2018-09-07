@@ -11,10 +11,11 @@ import org.postgresql.sql2.communication.NetworkWriteContext;
  * @author Daniel Sagenschneider
  */
 public class SyncRequest implements NetworkRequest {
-  private final Portal portal;
+  
+  private final Query query;
 
-  public SyncRequest(Portal portal) {
-    this.portal = portal;
+  public SyncRequest(Query query) {
+    this.query = query;
   }
 
   /*
@@ -29,8 +30,8 @@ public class SyncRequest implements NetworkRequest {
     wire.initPacket();
     wire.completePacket();
 
-    if (portal.hasMoreToExecute()) {
-      return new BindRequest<>(portal);
+    if (this.query.hasMoreToExecute()) {
+      return new BindRequest<>(this.query);
     }
 
     // Nothing further

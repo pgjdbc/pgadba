@@ -47,7 +47,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   private final BEFrameParser parser = new BEFrameParser();
 
-  private final PreparedStatementCache preparedStatementCache = new PreparedStatementCache();
+  private final QueryFactory queryFactory = new QueryFactory();
 
   private NetworkConnect connect = null;
 
@@ -462,8 +462,8 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   }
 
   @Override
-  public PreparedStatementCache getPreparedStatementCache() {
-    return this.preparedStatementCache;
+  public QueryFactory getQueryFactory() {
+    return this.queryFactory;
   }
 
   @Override

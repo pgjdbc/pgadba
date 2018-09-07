@@ -13,10 +13,10 @@ import org.postgresql.sql2.communication.packets.DataRow;
  * 
  * @author Daniel Sagenschneider
  */
-public class ExecuteResponse extends AbstractPortalResponse {
+public class ExecuteResponse extends AbstractQueryResponse {
 
-  public ExecuteResponse(Portal portal) {
-    super(portal);
+  public ExecuteResponse(Query query) {
+    super(query);
   }
 
   @Override
@@ -24,14 +24,14 @@ public class ExecuteResponse extends AbstractPortalResponse {
     switch (context.getFrameTag()) {
 
     case BEFrameParser.DATA_ROW:
-      DataRow dataRow = new DataRow(context, this.portal.getQuery().getRowDescription().getDescriptions(),
-          this.portal.nextRowNumber());
-      this.portal.addDataRow(dataRow);
+      DataRow dataRow = new DataRow(context, this.query.getReuse().getRowDescription().getDescriptions(),
+          this.query.nextRowNumber());
+      this.query.addDataRow(dataRow);
       return this;
 
     case BEFrameParser.COMMAND_COMPLETE:
       CommandComplete complete = new CommandComplete(context);
-      this.portal.commandComplete(complete, context.getSocketChannel());
+      this.query.commandComplete(complete, context.getSocketChannel());
       return this;
 
     case BEFrameParser.READY_FOR_QUERY:

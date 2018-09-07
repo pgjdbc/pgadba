@@ -15,10 +15,10 @@ public interface NetworkWriteContext extends NetworkContext {
   NetworkOutputStream getOutputStream();
 
   /**
-   * Obtains the {@link PreparedStatementCache}.
+   * Obtains the {@link QueryFactory}.
    * 
-   * @return {@link PreparedStatementCache}.
+   * @return {@link QueryFactory}.
    */
-  PreparedStatementCache getPreparedStatementCache();
+  QueryFactory getQueryFactory();
 
 }

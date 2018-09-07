@@ -64,14 +64,14 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
 
   /**
    * Meant for internal usage, use the connection builder instead.
+   * 
    * @param properties connection properties
    * @param dataSource datasource that this connection is a part of
-   * @param loop the nioLoop is what transports data
+   * @param loop       the nioLoop is what transports data
    * @param bufferPool Pool of {@link PooledByteBuffer} instances.
    * @throws IOException if there is problems with opening a socket channel
    */
-  public PgConnection(Map<ConnectionProperty, Object> properties, PgDataSource dataSource,
-      NioLoop loop,
+  public PgConnection(Map<ConnectionProperty, Object> properties, PgDataSource dataSource, NioLoop loop,
       ByteBufferPool bufferPool) throws IOException {
     this.properties = properties;
     this.dataSource = dataSource;
@@ -82,74 +82,86 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
   }
 
   /**
-   * Returns an {@link Operation} that connects this {@link Connection} to a server. If the
-   * Operation completes successfully and the lifecycle is {@link Lifecycle#NEW} -&gt; {@link
-   * Lifecycle#OPEN}. If lifecycle is {@link Lifecycle#NEW_INACTIVE} -&gt; {@link
-   * Lifecycle#INACTIVE}. If the {@link Operation} completes exceptionally the lifecycle -&gt;
-   * {@link Lifecycle#CLOSED}. The lifecycle must be {@link Lifecycle#NEW} or {@link
-   * Lifecycle#NEW_INACTIVE} when the {@link Operation} is executed. Otherwise the {@link Operation}
-   * will complete exceptionally with {@link SqlException}.
+   * Returns an {@link Operation} that connects this {@link Connection} to a
+   * server. If the Operation completes successfully and the lifecycle is
+   * {@link Lifecycle#NEW} -&gt; {@link Lifecycle#OPEN}. If lifecycle is
+   * {@link Lifecycle#NEW_INACTIVE} -&gt; {@link Lifecycle#INACTIVE}. If the
+   * {@link Operation} completes exceptionally the lifecycle -&gt;
+   * {@link Lifecycle#CLOSED}. The lifecycle must be {@link Lifecycle#NEW} or
+   * {@link Lifecycle#NEW_INACTIVE} when the {@link Operation} is executed.
+   * Otherwise the {@link Operation} will complete exceptionally with
+   * {@link SqlException}.
    *
-   * <p>Note: It is highly recommended to use the {@link Connection#connect()} convenience method or to
-   * use {@link DataSource#getConnection} which itself calls {@link Connection#connect()}. Unless
-   * there is a specific need, do not call this method directly.
+   * <p>
+   * Note: It is highly recommended to use the {@link Connection#connect()}
+   * convenience method or to use {@link DataSource#getConnection} which itself
+   * calls {@link Connection#connect()}. Unless there is a specific need, do not
+   * call this method directly.
    *
-   * <p>This method exists partially to clearly explain that while creating a {@link Connection} is
-   * non-blocking, the act of connecting to the server may block and so is executed asynchronously.
-   * We could write a bunch of text saying this but defining this method is more explicit. Given the
-   * {@link Connection#connect()} convenience methods there's probably not much reason to use this
-   * method, but on the other hand, who knows, so here it is.
+   * <p>
+   * This method exists partially to clearly explain that while creating a
+   * {@link Connection} is non-blocking, the act of connecting to the server may
+   * block and so is executed asynchronously. We could write a bunch of text
+   * saying this but defining this method is more explicit. Given the
+   * {@link Connection#connect()} convenience methods there's probably not much
+   * reason to use this method, but on the other hand, who knows, so here it is.
    *
-   * @return an {@link Operation} that connects this {@link Connection} to a server.
-   * @throws IllegalStateException if this {@link Connection} is in a lifecycle state other than
-   * {@link Lifecycle#NEW}.
+   * @return an {@link Operation} that connects this {@link Connection} to a
+   *         server.
+   * @throws IllegalStateException if this {@link Connection} is in a lifecycle
+   *                               state other than {@link Lifecycle#NEW}.
    */
   @Override
   public Operation<Void> connectOperation() {
     if (lifecycle != Lifecycle.NEW) {
-      throw new IllegalStateException(
-          "only connections in state NEW are allowed to start connecting");
+      throw new IllegalStateException("only connections in state NEW are allowed to start connecting");
     }
 
     return new PgConnectOperation(this, groupSubmission);
   }
 
   /**
-   * Returns an {@link Operation} that verifies that the resources are available and operational.
-   * Successful completion of that {@link Operation} implies that at some point between the
-   * beginning and end of the {@link Operation} the Connection was working properly to the extent
-   * specified by {@code depth}. There is no guarantee that the {@link Connection} is still working
-   * after completion.
+   * Returns an {@link Operation} that verifies that the resources are available
+   * and operational. Successful completion of that {@link Operation} implies that
+   * at some point between the beginning and end of the {@link Operation} the
+   * Connection was working properly to the extent specified by {@code depth}.
+   * There is no guarantee that the {@link Connection} is still working after
+   * completion.
    *
-   * @param depth how completely to check that resources are available and operational. Not {@code
-   * null}.
+   * @param depth how completely to check that resources are available and
+   *              operational. Not {@code
+   * null}     .
    * @return an {@link Operation} that will validate this {@link Connection}
    * @throws IllegalStateException if this Connection is not active
    */
   @Override
   public Operation<Void> validationOperation(Connection.Validation depth) {
     if (!lifecycle.isOpen() || !lifecycle.isActive()) {
-      throw new IllegalStateException(
-          "connection lifecycle in state: " + lifecycle + " and not open for new work");
+      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
     return new PgValidationOperation(this, depth);
   }
 
   /**
-   * Create an {@link Operation} to close this {@link Connection}. When the {@link Operation} is
-   * executed, if this {@link Connection} is open -&gt; {@link Lifecycle#CLOSING}. If this {@link
-   * Connection} is closed executing the returned {@link Operation} is a noop. When the queue is
-   * empty and all resources released -&gt; {@link Lifecycle#CLOSED}.
+   * Create an {@link Operation} to close this {@link Connection}. When the
+   * {@link Operation} is executed, if this {@link Connection} is open -&gt;
+   * {@link Lifecycle#CLOSING}. If this {@link Connection} is closed executing the
+   * returned {@link Operation} is a noop. When the queue is empty and all
+   * resources released -&gt; {@link Lifecycle#CLOSED}.
    *
-   * <p>A close {@link Operation} is never skipped. Even when the {@link Connection} is dependent, the
-   * default, and an {@link Operation} completes exceptionally, a close {@link Operation} is still
-   * executed. If the {@link Connection} is parallel, a close {@link Operation} is not executed so
-   * long as there are other {@link Operation}s or the {@link Connection} is held; for more {@link
-   * Operation}s.
+   * <p>
+   * A close {@link Operation} is never skipped. Even when the {@link Connection}
+   * is dependent, the default, and an {@link Operation} completes exceptionally,
+   * a close {@link Operation} is still executed. If the {@link Connection} is
+   * parallel, a close {@link Operation} is not executed so long as there are
+   * other {@link Operation}s or the {@link Connection} is held; for more
+   * {@link Operation}s.
    *
-   * <p>Note: It is highly recommended to use try with resources or the {@link Connection#close()}
-   * convenience method. Unless there is a specific need, do not call this method directly.
+   * <p>
+   * Note: It is highly recommended to use try with resources or the
+   * {@link Connection#close()} convenience method. Unless there is a specific
+   * need, do not call this method directly.
    *
    * @return an {@link Operation} that will close this {@link Connection}.
    * @throws IllegalStateException if the Connection is not active
@@ -169,17 +181,17 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
   /**
    * Create a new {@link OperationGroup} for this {@link Connection}.
    *
-   * @param <S> the result type of the member {@link Operation}s of the returned {@link
-   * OperationGroup}
-   * @param <T> the result type of the collected results of the member {@link Operation}s
+   * @param <S> the result type of the member {@link Operation}s of the returned
+   *        {@link OperationGroup}
+   * @param <T> the result type of the collected results of the member
+   *        {@link Operation}s
    * @return a new {@link OperationGroup}.
    * @throws IllegalStateException if this Connection is not active
    */
   @Override
   public <S, T> OperationGroup<S, T> operationGroup() {
     if (!lifecycle.isOpen() || !lifecycle.isActive()) {
-      throw new IllegalStateException(
-          "connection lifecycle in state: " + lifecycle + " and not open for new work");
+      throw new IllegalStateException("connection lifecycle in state: " + lifecycle + " and not open for new work");
     }
 
     if (logger.isLoggable(Level.CONFIG)) {
@@ -190,11 +202,14 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
   }
 
   /**
-   * Returns a new {@link Transaction} that can be used as an argument to a commit Operation.
+   * Returns a new {@link Transaction} that can be used as an argument to a commit
+   * Operation.
    *
-   * <p>It is most likely an error to call this within an error handler, or any handler as it is very
-   * likely that when the handler is executed the next submitted endTransaction {@link Operation}
-   * will have been created with a different Transaction.
+   * <p>
+   * It is most likely an error to call this within an error handler, or any
+   * handler as it is very likely that when the handler is executed the next
+   * submitted endTransaction {@link Operation} will have been created with a
+   * different Transaction.
    *
    * @return a new {@link Transaction}. Not retained.
    * @throws IllegalStateException if this Connection is not active
@@ -205,8 +220,8 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
   }
 
   /**
-   * Register a listener that will be called whenever there is a change in the lifecycle of this
-   * {@link Connection}.
+   * Register a listener that will be called whenever there is a change in the
+   * lifecycle of this {@link Connection}.
    *
    * @param listener Can be {@code null}.
    * @throws IllegalStateException if this Connection is not active
@@ -225,9 +240,10 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
   }
 
   /**
-   * Removes a listener that was registered by calling registerLifecycleListener.Sometime after this
-   * method is called the listener will stop receiving lifecycle events. If the listener is not
-   * registered, this is a no-op.
+   * Removes a listener that was registered by calling
+   * registerLifecycleListener.Sometime after this method is called the listener
+   * will stop receiving lifecycle events. If the listener is not registered, this
+   * is a no-op.
    *
    * @param listener Not {@code null}.
    * @return this Connection
@@ -257,12 +273,13 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
   }
 
   /**
-   * Terminate this {@link Connection}. If lifecycle is {@link Lifecycle#NEW}, {@link
-   * Lifecycle#OPEN}, {@link Lifecycle#INACTIVE} or {@link Lifecycle#CLOSING} -&gt; {@link
-   * Lifecycle#ABORTING} If lifecycle is {@link Lifecycle#ABORTING} or {@link Lifecycle#CLOSED} this
-   * is a noop. If an {@link Operation} is currently executing, terminate it immediately. Remove all
-   * remaining {@link Operation}s from the queue. {@link Operation}s are not skipped. They are just
-   * removed from the queue.
+   * Terminate this {@link Connection}. If lifecycle is {@link Lifecycle#NEW},
+   * {@link Lifecycle#OPEN}, {@link Lifecycle#INACTIVE} or
+   * {@link Lifecycle#CLOSING} -&gt; {@link Lifecycle#ABORTING} If lifecycle is
+   * {@link Lifecycle#ABORTING} or {@link Lifecycle#CLOSED} this is a noop. If an
+   * {@link Operation} is currently executing, terminate it immediately. Remove
+   * all remaining {@link Operation}s from the queue. {@link Operation}s are not
+   * skipped. They are just removed from the queue.
    *
    * @return this {@link Connection}
    */
@@ -279,13 +296,15 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
   }
 
   /**
-   * Return the set of properties configured on this {@link Connection} excepting any sensitive
-   * properties. Neither the key nor the value for sensitive properties are included in the result.
-   * Properties (other than sensitive properties) that have default values are included even when
-   * not explicitly set. Properties that have no default value and are not set explicitly are not
+   * Return the set of properties configured on this {@link Connection} excepting
+   * any sensitive properties. Neither the key nor the value for sensitive
+   * properties are included in the result. Properties (other than sensitive
+   * properties) that have default values are included even when not explicitly
+   * set. Properties that have no default value and are not set explicitly are not
    * included.
    *
-   * @return a {@link Map} of property, value. Not modifiable. May be retained. Not {@code null}.
+   * @return a {@link Map} of property, value. Not modifiable. May be retained.
+   *         Not {@code null}.
    * @throws IllegalStateException if this Connection is not active
    */
   @Override
@@ -294,7 +313,8 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
   }
 
   /**
-   * Returns a {@link ShardingKey.Builder} that is valid for this {@link Connection}.
+   * Returns a {@link ShardingKey.Builder} that is valid for this
+   * {@link Connection}.
    *
    * @return a {@link ShardingKey.Builder} for this {@link Connection}
    */
@@ -309,10 +329,11 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
   }
 
   /**
-   * Make this {@link Connection} ready for use. A newly created {@link Connection} is active.
-   * Calling this method on a {@link Connection} that is active is a no-op. If the lifecycle is
-   * {@link Lifecycle#INACTIVE} -&gt; {@link Lifecycle#OPEN}. If the lifecycle is {@link
-   * Lifecycle#NEW_INACTIVE} -&gt; {@link Lifecycle#NEW}.
+   * Make this {@link Connection} ready for use. A newly created
+   * {@link Connection} is active. Calling this method on a {@link Connection}
+   * that is active is a no-op. If the lifecycle is {@link Lifecycle#INACTIVE}
+   * -&gt; {@link Lifecycle#OPEN}. If the lifecycle is
+   * {@link Lifecycle#NEW_INACTIVE} -&gt; {@link Lifecycle#NEW}.
    *
    * @return this {@link Connection}
    * @throws IllegalStateException if this {@link Connection} is closed.
@@ -330,23 +351,28 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
   }
 
   /**
-   * Makes this {@link Connection} inactive. After a call to this method previously submitted
-   * Operations will be executed normally. If the lifecycle is {@link Lifecycle#NEW} -&gt; {@link
-   * Lifecycle#NEW_INACTIVE}. if the lifecycle is {@link Lifecycle#OPEN} -&gt; {@link
-   * Lifecycle#INACTIVE}. If the lifecycle is {@link Lifecycle#INACTIVE} or {@link
-   * Lifecycle#NEW_INACTIVE} this method is a no-op. After calling this method calling any method
-   * other than {@link Connection#deactivate}, {@link Connection#activate}, {@link
-   * Connection#abort}, or {@link Connection#getConnectionLifecycle} or submitting any member {@link
-   * Operation} will throw {@link IllegalStateException}. Local {@link Connection} state not created
-   * by {@link Connection.Builder} may not be preserved.
+   * Makes this {@link Connection} inactive. After a call to this method
+   * previously submitted Operations will be executed normally. If the lifecycle
+   * is {@link Lifecycle#NEW} -&gt; {@link Lifecycle#NEW_INACTIVE}. if the
+   * lifecycle is {@link Lifecycle#OPEN} -&gt; {@link Lifecycle#INACTIVE}. If the
+   * lifecycle is {@link Lifecycle#INACTIVE} or {@link Lifecycle#NEW_INACTIVE}
+   * this method is a no-op. After calling this method calling any method other
+   * than {@link Connection#deactivate}, {@link Connection#activate},
+   * {@link Connection#abort}, or {@link Connection#getConnectionLifecycle} or
+   * submitting any member {@link Operation} will throw
+   * {@link IllegalStateException}. Local {@link Connection} state not created by
+   * {@link Connection.Builder} may not be preserved.
    *
-   * <p>Any implementation of a {@link Connection} pool is by default required to call {@code
-   * deactivate} when putting a {@link Connection} into a pool. The implementation is required to
-   * call {@code activate} when removing a {@link Connection} from a pool so the {@link Connection}
-   * can be used. An implementation of a {@link Connection} pool may have an optional mode where it
-   * does not call {@code deactivate}/{@code activate} as required above. The behavior of the pool
-   * and {@link Connection}s cached in the pool in such a mode is entirely implementation
-   * dependent.
+   * <p>
+   * Any implementation of a {@link Connection} pool is by default required to
+   * call {@code
+   * deactivate} when putting a {@link Connection} into a pool. The implementation
+   * is required to call {@code activate} when removing a {@link Connection} from
+   * a pool so the {@link Connection} can be used. An implementation of a
+   * {@link Connection} pool may have an optional mode where it does not call
+   * {@code deactivate}/{@code activate} as required above. The behavior of the
+   * pool and {@link Connection}s cached in the pool in such a mode is entirely
+   * implementation dependent.
    *
    * @return this {@link Connection}
    * @throws IllegalStateException if this {@link Connection} is closed
@@ -399,20 +425,18 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
    */
   public void submit(PgSubmission<?> submission) {
     switch (submission.getCompletionType()) {
-      case LOCAL:
-      case CATCH:
-        sendNetworkRequest(new ImmediateComplete(submission));
-        break;
-      case GROUP:
-        if (lastSubmission != null) {
-          ((CompletableFuture<?>) lastSubmission.getCompletionStage()).thenApply(a ->
-              submission.finish(null));
-        }
-        break;
+    case LOCAL:
+    case CATCH:
+      sendNetworkRequest(new ImmediateComplete(submission));
+      break;
+    case GROUP:
+      if (lastSubmission != null) {
+        ((CompletableFuture<?>) lastSubmission.getCompletionStage()).thenApply(a -> submission.finish(null));
+      }
+      break;
 
-      default:
-        Portal portal = new Portal(submission);
-        sendNetworkRequest(new ParseRequest<>(portal));
+    default:
+      sendNetworkRequest(new ParseRequest<>(submission));
     }
     lastSubmission = submission;
   }

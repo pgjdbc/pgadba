@@ -11,10 +11,10 @@ import org.postgresql.sql2.communication.NetworkResponse;
  * 
  * @author Daniel Sagenschneider
  */
-public class BindResponse extends AbstractPortalResponse {
+public class BindResponse extends AbstractQueryResponse {
 
-  public BindResponse(Portal portal) {
-    super(portal);
+  public BindResponse(Query query) {
+    super(query);
   }
 
   @Override

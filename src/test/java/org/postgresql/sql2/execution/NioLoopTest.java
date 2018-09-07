@@ -75,8 +75,12 @@ public class NioLoopTest {
       final int queryCount = 1000;
       Submission<Integer>[] submissions = new Submission[queryCount];
       for (int i = 0; i < queryCount; i++) {
+        final int index = i;
         submissions[i] = connection.<Integer>rowOperation("SELECT 1 as t")
             .collect(CollectorUtils.singleCollector(Integer.class)).submit();
+
+        // TODO RMEOVE
+        submissions[i].getCompletionStage().thenRun(() -> System.out.println("-> " + index));
       }
 
       // Ensure obtain all results
@@ -112,10 +116,8 @@ public class NioLoopTest {
   @Test
   public void reuseNioLoopBetweenDataSources() throws Exception {
     MockNioLoop loop = new MockNioLoop();
-    try (
-        DataSource dataSourceOne = createDataSource().connectionProperty(PgConnectionProperty.NIO_LOOP, loop).build();
-        DataSource dataSourceTwo = createDataSource().connectionProperty(PgConnectionProperty.NIO_LOOP, loop)
-            .build()) {
+    try (DataSource dataSourceOne = createDataSource().connectionProperty(PgConnectionProperty.NIO_LOOP, loop).build();
+        DataSource dataSourceTwo = createDataSource().connectionProperty(PgConnectionProperty.NIO_LOOP, loop).build()) {
 
       // Run query via each data source
       DataSource[] dataSources = new DataSource[] { dataSourceOne, dataSourceTwo };

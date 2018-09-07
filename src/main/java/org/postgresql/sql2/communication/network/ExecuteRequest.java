@@ -14,10 +14,10 @@ import org.postgresql.sql2.util.BinaryHelper;
  */
 public class ExecuteRequest<T> implements NetworkRequest {
 
-  private final Portal portal;
+  private final Query query;
 
-  public ExecuteRequest(Portal portal) {
-    this.portal = portal;
+  public ExecuteRequest(Query query) {
+    this.query = query;
   }
 
   /*
@@ -31,17 +31,16 @@ public class ExecuteRequest<T> implements NetworkRequest {
     NetworkOutputStream wire = context.getOutputStream();
     wire.write(FeFrame.FrontendTag.EXECUTE.getByte());
     wire.initPacket();
-    wire.write(this.portal.getPortalName());
+    wire.write(this.query.getQueryName());
     wire.write(BinaryHelper.writeInt(0)); // number of rows to return, 0 == all
     wire.completePacket();
 
-    // TODO Auto-generated method stub
-    return new SyncRequest(portal);
+    return new SyncRequest(this.query);
   }
 
   @Override
   public NetworkResponse getRequiredResponse() {
-    return new ExecuteResponse(this.portal);
+    return new ExecuteResponse(this.query);
   }
 
 }

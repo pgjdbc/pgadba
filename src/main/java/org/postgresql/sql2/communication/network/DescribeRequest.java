@@ -13,15 +13,15 @@ import org.postgresql.sql2.communication.NetworkWriteContext;
  */
 public class DescribeRequest<T> implements NetworkRequest {
 
-  private final Portal portal;
+  private final Query query;
 
   /**
    * Instantiate.
    *
-   * @param portal the portal this request connects to
+   * @param query {@link Query}.
    */
-  public DescribeRequest(Portal portal) {
-    this.portal = portal;
+  public DescribeRequest(Query query) {
+    this.query = query;
   }
 
   /*
@@ -31,21 +31,37 @@ public class DescribeRequest<T> implements NetworkRequest {
   @Override
   public NetworkRequest write(NetworkWriteContext context) throws Exception {
 
-    // Send describe packet
-    NetworkOutputStream wire = context.getOutputStream();
-    wire.write(FeFrame.FrontendTag.DESCRIBE.getByte());
-    wire.initPacket();
-    wire.write('S');
-    wire.write(this.portal.getQuery().getQueryName());
-    wire.completePacket();
+    // Obtain the reuse
+    QueryReuse reuse = this.query.getReuse();
+
+    // Determine if describe query
+    if ((reuse.getRowDescription() == null) && (!reuse.isWaitingDescribe())) {
+
+      // Send describe packet
+      NetworkOutputStream wire = context.getOutputStream();
+      wire.write(FeFrame.FrontendTag.DESCRIBE.getByte());
+      wire.initPacket();
+      wire.write('S');
+      wire.write(this.query.getReuse().getPortalNameOrUnnamed());
+      wire.completePacket();
+    }
 
     // Next step to bind
-    return new BindRequest<>(this.portal);
+    return new BindRequest<>(this.query);
   }
 
   @Override
   public NetworkResponse getRequiredResponse() {
-    return new DescribeResponse(this.portal);
+
+    // Determine if waiting on describe
+    QueryReuse reuse = this.query.getReuse();
+    if (!reuse.isWaitingDescribe()) {
+      reuse.flagWaitingDescribe();
+      return new DescribeResponse(this.query);
+    }
+
+    // Already waiting on describe
+    return null;
   }
 
 }

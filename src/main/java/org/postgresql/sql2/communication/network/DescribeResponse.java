@@ -12,10 +12,10 @@ import org.postgresql.sql2.communication.packets.RowDescription;
  * 
  * @author Daniel Sagenschneider
  */
-public class DescribeResponse extends AbstractPortalResponse {
+public class DescribeResponse extends AbstractQueryResponse {
 
-  public DescribeResponse(Portal portal) {
-    super(portal);
+  public DescribeResponse(Query query) {
+    super(query);
   }
 
   @Override
@@ -30,7 +30,8 @@ public class DescribeResponse extends AbstractPortalResponse {
 
     case BEFrameParser.ROW_DESCRIPTION:
       RowDescription rowDescription = new RowDescription(context.getPayload());
-      this.portal.getQuery().setRowDescription(rowDescription);
+      QueryReuse reuse = this.query.getReuse();
+      reuse.setRowDescription(rowDescription);
       return null; // nothing further
 
     default:

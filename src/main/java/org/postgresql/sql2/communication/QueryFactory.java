@@ -4,15 +4,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
+import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.communication.network.Query;
+import org.postgresql.sql2.communication.network.QueryReuse;
 
-public class PreparedStatementCache {
+public class QueryFactory {
 
   /**
    * As only used on networking thread, is thread safe.
    */
-  private Map<StatementKey, Query> sqlToQuery = new HashMap<>();
+  private Map<StatementKey, QueryReuse> sqlToReuse = new HashMap<>();
 
   /**
    * Obtains the {@link Query} for the SQL.
@@ -21,13 +24,21 @@ public class PreparedStatementCache {
    * @param params Parameters.
    * @return {@link Query}.
    */
-  public Query getQuery(String sql, List<Integer> params) {
+  public Query createQuery(PgSubmission<?> submission) throws InterruptedException, ExecutionException {
+
+    // Obtain the details
+    String sql = submission.getSql();
+    List<Integer> parameters = submission.getParamTypes();
     if (sql == null) {
       throw new IllegalArgumentException("No SQL provided");
     }
 
-    // Obtain or create the query
-    return this.sqlToQuery.computeIfAbsent(new StatementKey(sql, params), key -> new Query());
+    // Obtain or create the query re-use
+    StatementKey key = new StatementKey(sql, parameters);
+    QueryReuse reuse = this.sqlToReuse.computeIfAbsent(key, (absentKey) -> new QueryReuse());
+
+    // Return the query
+    return new Query(submission, reuse);
   }
 
   private class StatementKey {
@@ -50,7 +61,7 @@ public class PreparedStatementCache {
       }
 
       StatementKey that = (StatementKey) o;
-      return Objects.equals(sql, that.sql) && Objects.equals(params, that.params);
+      return Objects.equals(sql, that.sql) ; //&& Objects.equals(params, that.params);
     }
 
     @Override

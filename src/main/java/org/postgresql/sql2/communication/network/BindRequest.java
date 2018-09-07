@@ -16,10 +16,10 @@ import org.postgresql.sql2.util.BinaryHelper;
  */
 public class BindRequest<T> implements NetworkRequest {
 
-  private final Portal portal;
+  private final Query query;
 
-  public BindRequest(Portal portal) {
-    this.portal = portal;
+  public BindRequest(Query query) {
+    this.query = query;
   }
 
   /*
@@ -30,17 +30,14 @@ public class BindRequest<T> implements NetworkRequest {
   public NetworkRequest write(NetworkWriteContext context) throws Exception {
 
     // Obtain the query details
-    String portalName = this.portal.getPortalName();
-    String queryName = this.portal.getQuery().getQueryName();
-    String sql = this.portal.getSql();
-    ParameterHolder holder = this.portal.getParameterHolder();
+    ParameterHolder holder = this.query.getSubmission().getHolder();
 
     // Write the packet
     NetworkOutputStream wire = context.getOutputStream();
     wire.write(FeFrame.FrontendTag.BIND.getByte());
     wire.initPacket();
-    wire.write(this.portal.getPortalName());
-    wire.write(this.portal.getQuery().getQueryName());
+    wire.write(this.query.getQueryName());
+    wire.write(this.query.getReuse().getPortalNameOrUnnamed());
     wire.write(BinaryHelper.writeShort(holder.size()));
     for (QueryParameter qp : holder.parameters()) {
       wire.write(BinaryHelper.writeShort(qp.getParameterFormatCode()));
@@ -61,12 +58,12 @@ public class BindRequest<T> implements NetworkRequest {
     wire.completePacket();
 
     // Next step to execute
-    return new ExecuteRequest<>(this.portal);
+    return new ExecuteRequest<>(this.query);
   }
 
   @Override
   public NetworkResponse getRequiredResponse() {
-    return new BindResponse(this.portal);
+    return new BindResponse(this.query);
   }
 
 }

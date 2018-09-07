@@ -1,8 +1,17 @@
 package org.postgresql.sql2.communication.network;
 
+import static org.postgresql.sql2.PgSubmission.Types.ARRAY_COUNT;
+
+import java.nio.channels.SocketChannel;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.postgresql.sql2.communication.packets.RowDescription;
+import org.postgresql.sql2.PgSubmission;
+import org.postgresql.sql2.communication.packets.CommandComplete;
+import org.postgresql.sql2.communication.packets.DataRow;
+import org.postgresql.sql2.submissions.ArrayCountSubmission;
+import org.postgresql.sql2.util.PgCount;
 
 /**
  * Query.
@@ -17,29 +26,34 @@ public class Query {
   private static AtomicInteger nameIndex = new AtomicInteger(0);
 
   /**
+   * {@link PgSubmission}.
+   */
+  private final PgSubmission<?> submission;
+
+  /**
+   * {@link QueryReuse}.
+   */
+  private final QueryReuse reuse;
+
+  /**
    * Name for the {@link Query}.
    */
   private final String name;
 
   /**
-   * Indicates whether parsed.
+   * Next row number.
    */
-  private boolean isParsed = false;
-
-  /**
-   * Indicates if waiting parse.
-   */
-  private boolean isAwaitingParse = false;
-
-  /**
-   * {@link RowDescription}.
-   */
-  private RowDescription rowDescription = null;
+  private long nextRowNumber = 0;
 
   /**
    * Instantiate.
+   * 
+   * @param submission {@link PgSubmission}.
+   * @param reuse      {@link QueryReuse}.
    */
-  public Query() {
+  public Query(PgSubmission<?> submission, QueryReuse reuse) {
+    this.submission = submission;
+    this.reuse = reuse;
     this.name = "q" + nameIndex.incrementAndGet();
   }
 
@@ -53,53 +67,95 @@ public class Query {
   }
 
   /**
-   * Indicates if parsed.
+   * Obtains the {@link QueryReuse}.
    * 
-   * @return Parsed.
+   * @return {@link QueryReuse}.
    */
-  public boolean isParsed() {
-    return this.isParsed;
+  public QueryReuse getReuse() {
+    return this.reuse;
   }
 
   /**
-   * Flags that the query has parsed.
-   */
-  void flagParsed() {
-    this.isParsed = true;
-  }
-
-  /**
-   * Indicates if waiting on parse.
+   * Obtains the {@link PgSubmission}.
    * 
-   * @return Waiting on parse.
+   * @return {@link PgSubmission}.
    */
-  public boolean isWaitingParse() {
-    return this.isAwaitingParse;
-  }
-  
-  /**
-   * Flags that waiting on parse.
-   */
-  void flagWaitingParse() {
-    this.isAwaitingParse = true;
+  public PgSubmission<?> getSubmission() {
+    return this.submission;
   }
 
   /**
-   * Obtains the {@link RowDescription}.
+   * Obtains the next row number.
    * 
-   * @return {@link RowDescription}.
+   * @return Next row number.
    */
-  RowDescription getRowDescription() {
-    return this.rowDescription;
+  long nextRowNumber() {
+    return this.nextRowNumber++;
   }
 
   /**
-   * Specifies the {@link RowDescription}.
+   * Adds a data row.
    * 
-   * @param rowDescription {@link RowDescription}.
+   * @param dataRow {@link DataRow}.
    */
-  void setRowDescription(RowDescription rowDescription) {
-    this.rowDescription = rowDescription;
+  void addDataRow(DataRow dataRow) {
+    this.submission.addRow(dataRow);
   }
 
+  /**
+   * Flags the command is complete.
+   * 
+   * @param complete      Command is complete.
+   * @param socketChannel {@link SocketChannel}.
+   */
+  void commandComplete(CommandComplete complete, SocketChannel socketChannel) {
+    try {
+      switch (submission.getCompletionType()) {
+      case COUNT:
+        submission.finish(new PgCount(complete.getNumberOfRowsAffected()));
+        break;
+      case ROW:
+        submission.finish(null);
+        break;
+      case CLOSE:
+        submission.finish(socketChannel);
+        break;
+      case TRANSACTION:
+        submission.finish(complete.getType());
+        break;
+      case ARRAY_COUNT:
+        submission.finish(complete.getNumberOfRowsAffected());
+        break;
+      case VOID:
+        ((CompletableFuture) submission.getCompletionStage()).complete(null);
+        break;
+      case PROCESSOR:
+        submission.finish(null);
+        break;
+      case OUT_PARAMETER:
+        submission.finish(null);
+        break;
+      default:
+        throw new IllegalStateException(
+            "Invalid completion type '" + submission.getCompletionType() + "' for " + this.getClass().getSimpleName());
+      }
+    } catch (Throwable t) {
+      ((CompletableFuture<?>) submission.getCompletionStage()).completeExceptionally(t);
+    }
+  }
+
+  /**
+   * Some submission types needs multiple rounds of queries before the operation
+   * is finished. This function returns true if more is needed.
+   *
+   * @return true if another query should be sent to the database
+   * @throws ExecutionException   if the bound variables are a future that fails
+   * @throws InterruptedException if the bound variables are a future that fails
+   */
+  public boolean hasMoreToExecute() throws ExecutionException, InterruptedException {
+    if (submission.getCompletionType() == ARRAY_COUNT) {
+      return ((ArrayCountSubmission) submission).hasMoreToExecute();
+    }
+    return false;
+  }
 }

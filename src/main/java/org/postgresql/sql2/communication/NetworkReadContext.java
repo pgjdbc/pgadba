@@ -31,11 +31,11 @@ public interface NetworkReadContext extends NetworkContext {
   NetworkInputStream getPayload();
 
   /**
-   * Obtains the {@link PreparedStatementCache}.
+   * Obtains the {@link QueryFactory}.
    * 
-   * @return {@link PreparedStatementCache}.
+   * @return {@link QueryFactory}.
    */
-  PreparedStatementCache getPreparedStatementCache();
+  QueryFactory getQueryFactory();
 
   /**
    * Allows overriding {@link ConnectionProperty}.

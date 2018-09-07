@@ -134,7 +134,7 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
 
   @Override
   public NetworkResponse handleException(Throwable ex) {
-    Portal.doHandleException(this.connectSubmission, ex);
+    AbstractQueryResponse.doHandleException(this.connectSubmission, ex);
     return null;
   }
 
