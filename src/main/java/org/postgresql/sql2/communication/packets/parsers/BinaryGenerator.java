@@ -77,6 +77,39 @@ public class BinaryGenerator {
   }
 
   /**
+   * parses an array of Floats to a byte array.
+   * @param input the Float[] to convert
+   * @return a byte array
+   */
+  public static byte[] fromFloatArray(Object input) {
+    if (input instanceof Float[]) {
+      Float[] in = (Float[]) input;
+      int size = 20 + in.length * 8;
+      byte[] data = new byte[size];
+      int pos = 0;
+      BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
+      pos += 4;
+      BinaryHelper.writeIntAtPos(0, pos, data); // flags
+      pos += 4;
+      BinaryHelper.writeIntAtPos(700, pos, data); // oid of float
+      pos += 4;
+      BinaryHelper.writeIntAtPos(in.length, pos, data); // length of first dimension
+      pos += 4;
+      BinaryHelper.writeIntAtPos(1, pos, data); // lower b
+      pos += 4;
+      for (int i = 0; i < in.length; i++) {
+        BinaryHelper.writeIntAtPos(4, pos, data);
+        pos += 4;
+        BinaryHelper.writeFloatAtPos(in[i], pos, data);
+        pos += 4;
+      }
+      return data;
+    }
+
+    return null;
+  }
+
+  /**
    * parses Double to a byte array.
    * @param input the Double to convert
    * @return a byte array of length 8 or null

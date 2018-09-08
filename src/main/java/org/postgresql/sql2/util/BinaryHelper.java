@@ -1,5 +1,7 @@
 package org.postgresql.sql2.util;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -53,6 +55,18 @@ public class BinaryHelper {
     bb[pos + 1] = (byte) (val >>> 16);
     bb[pos + 2] = (byte) (val >>> 8);
     bb[pos + 3] = (byte) (val);
+  }
+
+  /**
+   * writes a float to a byte array in network byte order.
+   * @param val the float to write
+   */
+  public static void writeFloatAtPos(float val, int pos, byte[] bb) {
+    byte[] arr = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putFloat(val).array();
+    bb[pos] = arr[0];
+    bb[pos + 1] = arr[1];
+    bb[pos + 2] = arr[2];
+    bb[pos + 3] = arr[3];
   }
 
   /**

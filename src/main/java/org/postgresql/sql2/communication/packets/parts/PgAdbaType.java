@@ -40,6 +40,10 @@ public enum PgAdbaType implements SqlType {
    */
   FLOAT("float", 700, AdbaType.FLOAT, BinaryGenerator::fromFloat, FormatCodeTypes.BINARY),
   /**
+   * Identifies the generic SQL type {@code FLOAT}.
+   */
+  FLOAT_ARRAY("_float", 1021, AdbaType.FLOAT, BinaryGenerator::fromFloatArray, FormatCodeTypes.BINARY),
+  /**
    * Identifies the generic SQL type {@code REAL}.
    */
   REAL("float", 700, AdbaType.REAL, BinaryGenerator::fromFloat, FormatCodeTypes.BINARY),
@@ -227,6 +231,7 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(byte[].class, BLOB);
     classToDb.put(byte[][].class, BYTEA_ARRAY);
     classToDb.put(Integer[].class, INTEGER_ARRAY);
+    classToDb.put(Float[].class, FLOAT_ARRAY);
     classToDb.put(char[].class, CLOB);
     //classToDb.put(.class, REF);
     //classToDb.put(.class, DATALINK);
