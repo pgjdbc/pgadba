@@ -122,6 +122,39 @@ public class BinaryGenerator {
   }
 
   /**
+   * parses an array of Floats to a byte array.
+   * @param input the Float[] to convert
+   * @return a byte array
+   */
+  public static byte[] fromDoubleArray(Object input) {
+    if (input instanceof Double[]) {
+      Double[] in = (Double[]) input;
+      int size = 20 + in.length * 12;
+      byte[] data = new byte[size];
+      int pos = 0;
+      BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
+      pos += 4;
+      BinaryHelper.writeIntAtPos(0, pos, data); // flags
+      pos += 4;
+      BinaryHelper.writeIntAtPos(701, pos, data); // oid of float8
+      pos += 4;
+      BinaryHelper.writeIntAtPos(in.length, pos, data); // length of first dimension
+      pos += 4;
+      BinaryHelper.writeIntAtPos(1, pos, data); // lower b
+      pos += 4;
+      for (int i = 0; i < in.length; i++) {
+        BinaryHelper.writeIntAtPos(8, pos, data);
+        pos += 4;
+        BinaryHelper.writeDoubleAtPos(in[i], pos, data);
+        pos += 8;
+      }
+      return data;
+    }
+
+    return null;
+  }
+
+  /**
    * parses a BigDecimal to a byte array.
    * @param input the BigDecimal to convert
    * @return a byte array of appropriate length or null

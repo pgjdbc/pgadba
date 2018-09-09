@@ -85,6 +85,22 @@ public class BinaryHelper {
   }
 
   /**
+   * writes a float to a byte array in network byte order.
+   * @param val the float to write
+   */
+  public static void writeDoubleAtPos(double val, int pos, byte[] bb) {
+    byte[] arr = ByteBuffer.allocate(8).order(ByteOrder.BIG_ENDIAN).putDouble(val).array();
+    bb[pos] = arr[0];
+    bb[pos + 1] = arr[1];
+    bb[pos + 2] = arr[2];
+    bb[pos + 3] = arr[3];
+    bb[pos + 4] = arr[4];
+    bb[pos + 5] = arr[5];
+    bb[pos + 6] = arr[6];
+    bb[pos + 7] = arr[7];
+  }
+
+  /**
    * writes a short to a byte array in network byte order.
    * @param val the short to write
    * @return the byte array, size 2
