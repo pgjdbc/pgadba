@@ -254,6 +254,39 @@ public class BinaryGenerator {
   }
 
   /**
+   * parses an array into to a byte array.
+   * @param input the Array to convert
+   * @return a byte array
+   */
+  public static byte[] fromLongArray(Object input) {
+    if (input instanceof Long[]) {
+      Long[] in = (Long[]) input;
+      int size = 20 + in.length * 12;
+      byte[] data = new byte[size];
+      int pos = 0;
+      BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
+      pos += 4;
+      BinaryHelper.writeIntAtPos(0, pos, data); // flags
+      pos += 4;
+      BinaryHelper.writeIntAtPos(20, pos, data); // oid of int8
+      pos += 4;
+      BinaryHelper.writeIntAtPos(in.length, pos, data); // length of first dimension
+      pos += 4;
+      BinaryHelper.writeIntAtPos(1, pos, data); // lower b
+      pos += 4;
+      for (int i = 0; i < in.length; i++) {
+        BinaryHelper.writeIntAtPos(8, pos, data);
+        pos += 4;
+        BinaryHelper.writeLongAtPos(in[i], pos, data);
+        pos += 8;
+      }
+      return data;
+    }
+
+    return new byte[] {};
+  }
+
+  /**
    * parses a LocalDate to a byte array.
    * @param input the LocalDate to convert
    * @return a byte array

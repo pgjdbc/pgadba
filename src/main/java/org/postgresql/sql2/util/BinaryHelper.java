@@ -33,6 +33,21 @@ public class BinaryHelper {
   }
 
   /**
+   * writes a long to a byte array in network byte order.
+   * @param val the long to write
+   */
+  public static void writeLongAtPos(long val, int pos, byte[] bb) {
+    bb[pos] = (byte) (val >>> 56);
+    bb[pos + 1] = (byte) (val >>> 48);
+    bb[pos + 2] = (byte) (val >>> 40);
+    bb[pos + 3] = (byte) (val >>> 32);
+    bb[pos + 4] = (byte) (val >>> 24);
+    bb[pos + 5] = (byte) (val >>> 16);
+    bb[pos + 6] = (byte) (val >>> 8);
+    bb[pos + 7] = (byte) (val);
+  }
+
+  /**
    * writes an int to a byte array in network byte order.
    * @param val the int to write
    * @return the byte array, size 4
