@@ -41,6 +41,7 @@ public class InsertSelectDataTypesTest {
    */
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {
+        {"bool", true, boolean.class, PgAdbaType.BOOLEAN, boolean[].class, new Boolean[] {true, false, true}},
         {"bytea", new byte[] { 0, 1, 2, 3, 4, 5}, byte[].class, PgAdbaType.BLOB, byte[][].class,
             new byte[][] {{0, 1, 2, 3, 4, 5}, {0, 1, 2, 3, 4, 5}}},
         {"int2", (short) 21, short.class, PgAdbaType.SMALLINT, int[].class, new Short[] {21, 22}},

@@ -35,6 +35,8 @@ public class BinaryHelper {
   /**
    * writes a long to a byte array in network byte order.
    * @param val the long to write
+   * @param pos the position to start writing on
+   * @param bb the array to write to
    */
   public static void writeLongAtPos(long val, int pos, byte[] bb) {
     bb[pos] = (byte) (val >>> 56);
@@ -203,5 +205,19 @@ public class BinaryHelper {
       }
     }
     return bytes.length;
+  }
+
+  /**
+   * writes a boolean to a byte array in network byte order.
+   * @param val the boolean to write
+   * @param pos the position to start writing on
+   * @param data the array to write to
+   */
+  public static void writeBooleanAtPos(Boolean val, int pos, byte[] data) {
+    if (val) {
+      data[pos] = 1;
+    } else {
+      data[pos] = 0;
+    }
   }
 }
