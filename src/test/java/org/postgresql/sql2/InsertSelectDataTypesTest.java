@@ -43,6 +43,7 @@ public class InsertSelectDataTypesTest {
     return Arrays.asList(new Object[][] {
         {"bytea", new byte[] { 0, 1, 2, 3, 4, 5}, byte[].class, PgAdbaType.BLOB, byte[][].class,
             new byte[][] {{0, 1, 2, 3, 4, 5}, {0, 1, 2, 3, 4, 5}}},
+        {"int2", (short) 21, short.class, PgAdbaType.SMALLINT, int[].class, new Short[] {21, 22}},
         {"integer", 42, int.class, PgAdbaType.INTEGER, int[].class, new Integer[] {42, 43}},
         {"float4", 42.0f, float.class, PgAdbaType.FLOAT, float[].class, new Float[] {42.0f, 43.0f}},
     });

@@ -81,6 +81,12 @@ public class BinaryHelper {
     return bb;
   }
 
+
+  public static void writeShortAtPos(short val, int pos, byte[] bb) {
+    bb[pos] = (byte) (val >>> 8);
+    bb[pos + 1] = (byte) (val);
+  }
+
   /**
    * Turn 16-byte stream into a human-readable 32-byte hex string.
    */

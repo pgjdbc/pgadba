@@ -192,6 +192,39 @@ public class BinaryGenerator {
    * @param input the Array to convert
    * @return a byte array
    */
+  public static byte[] fromShortArray(Object input) {
+    if (input instanceof Short[]) {
+      Short[] in = (Short[]) input;
+      int size = 20 + in.length * 6;
+      byte[] data = new byte[size];
+      int pos = 0;
+      BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
+      pos += 4;
+      BinaryHelper.writeIntAtPos(0, pos, data); // flags
+      pos += 4;
+      BinaryHelper.writeIntAtPos(21, pos, data); // oid of int2
+      pos += 4;
+      BinaryHelper.writeIntAtPos(in.length, pos, data); // length of first dimension
+      pos += 4;
+      BinaryHelper.writeIntAtPos(1, pos, data); // lower b
+      pos += 4;
+      for (int i = 0; i < in.length; i++) {
+        BinaryHelper.writeIntAtPos(2, pos, data);
+        pos += 4;
+        BinaryHelper.writeShortAtPos(in[i], pos, data);
+        pos += 2;
+      }
+      return data;
+    }
+
+    return new byte[] {};
+  }
+
+  /**
+   * parses an array into to a byte array.
+   * @param input the Array to convert
+   * @return a byte array
+   */
   public static byte[] fromIntegerArray(Object input) {
     if (input instanceof Integer[]) {
       Integer[] in = (Integer[]) input;
