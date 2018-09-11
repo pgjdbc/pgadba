@@ -132,6 +132,10 @@ public enum PgAdbaType implements SqlType {
    */
   BYTEA_ARRAY("_bytea", 1001, AdbaType.ARRAY, BinaryGenerator::fromByteaArray, FormatCodeTypes.BINARY),
   /**
+   * Identifies an array of character objects.
+   */
+  CHAR_ARRAY("_bpchar", 1014, AdbaType.ARRAY, BinaryGenerator::fromCharArray, FormatCodeTypes.BINARY),
+  /**
    * Identifies an array of short objects.
    */
   SHORT_ARRAY("_int4", 1005, AdbaType.ARRAY, BinaryGenerator::fromShortArray, FormatCodeTypes.BINARY),
@@ -252,6 +256,7 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(Float[].class, FLOAT_ARRAY);
     classToDb.put(Double[].class, DOUBLE_ARRAY);
     classToDb.put(Boolean[].class, BOOLEAN_ARRAY);
+    classToDb.put(Character[].class, CHAR_ARRAY);
     classToDb.put(char[].class, CLOB);
     //classToDb.put(.class, REF);
     //classToDb.put(.class, DATALINK);

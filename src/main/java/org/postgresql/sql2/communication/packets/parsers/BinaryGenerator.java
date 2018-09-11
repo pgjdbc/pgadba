@@ -179,6 +179,45 @@ public class BinaryGenerator {
   }
 
   /**
+   * parses an array of Characters to a byte array.
+   * @param input the Character[] to convert
+   * @return a byte array
+   */
+  public static byte[] fromCharArray(Object input) {
+    if (input instanceof Character[]) {
+      Character[] in = (Character[]) input;
+      int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(c -> c.toString().getBytes(StandardCharsets.UTF_8).length).sum();
+      byte[] data = new byte[size];
+      int pos = 0;
+      BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
+      pos += 4;
+      BinaryHelper.writeIntAtPos(0, pos, data); // flags
+      pos += 4;
+      BinaryHelper.writeIntAtPos(1042, pos, data); // oid of bpchar
+      pos += 4;
+      BinaryHelper.writeIntAtPos(in.length, pos, data); // length of first dimension
+      pos += 4;
+      BinaryHelper.writeIntAtPos(1, pos, data); // lower b
+      pos += 4;
+      for (int i = 0; i < in.length; i++) {
+        byte[] bb = in[i].toString().getBytes(StandardCharsets.UTF_8);
+        BinaryHelper.writeIntAtPos(bb.length, pos, data);
+        pos += 4;
+        if(bb.length == 1) {
+          data[pos] = bb[0];
+        } else if (bb.length == 2) {
+          data[pos] = bb[0];
+          data[pos + 1] = bb[1];
+        }
+        pos += bb.length;
+      }
+      return data;
+    }
+
+    return null;
+  }
+
+  /**
    * parses a Character to a byte array.
    * @param input the Character to convert
    * @return a byte array
