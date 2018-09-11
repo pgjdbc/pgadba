@@ -203,7 +203,7 @@ public class BinaryGenerator {
         byte[] bb = in[i].toString().getBytes(StandardCharsets.UTF_8);
         BinaryHelper.writeIntAtPos(bb.length, pos, data);
         pos += 4;
-        if(bb.length == 1) {
+        if (bb.length == 1) {
           data[pos] = bb[0];
         } else if (bb.length == 2) {
           data[pos] = bb[0];
