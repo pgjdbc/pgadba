@@ -392,6 +392,43 @@ public class BinaryGenerator {
   }
 
   /**
+   * parses an array into to a byte array.
+   * @param input the Array to convert
+   * @return a byte array
+   */
+  public static byte[] fromStringArray(Object input) {
+    if (input instanceof String[]) {
+      String[] in = (String[]) input;
+      byte[][] parts = new byte[in.length][];
+      for (int i = 0; i < in.length; i++) {
+        parts[i] = in[i].getBytes(StandardCharsets.UTF_8);
+      }
+      int size = 20 + in.length * 4 + Arrays.stream(parts).mapToInt(a -> a.length).sum();
+      byte[] data = new byte[size];
+      int pos = 0;
+      BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
+      pos += 4;
+      BinaryHelper.writeIntAtPos(0, pos, data); // flags
+      pos += 4;
+      BinaryHelper.writeIntAtPos(1043, pos, data); // oid of varchar
+      pos += 4;
+      BinaryHelper.writeIntAtPos(in.length, pos, data); // length of first dimension
+      pos += 4;
+      BinaryHelper.writeIntAtPos(1, pos, data); // lower b
+      pos += 4;
+      for (int i = 0; i < in.length; i++) {
+        BinaryHelper.writeIntAtPos(parts[i].length, pos, data);
+        pos += 4;
+        System.arraycopy(parts[i], 0, data, pos, parts[i].length);
+        pos += parts[i].length;
+      }
+      return data;
+    }
+
+    return new byte[] {};
+  }
+
+  /**
    * parses a LocalDate to a byte array.
    * @param input the LocalDate to convert
    * @return a byte array

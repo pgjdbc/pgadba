@@ -148,9 +148,13 @@ public enum PgAdbaType implements SqlType {
    */
   LONG_ARRAY("_int8", 1016, AdbaType.ARRAY, BinaryGenerator::fromLongArray, FormatCodeTypes.BINARY),
   /**
-   * Identifies an array of long objects.
+   * Identifies an array of boolean objects.
    */
   BOOLEAN_ARRAY("_bool", 1000, AdbaType.ARRAY, BinaryGenerator::fromBooleanArray, FormatCodeTypes.BINARY),
+  /**
+   * Identifies an array of string objects.
+   */
+  STRING_ARRAY("_varchar", 1015, AdbaType.ARRAY, BinaryGenerator::fromStringArray, FormatCodeTypes.BINARY),
   /**
    * Identifies the generic SQL type {@code BLOB}.
    */
@@ -257,6 +261,7 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(Double[].class, DOUBLE_ARRAY);
     classToDb.put(Boolean[].class, BOOLEAN_ARRAY);
     classToDb.put(Character[].class, CHAR_ARRAY);
+    classToDb.put(String[].class, STRING_ARRAY);
     classToDb.put(char[].class, CLOB);
     //classToDb.put(.class, REF);
     //classToDb.put(.class, DATALINK);

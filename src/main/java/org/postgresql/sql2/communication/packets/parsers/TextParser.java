@@ -914,7 +914,18 @@ public class TextParser {
       if (!stringStarted) {
         if (in.charAt(i) == '{' && in.charAt(i + 1) != '"') {
           stringStarted = true;
-        } else if (in.charAt(i) == ',' && in.charAt(i + 1) != '"') {
+        } else if (in.charAt(i) == '}' && in.charAt(i - 1) == ',') {
+          result.add(sb.toString());
+          sb.setLength(0);
+        } else if (in.charAt(i) == '{' && in.charAt(i + 1) == '"') {
+          continue;
+        } else if (in.charAt(i - 1) == ',' && in.charAt(i) == ',') {
+          result.add("");
+          stringStarted = true;
+        } else if (in.charAt(i - 1) == ',' && in.charAt(i) != '"') {
+          if (in.charAt(i) != ',') {
+            sb.append(in.charAt(i));
+          }
           stringStarted = true;
         } else if (in.charAt(i) == '"') {
           stringStarted = true;

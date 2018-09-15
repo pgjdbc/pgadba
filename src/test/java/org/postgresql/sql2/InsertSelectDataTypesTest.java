@@ -50,6 +50,7 @@ public class InsertSelectDataTypesTest {
         {"float4", 42.0f, float.class, PgAdbaType.FLOAT, float[].class, new Float[] {42.0f, 43.0f}},
         {"float8", 84.0d, double.class, PgAdbaType.DOUBLE, double[].class, new Double[] {84.0d, 85.0d}},
         {"bpchar", 'a', char.class, PgAdbaType.CHAR, char[].class, new Character[] {'a', 'ö'}},
+        {"varchar", "small string", String.class, PgAdbaType.VARCHAR, String[].class, new String[] {"a1", "ö2"}},
     });
   }
 
