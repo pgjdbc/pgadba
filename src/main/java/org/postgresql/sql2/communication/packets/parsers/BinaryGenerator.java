@@ -1,6 +1,8 @@
 package org.postgresql.sql2.communication.packets.parsers;
 
 import java.util.Arrays;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.postgresql.sql2.util.BinaryHelper;
 
 import java.io.ByteArrayOutputStream;
@@ -218,12 +220,32 @@ public class BinaryGenerator {
   }
 
   /**
-   * parses a Character to a byte array.
-   * @param input the Character to convert
+   * parses a String to a byte array.
+   * @param input the String to convert
    * @return a byte array
    */
   public static byte[] fromString(Object input) {
     return ((String)input).getBytes(StandardCharsets.UTF_8);
+  }
+
+  /**
+   * parses a UUID to a byte array.
+   * @param input the UUID to convert
+   * @return a byte array
+   */
+  public static byte[] fromUuid(Object input) {
+    return ((UUID)input).toString().getBytes(StandardCharsets.UTF_8);
+  }
+
+  /**
+   * parses a UUID[] to a byte array.
+   * @param input the UUID[] to convert
+   * @return a byte array
+   */
+  public static byte[] fromUuidArray(Object input) {
+    UUID[] in = (UUID[])input;
+    String str = "{" + String.join(",", Arrays.stream(in).map(UUID::toString).collect(Collectors.toList())) + "}";
+    return str.getBytes(StandardCharsets.UTF_8);
   }
 
   /**

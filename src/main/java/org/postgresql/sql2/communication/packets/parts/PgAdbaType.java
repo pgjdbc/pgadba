@@ -72,6 +72,14 @@ public enum PgAdbaType implements SqlType {
    */
   VARCHAR("varchar", 1043, AdbaType.VARCHAR, BinaryGenerator::fromString, FormatCodeTypes.TEXT),
   /**
+   * Identifies the type UUID.
+   */
+  UUID("uuid", 2950, AdbaType.OTHER, BinaryGenerator::fromUuid, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of UUIDs.
+   */
+  UUID_ARRAY("_uuid", 2951, AdbaType.ARRAY, BinaryGenerator::fromUuidArray, FormatCodeTypes.TEXT),
+  /**
    * Identifies the generic SQL type {@code LONGVARCHAR}.
    */
   LONGVARCHAR("text", 25, AdbaType.LONG_VARCHAR, BinaryGenerator::fromString, FormatCodeTypes.TEXT),
@@ -266,6 +274,8 @@ public enum PgAdbaType implements SqlType {
     //classToDb.put(.class, REF);
     //classToDb.put(.class, DATALINK);
     classToDb.put(Boolean.class, BOOLEAN);
+    classToDb.put(java.util.UUID.class, UUID);
+    classToDb.put(java.util.UUID[].class, UUID_ARRAY);
     //classToDb.put(.class, ROWID);
     //classToDb.put(.class, NCHAR);
     //classToDb.put(.class, NVARCHAR);
