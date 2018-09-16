@@ -692,6 +692,35 @@ public class BinaryGenerator {
   }
 
   /**
+   * parses a OffsetTime to a byte array.
+   * @param input the OffsetTime to convert
+   * @return a byte array
+   */
+  public static byte[] fromOffsetTimeArray(Object input) {
+    if (input instanceof OffsetTime[]) {
+      OffsetTime[] in = (OffsetTime[]) input;
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+      try {
+        baos.write('{');
+        for (int i = 0; i < in.length; i++) {
+          if (i != 0) {
+            baos.write(',');
+          }
+
+
+          baos.write(in[i].format(offsetTimeFormatter).getBytes(StandardCharsets.UTF_8));
+        }
+        baos.write('}');
+      } catch (IOException e) {
+        throw new IllegalArgumentException("couldn't parse input to byte array", e);
+      }
+      return baos.toByteArray();
+    }
+    return null;
+  }
+
+  /**
    * parses a OffsetDateTime to a byte array.
    * @param input the OffsetDateTime to convert
    * @return a byte array

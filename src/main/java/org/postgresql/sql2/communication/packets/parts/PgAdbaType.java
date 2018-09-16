@@ -231,6 +231,11 @@ public enum PgAdbaType implements SqlType {
    */
   TIME_WITH_TIME_ZONE("time with timezone", 1266, AdbaType.TIME_WITH_TIME_ZONE, BinaryGenerator::fromOffsetTime,
       FormatCodeTypes.TEXT),
+  /**
+   * Identifies the generic SQL type {@code TIME WITH TIME ZONE}.
+   */
+  TIME_WITH_TIME_ZONE_ARRAY("time with timezone", 1270, AdbaType.ARRAY, BinaryGenerator::fromOffsetTimeArray,
+      FormatCodeTypes.TEXT),
 
   /**
    * Identifies the generic SQL type {@code TIMESTAMP WITH TIME ZONE}.
@@ -291,6 +296,7 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(LocalTime[].class, TIME_ARRAY);
     classToDb.put(LocalDateTime[].class, TIMESTAMP_ARRAY);
     classToDb.put(OffsetDateTime[].class, TIMESTAMP_WITH_TIME_ZONE_ARRAY);
+    classToDb.put(OffsetTime[].class, TIME_WITH_TIME_ZONE_ARRAY);
     classToDb.put(char[].class, CLOB);
     //classToDb.put(.class, REF);
     //classToDb.put(.class, DATALINK);

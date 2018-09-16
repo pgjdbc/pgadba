@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.OffsetTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.UUID;
@@ -68,6 +69,9 @@ public class InsertSelectDataTypesTest {
         {"timestamptz", OffsetDateTime.of(2011, 2, 3, 14, 1, 12, 0, UTC), OffsetDateTime.class,
             PgAdbaType.TIMESTAMP_WITH_TIME_ZONE, OffsetDateTime[].class, new OffsetDateTime[]
             {OffsetDateTime.of(2011, 2, 3, 11, 2, 3, 0, UTC), OffsetDateTime.of(2011, 2, 3, 22, 12, 25, 0, UTC)}},
+        {"timetz", OffsetTime.of(14, 1, 12, 0, UTC), OffsetTime.class,
+            PgAdbaType.TIME_WITH_TIME_ZONE, OffsetTime[].class, new OffsetTime[]
+            {OffsetTime.of(11, 2, 3, 0, UTC), OffsetTime.of(22, 12, 25, 0, UTC)}},
     });
   }
 
