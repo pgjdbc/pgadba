@@ -1,5 +1,6 @@
 package org.postgresql.sql2;
 
+import static java.time.ZoneOffset.UTC;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
@@ -8,6 +9,7 @@ import static org.postgresql.sql2.testutil.FutureUtil.get10;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.UUID;
@@ -63,6 +65,9 @@ public class InsertSelectDataTypesTest {
         {"timestamp", LocalDateTime.of(2011, 2, 3, 14, 1, 12), LocalDateTime.class,
             PgAdbaType.TIMESTAMP, LocalDateTime[].class, new LocalDateTime[]
             {LocalDateTime.of(2011, 2, 3, 11, 2, 3), LocalDateTime.of(2011, 2, 3, 22, 12, 25)}},
+        {"timestamptz", OffsetDateTime.of(2011, 2, 3, 14, 1, 12, 0, UTC), OffsetDateTime.class,
+            PgAdbaType.TIMESTAMP_WITH_TIME_ZONE, OffsetDateTime[].class, new OffsetDateTime[]
+            {OffsetDateTime.of(2011, 2, 3, 11, 2, 3, 0, UTC), OffsetDateTime.of(2011, 2, 3, 22, 12, 25, 0, UTC)}},
     });
   }
 

@@ -475,7 +475,7 @@ public class BinaryGenerator {
 
         return baos.toByteArray();
       } catch (IOException e) {
-        e.printStackTrace();
+        throw new IllegalArgumentException("couldn't parse input to byte array", e);
       }
     }
     return null;
@@ -716,8 +716,48 @@ public class BinaryGenerator {
 
         return baos.toByteArray();
       } catch (IOException e) {
-        e.printStackTrace();
+        throw new IllegalArgumentException("couldn't parse input to byte array", e);
       }
+    }
+    return null;
+  }
+
+  /**
+   * parses a OffsetDateTime to a byte array.
+   * @param input the OffsetDateTime to convert
+   * @return a byte array
+   */
+  public static byte[] fromOffsetDateTimeArray(Object input) {
+    if (input instanceof OffsetDateTime[]) {
+      OffsetDateTime[] in = (OffsetDateTime[]) input;
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+      try {
+        baos.write('{');
+        for (int i = 0; i < in.length; i++) {
+          if (i != 0) {
+            baos.write(',');
+          }
+
+          if (in[i] == OffsetDateTime.MAX) {
+            baos.write("infinity".getBytes(StandardCharsets.UTF_8));
+            continue;
+          } else if (in[i] == OffsetDateTime.MIN) {
+            baos.write("-infinity".getBytes(StandardCharsets.UTF_8));
+            continue;
+          }
+
+          baos.write(in[i].format(offsetDateTimeFormatter).getBytes(StandardCharsets.UTF_8));
+
+          if (in[i].getYear() < 0) {
+            baos.write(" BC".getBytes(StandardCharsets.UTF_8));
+          }
+        }
+        baos.write('}');
+      } catch (IOException e) {
+        throw new IllegalArgumentException("couldn't parse input to byte array", e);
+      }
+      return baos.toByteArray();
     }
     return null;
   }
