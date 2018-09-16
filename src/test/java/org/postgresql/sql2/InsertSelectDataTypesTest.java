@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
 import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.UUID;
@@ -53,6 +55,8 @@ public class InsertSelectDataTypesTest {
         {"bpchar", 'a', char.class, PgAdbaType.CHAR, char[].class, new Character[] {'a', 'ö'}},
         {"varchar", "small string", String.class, PgAdbaType.VARCHAR, String[].class, new String[] {"a1", "ö2"}},
         {"uuid", new UUID(1, 1), UUID.class, PgAdbaType.UUID, UUID[].class, new UUID[] {new UUID(1, 1), new UUID(1, 1)}},
+        {"date", LocalDate.of(2018, 1, 12), LocalDate.class, PgAdbaType.DATE, LocalDate[].class,
+            new LocalDate[] {LocalDate.of(2011, 2, 3), LocalDate.of(2031, 12, 25)}},
     });
   }
 

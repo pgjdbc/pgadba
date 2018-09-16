@@ -482,6 +482,45 @@ public class BinaryGenerator {
   }
 
   /**
+   * parses a LocalDate to a byte array.
+   * @param input the LocalDate to convert
+   * @return a byte array
+   */
+  public static byte[] fromLocalDateArray(Object input) {
+    if (input instanceof LocalDate[]) {
+      LocalDate[] in = (LocalDate[]) input;
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+      try {
+        baos.write('{');
+        for (int i = 0; i < in.length; i++) {
+          if (i != 0) {
+            baos.write(',');
+          }
+
+          if (in[i] == LocalDate.MAX) {
+            baos.write("infinity".getBytes(StandardCharsets.UTF_8));
+          } else if (in[i] == LocalDate.MIN) {
+            baos.write("-infinity".getBytes(StandardCharsets.UTF_8));
+          }
+
+
+          baos.write(in[i].format(localDateFormatter).getBytes(StandardCharsets.UTF_8));
+
+          if (in[i].getYear() < 0) {
+            baos.write(" BC".getBytes(StandardCharsets.UTF_8));
+          }
+        }
+        baos.write('}');
+      } catch (IOException e) {
+        throw new IllegalArgumentException("couldn't parse input to byte array", e);
+      }
+      return baos.toByteArray();
+    }
+    return null;
+  }
+
+  /**
    * parses a LocalTime to a byte array.
    * @param input the LocalTime to convert
    * @return a byte array
