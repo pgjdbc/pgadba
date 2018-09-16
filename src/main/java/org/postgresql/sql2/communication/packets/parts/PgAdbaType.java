@@ -98,11 +98,15 @@ public enum PgAdbaType implements SqlType {
   /**
    * Identifies an array of LocalTime objects.
    */
-  TIME_ARRAY("time", 1183, AdbaType.TIME, BinaryGenerator::fromLocalTimeArray, FormatCodeTypes.TEXT),
+  TIME_ARRAY("_time", 1183, AdbaType.ARRAY, BinaryGenerator::fromLocalTimeArray, FormatCodeTypes.TEXT),
   /**
    * Identifies the generic SQL type {@code TIMESTAMP}.
    */
   TIMESTAMP("timestamp", 1114, AdbaType.TIMESTAMP, BinaryGenerator::fromLocalDateTime, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of LocalDateTime objects.
+   */
+  TIMESTAMP_ARRAY("_timestamp", 1115, AdbaType.ARRAY, BinaryGenerator::fromLocalDateTimeArray, FormatCodeTypes.TEXT),
   /**
    * Identifies the generic SQL type {@code BINARY}.
    */
@@ -280,6 +284,7 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(String[].class, STRING_ARRAY);
     classToDb.put(LocalDate[].class, DATE_ARRAY);
     classToDb.put(LocalTime[].class, TIME_ARRAY);
+    classToDb.put(LocalDateTime[].class, TIMESTAMP_ARRAY);
     classToDb.put(char[].class, CLOB);
     //classToDb.put(.class, REF);
     //classToDb.put(.class, DATALINK);

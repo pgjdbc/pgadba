@@ -500,8 +500,10 @@ public class BinaryGenerator {
 
           if (in[i] == LocalDate.MAX) {
             baos.write("infinity".getBytes(StandardCharsets.UTF_8));
+            continue;
           } else if (in[i] == LocalDate.MIN) {
             baos.write("-infinity".getBytes(StandardCharsets.UTF_8));
+            continue;
           }
 
 
@@ -587,8 +589,48 @@ public class BinaryGenerator {
 
         return baos.toByteArray();
       } catch (IOException e) {
-        e.printStackTrace();
+        throw new IllegalArgumentException("couldn't parse input to byte array", e);
       }
+    }
+    return null;
+  }
+
+  /**
+   * parses a LocalDateTime to a byte array.
+   * @param input the LocalDateTime to convert
+   * @return a byte array
+   */
+  public static byte[] fromLocalDateTimeArray(Object input) {
+    if (input instanceof LocalDateTime[]) {
+      LocalDateTime[] in = (LocalDateTime[]) input;
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+      try {
+        baos.write('{');
+        for (int i = 0; i < in.length; i++) {
+          if (i != 0) {
+            baos.write(',');
+          }
+
+          if (in[i] == LocalDateTime.MAX) {
+            baos.write("infinity".getBytes(StandardCharsets.UTF_8));
+            continue;
+          } else if (in[i] == LocalDateTime.MIN) {
+            baos.write("-infinity".getBytes(StandardCharsets.UTF_8));
+            continue;
+          }
+
+          baos.write(in[i].format(localDateTimeFormatter).getBytes(StandardCharsets.UTF_8));
+
+          if (in[i].getYear() < 0) {
+            baos.write(" BC".getBytes(StandardCharsets.UTF_8));
+          }
+        }
+        baos.write('}');
+      } catch (IOException e) {
+        throw new IllegalArgumentException("couldn't parse input to byte array", e);
+      }
+      return baos.toByteArray();
     }
     return null;
   }

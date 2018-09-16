@@ -6,6 +6,7 @@ import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
 import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,6 +60,9 @@ public class InsertSelectDataTypesTest {
             new LocalDate[] {LocalDate.of(2011, 2, 3), LocalDate.of(2031, 12, 25)}},
         {"time", LocalTime.of(14, 1, 12), LocalTime.class, PgAdbaType.TIME, LocalTime[].class,
             new LocalTime[] {LocalTime.of(11, 2, 3), LocalTime.of(22, 12, 25)}},
+        {"timestamp", LocalDateTime.of(2011, 2, 3, 14, 1, 12), LocalDateTime.class,
+            PgAdbaType.TIMESTAMP, LocalDateTime[].class, new LocalDateTime[]
+            {LocalDateTime.of(2011, 2, 3, 11, 2, 3), LocalDateTime.of(2011, 2, 3, 22, 12, 25)}},
     });
   }
 
