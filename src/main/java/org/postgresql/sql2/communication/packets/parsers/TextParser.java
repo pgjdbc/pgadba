@@ -21,7 +21,7 @@ public class TextParser {
   private static final DateTimeFormatter timestampWithTimeZoneFormatter = DateTimeFormatter
       .ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSX");
   private static final DateTimeFormatter localDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-  private static final DateTimeFormatter localTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSS");
+  private static final DateTimeFormatter localTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss[.SSSSSS]");
   private static final DateTimeFormatter offsetTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSX");
 
   public static Object boolOut(String in, Class<?> requestedClass) {

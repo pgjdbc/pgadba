@@ -535,6 +535,34 @@ public class BinaryGenerator {
   }
 
   /**
+   * parses a LocalTime to a byte array.
+   * @param input the LocalTime to convert
+   * @return a byte array
+   */
+  public static byte[] fromLocalTimeArray(Object input) {
+    if (input instanceof LocalTime[]) {
+      LocalTime[] in = (LocalTime[]) input;
+
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+      try {
+        baos.write('{');
+        for (int i = 0; i < in.length; i++) {
+          if (i != 0) {
+            baos.write(',');
+          }
+          baos.write(in[i].format(localTimeFormatter).getBytes(StandardCharsets.UTF_8));
+        }
+        baos.write('}');
+      } catch (IOException e) {
+        throw new IllegalArgumentException("couldn't parse input to byte array", e);
+      }
+      return baos.toByteArray();
+    }
+    return null;
+  }
+
+  /**
    * parses a LocalDateTime to a byte array.
    * @param input the LocalDateTime to convert
    * @return a byte array

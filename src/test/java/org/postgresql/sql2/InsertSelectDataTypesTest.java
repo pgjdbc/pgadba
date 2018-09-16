@@ -57,6 +57,8 @@ public class InsertSelectDataTypesTest {
         {"uuid", new UUID(1, 1), UUID.class, PgAdbaType.UUID, UUID[].class, new UUID[] {new UUID(1, 1), new UUID(1, 1)}},
         {"date", LocalDate.of(2018, 1, 12), LocalDate.class, PgAdbaType.DATE, LocalDate[].class,
             new LocalDate[] {LocalDate.of(2011, 2, 3), LocalDate.of(2031, 12, 25)}},
+        {"time", LocalTime.of(14, 1, 12), LocalTime.class, PgAdbaType.TIME, LocalTime[].class,
+            new LocalTime[] {LocalTime.of(11, 2, 3), LocalTime.of(22, 12, 25)}},
     });
   }
 
