@@ -60,6 +60,10 @@ public enum PgAdbaType implements SqlType {
    */
   NUMERIC("numeric", 1700, AdbaType.NUMERIC, BinaryGenerator::fromBigDecimal, FormatCodeTypes.TEXT),
   /**
+   * Identifies the generic SQL type {@code NUMERIC}.
+   */
+  NUMERIC_ARRAY("_numeric", 1231, AdbaType.ARRAY, BinaryGenerator::fromBigDecimalArray, FormatCodeTypes.TEXT),
+  /**
    * Identifies the generic SQL type {@code DECIMAL}.
    */
   DECIMAL("numeric", 1700, AdbaType.DECIMAL, BinaryGenerator::fromBigDecimal, FormatCodeTypes.TEXT),
@@ -297,6 +301,7 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(LocalDateTime[].class, TIMESTAMP_ARRAY);
     classToDb.put(OffsetDateTime[].class, TIMESTAMP_WITH_TIME_ZONE_ARRAY);
     classToDb.put(OffsetTime[].class, TIME_WITH_TIME_ZONE_ARRAY);
+    classToDb.put(BigDecimal[].class, NUMERIC_ARRAY);
     classToDb.put(char[].class, CLOB);
     //classToDb.put(.class, REF);
     //classToDb.put(.class, DATALINK);

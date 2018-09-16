@@ -1,5 +1,6 @@
 package org.postgresql.sql2.communication.packets.parsers;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -164,6 +165,33 @@ public class BinaryGenerator {
   public static byte[] fromBigDecimal(Object input) {
     if (input instanceof Number) {
       return input.toString().getBytes(StandardCharsets.UTF_8);
+    }
+    return null;
+  }
+
+  /**
+   * parses an array of BigDecimal objects to a byte array.
+   * @param input the BigDecimal[] to convert
+   * @return a byte array of appropriate length or null
+   */
+  public static byte[] fromBigDecimalArray(Object input) {
+    if (input instanceof BigDecimal[]) {
+      BigDecimal[] in = (BigDecimal[]) input;
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+      try {
+        baos.write('{');
+        for (int i = 0; i < in.length; i++) {
+          if (i != 0) {
+            baos.write(',');
+          }
+          baos.write(in[i].toString().getBytes(StandardCharsets.UTF_8));
+        }
+        baos.write('}');
+      } catch (IOException e) {
+        throw new IllegalArgumentException("couldn't parse input to byte array", e);
+      }
+      return baos.toByteArray();
     }
     return null;
   }
@@ -752,8 +780,8 @@ public class BinaryGenerator {
   }
 
   /**
-   * parses a OffsetDateTime to a byte array.
-   * @param input the OffsetDateTime to convert
+   * parses an array of OffsetDateTime objects to a byte array.
+   * @param input the OffsetDateTime[] to convert
    * @return a byte array
    */
   public static byte[] fromOffsetDateTimeArray(Object input) {

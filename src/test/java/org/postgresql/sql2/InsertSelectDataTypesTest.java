@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.postgresql.sql2.testutil.CollectorUtils.singleCollector;
 import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -72,6 +73,9 @@ public class InsertSelectDataTypesTest {
         {"timetz", OffsetTime.of(14, 1, 12, 0, UTC), OffsetTime.class,
             PgAdbaType.TIME_WITH_TIME_ZONE, OffsetTime[].class, new OffsetTime[]
             {OffsetTime.of(11, 2, 3, 0, UTC), OffsetTime.of(22, 12, 25, 0, UTC)}},
+        {"numeric", BigDecimal.ONE, BigDecimal.class,
+            PgAdbaType.NUMERIC, BigDecimal[].class, new BigDecimal[]
+            {new BigDecimal("15.22"), new BigDecimal("20.002")}},
     });
   }
 
