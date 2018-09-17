@@ -64,6 +64,10 @@ public class BinaryGenerator {
    * @return a byte array of length 8
    */
   public static byte[] fromBigInt(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     return BinaryHelper.writeLong(((Number)input).longValue());
   }
 
@@ -73,6 +77,10 @@ public class BinaryGenerator {
    * @return a byte array of length 4 or null
    */
   public static byte[] fromFloat(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof Float) {
       return ByteBuffer.allocate(4).putFloat((Float) input).array();
     }
@@ -85,6 +93,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromFloatArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof Float[]) {
       Float[] in = (Float[]) input;
       int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(f -> f == null ? 0 : 4).sum();
@@ -123,6 +135,10 @@ public class BinaryGenerator {
    * @return a byte array of length 8 or null
    */
   public static byte[] fromDouble(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof Double) {
       return ByteBuffer.allocate(8).putDouble((Double) input).array();
     }
@@ -135,6 +151,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromDoubleArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof Double[]) {
       Double[] in = (Double[]) input;
       int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(d -> d == null ? 0 : 8).sum();
@@ -173,6 +193,10 @@ public class BinaryGenerator {
    * @return a byte array of appropriate length or null
    */
   public static byte[] fromBigDecimal(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof Number) {
       return input.toString().getBytes(StandardCharsets.UTF_8);
     }
@@ -185,6 +209,10 @@ public class BinaryGenerator {
    * @return a byte array of appropriate length or null
    */
   public static byte[] fromBigDecimalArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof BigDecimal[]) {
       BigDecimal[] in = (BigDecimal[]) input;
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -216,6 +244,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromChar(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof Character) {
       return ((Character) input).toString().getBytes(StandardCharsets.UTF_8);
     }
@@ -228,6 +260,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromCharArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof Character[]) {
       Character[] in = (Character[]) input;
       int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(c -> c == null ? 0 : c.toString()
@@ -273,6 +309,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromString(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     return ((String)input).getBytes(StandardCharsets.UTF_8);
   }
 
@@ -282,6 +322,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromUuid(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     return ((UUID)input).toString().getBytes(StandardCharsets.UTF_8);
   }
 
@@ -291,6 +335,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromUuidArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     UUID[] in = (UUID[])input;
     String str = "{" + String.join(",", Arrays.stream(in).map(u -> u == null ? "NULL" : u.toString())
         .collect(Collectors.toList())) + "}";
@@ -303,6 +351,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromByteaArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof byte[][]) {
       byte[][] in = (byte[][]) input;
       int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(a -> a == null ? 0 : a.length).sum();
@@ -341,6 +393,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromShortArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof Short[]) {
       Short[] in = (Short[]) input;
       int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(s -> s == null ? 0 : 2).sum();
@@ -379,6 +435,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromIntegerArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof Integer[]) {
       Integer[] in = (Integer[]) input;
       int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(i -> i == null ? 0 : 4).sum();
@@ -417,6 +477,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromLongArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof Long[]) {
       Long[] in = (Long[]) input;
       int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(l -> l == null ? 0 : 8).sum();
@@ -455,6 +519,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromBooleanArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof Boolean[]) {
       Boolean[] in = (Boolean[]) input;
       int size = 20 + Arrays.stream(in).mapToInt(b -> b == null ? 4 : 5).sum();
@@ -493,6 +561,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromStringArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof String[]) {
       String[] in = (String[]) input;
       byte[][] parts = new byte[in.length][];
@@ -539,6 +611,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromLocalDate(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof LocalDate) {
       LocalDate x = (LocalDate) input;
       if (x == LocalDate.MAX) {
@@ -570,6 +646,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromLocalDateArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof LocalDate[]) {
       LocalDate[] in = (LocalDate[]) input;
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -616,6 +696,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromLocalTime(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof LocalTime) {
       LocalTime x = (LocalTime) input;
 
@@ -630,6 +714,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromLocalTimeArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof LocalTime[]) {
       LocalTime[] in = (LocalTime[]) input;
 
@@ -662,6 +750,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromLocalDateTime(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof LocalDateTime) {
       LocalDateTime x = (LocalDateTime) input;
       if (x == LocalDateTime.MAX) {
@@ -693,6 +785,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromLocalDateTimeArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof LocalDateTime[]) {
       LocalDateTime[] in = (LocalDateTime[]) input;
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -739,6 +835,10 @@ public class BinaryGenerator {
    * @return a byte array containing the information
    */
   public static byte[] fromByteArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof byte[]) {
       return (byte[])input;
     }
@@ -750,7 +850,16 @@ public class BinaryGenerator {
     return new byte[] {};
   }
 
+  /**
+   * doesn't do anything, as serialization to and from java objects are a security risk.
+   * @param input object
+   * @return a byte array
+   */
   public static byte[] fromJavaObject(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     return null;
   }
 
@@ -760,6 +869,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromBoolean(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof Boolean) {
       if ((Boolean)input) {
         return new byte[]{1};
@@ -780,6 +893,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromOffsetTime(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof OffsetTime) {
       OffsetTime x = (OffsetTime) input;
 
@@ -794,6 +911,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromOffsetTimeArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof OffsetTime[]) {
       OffsetTime[] in = (OffsetTime[]) input;
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -826,6 +947,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromOffsetDateTime(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof OffsetDateTime) {
       OffsetDateTime x = (OffsetDateTime) input;
       if (x == OffsetDateTime.MAX) {
@@ -857,6 +982,10 @@ public class BinaryGenerator {
    * @return a byte array
    */
   public static byte[] fromOffsetDateTimeArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
     if (input instanceof OffsetDateTime[]) {
       OffsetDateTime[] in = (OffsetDateTime[]) input;
       ByteArrayOutputStream baos = new ByteArrayOutputStream();

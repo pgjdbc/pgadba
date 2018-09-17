@@ -3,6 +3,7 @@ package org.postgresql.sql2;
 import static java.time.ZoneOffset.UTC;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.postgresql.sql2.communication.packets.parts.PgAdbaType.BLOB;
 import static org.postgresql.sql2.communication.packets.parts.PgAdbaType.BOOLEAN;
 import static org.postgresql.sql2.communication.packets.parts.PgAdbaType.BOOLEAN_ARRAY;
@@ -156,6 +157,26 @@ public class InsertSelectDataTypesTest {
 
   @ParameterizedTest
   @MethodSource("data")
+  public <T> void insertAndSelectNullWithTypeHinting(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType)
+      throws Exception {
+    try (Connection conn = ds.getConnection()) {
+      String tableName = "insertAndSelect" + table.incrementAndGet();
+      get10(conn.rowCountOperation("create table " + tableName + "(t " + dataTypeName + ")")
+          .submit().getCompletionStage());
+      get10(conn.rowCountOperation("insert into " + tableName + "(t) values($1)")
+          .set("$1", null, adbaType).submit().getCompletionStage());
+      CompletionStage<T> idF = conn.<T>rowOperation("select t from " + tableName)
+          .collect(singleCollector(type))
+          .submit()
+          .getCompletionStage();
+      get10(conn.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+
+      assertNull(get10(idF));
+    }
+  }
+
+  @ParameterizedTest
+  @MethodSource("data")
   public <T> void insertAndSelectArray(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType,
       Class<T[]> arrayType, T[] testArrayData) throws Exception {
     try (Connection conn = ds.getConnection()) {
@@ -236,6 +257,26 @@ public class InsertSelectDataTypesTest {
 
       T[] result = get10(idF);
       assertArrayEquals(arrayDataWithNull, result);
+    }
+  }
+
+  @ParameterizedTest
+  @MethodSource("data")
+  public <T> void insertAndSelectNullArray(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType,
+      Class<T[]> arrayType, T[] testArrayData, PgAdbaType arrayAdbaType) throws Exception {
+    try (Connection conn = ds.getConnection()) {
+      String tableName = "insertAndSelect" + table.incrementAndGet();
+      get10(conn.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
+          .submit().getCompletionStage());
+      get10(conn.rowCountOperation("insert into " + tableName + "(t) values($1)")
+          .set("$1", null, arrayAdbaType).submit().getCompletionStage());
+      CompletionStage<T[]> idF = conn.<T[]>rowOperation("select t from " + tableName)
+          .collect(singleCollector(arrayType))
+          .submit()
+          .getCompletionStage();
+      get10(conn.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+
+      assertNull(get10(idF));
     }
   }
 
