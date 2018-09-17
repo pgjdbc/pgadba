@@ -87,7 +87,7 @@ public class BinaryGenerator {
   public static byte[] fromFloatArray(Object input) {
     if (input instanceof Float[]) {
       Float[] in = (Float[]) input;
-      int size = 20 + in.length * 8;
+      int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(f -> f == null ? 0 : 4).sum();
       byte[] data = new byte[size];
       int pos = 0;
       BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
@@ -101,10 +101,15 @@ public class BinaryGenerator {
       BinaryHelper.writeIntAtPos(1, pos, data); // lower b
       pos += 4;
       for (int i = 0; i < in.length; i++) {
-        BinaryHelper.writeIntAtPos(4, pos, data);
-        pos += 4;
-        BinaryHelper.writeFloatAtPos(in[i], pos, data);
-        pos += 4;
+        if (in[i] == null) {
+          BinaryHelper.writeIntAtPos(-1, pos, data);
+          pos += 4;
+        } else {
+          BinaryHelper.writeIntAtPos(4, pos, data);
+          pos += 4;
+          BinaryHelper.writeFloatAtPos(in[i], pos, data);
+          pos += 4;
+        }
       }
       return data;
     }
@@ -132,7 +137,7 @@ public class BinaryGenerator {
   public static byte[] fromDoubleArray(Object input) {
     if (input instanceof Double[]) {
       Double[] in = (Double[]) input;
-      int size = 20 + in.length * 12;
+      int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(d -> d == null ? 0 : 8).sum();
       byte[] data = new byte[size];
       int pos = 0;
       BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
@@ -146,10 +151,15 @@ public class BinaryGenerator {
       BinaryHelper.writeIntAtPos(1, pos, data); // lower b
       pos += 4;
       for (int i = 0; i < in.length; i++) {
-        BinaryHelper.writeIntAtPos(8, pos, data);
-        pos += 4;
-        BinaryHelper.writeDoubleAtPos(in[i], pos, data);
-        pos += 8;
+        if (in[i] == null) {
+          BinaryHelper.writeIntAtPos(-1, pos, data);
+          pos += 4;
+        } else {
+          BinaryHelper.writeIntAtPos(8, pos, data);
+          pos += 4;
+          BinaryHelper.writeDoubleAtPos(in[i], pos, data);
+          pos += 8;
+        }
       }
       return data;
     }
@@ -185,7 +195,11 @@ public class BinaryGenerator {
           if (i != 0) {
             baos.write(',');
           }
-          baos.write(in[i].toString().getBytes(StandardCharsets.UTF_8));
+          if (in[i] == null) {
+            baos.write("NULL".getBytes(StandardCharsets.UTF_8));
+          } else {
+            baos.write(in[i].toString().getBytes(StandardCharsets.UTF_8));
+          }
         }
         baos.write('}');
       } catch (IOException e) {
@@ -216,7 +230,8 @@ public class BinaryGenerator {
   public static byte[] fromCharArray(Object input) {
     if (input instanceof Character[]) {
       Character[] in = (Character[]) input;
-      int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(c -> c.toString().getBytes(StandardCharsets.UTF_8).length).sum();
+      int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(c -> c == null ? 0 : c.toString()
+          .getBytes(StandardCharsets.UTF_8).length).sum();
       byte[] data = new byte[size];
       int pos = 0;
       BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
@@ -230,16 +245,21 @@ public class BinaryGenerator {
       BinaryHelper.writeIntAtPos(1, pos, data); // lower b
       pos += 4;
       for (int i = 0; i < in.length; i++) {
-        byte[] bb = in[i].toString().getBytes(StandardCharsets.UTF_8);
-        BinaryHelper.writeIntAtPos(bb.length, pos, data);
-        pos += 4;
-        if (bb.length == 1) {
-          data[pos] = bb[0];
-        } else if (bb.length == 2) {
-          data[pos] = bb[0];
-          data[pos + 1] = bb[1];
+        if (in[i] == null) {
+          BinaryHelper.writeIntAtPos(-1, pos, data);
+          pos += 4;
+        } else {
+          byte[] bb = in[i].toString().getBytes(StandardCharsets.UTF_8);
+          BinaryHelper.writeIntAtPos(bb.length, pos, data);
+          pos += 4;
+          if (bb.length == 1) {
+            data[pos] = bb[0];
+          } else if (bb.length == 2) {
+            data[pos] = bb[0];
+            data[pos + 1] = bb[1];
+          }
+          pos += bb.length;
         }
-        pos += bb.length;
       }
       return data;
     }
@@ -272,7 +292,8 @@ public class BinaryGenerator {
    */
   public static byte[] fromUuidArray(Object input) {
     UUID[] in = (UUID[])input;
-    String str = "{" + String.join(",", Arrays.stream(in).map(UUID::toString).collect(Collectors.toList())) + "}";
+    String str = "{" + String.join(",", Arrays.stream(in).map(u -> u == null ? "NULL" : u.toString())
+        .collect(Collectors.toList())) + "}";
     return str.getBytes(StandardCharsets.UTF_8);
   }
 
@@ -284,7 +305,7 @@ public class BinaryGenerator {
   public static byte[] fromByteaArray(Object input) {
     if (input instanceof byte[][]) {
       byte[][] in = (byte[][]) input;
-      int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(a -> a.length).sum();
+      int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(a -> a == null ? 0 : a.length).sum();
       byte[] data = new byte[size];
       int pos = 0;
       BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
@@ -298,10 +319,15 @@ public class BinaryGenerator {
       BinaryHelper.writeIntAtPos(1, pos, data); // flags
       pos += 4;
       for (int i = 0; i < in.length; i++) {
-        BinaryHelper.writeIntAtPos(in[i].length, pos, data);
-        pos += 4;
-        System.arraycopy(in[i], 0, data, pos, in[i].length);
-        pos += in[i].length;
+        if (in[i] == null) {
+          BinaryHelper.writeIntAtPos(-1, pos, data);
+          pos += 4;
+        } else {
+          BinaryHelper.writeIntAtPos(in[i].length, pos, data);
+          pos += 4;
+          System.arraycopy(in[i], 0, data, pos, in[i].length);
+          pos += in[i].length;
+        }
       }
       return data;
     }
@@ -317,7 +343,7 @@ public class BinaryGenerator {
   public static byte[] fromShortArray(Object input) {
     if (input instanceof Short[]) {
       Short[] in = (Short[]) input;
-      int size = 20 + in.length * 6;
+      int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(s -> s == null ? 0 : 2).sum();
       byte[] data = new byte[size];
       int pos = 0;
       BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
@@ -331,10 +357,15 @@ public class BinaryGenerator {
       BinaryHelper.writeIntAtPos(1, pos, data); // lower b
       pos += 4;
       for (int i = 0; i < in.length; i++) {
-        BinaryHelper.writeIntAtPos(2, pos, data);
-        pos += 4;
-        BinaryHelper.writeShortAtPos(in[i], pos, data);
-        pos += 2;
+        if (in[i] == null) {
+          BinaryHelper.writeIntAtPos(-1, pos, data);
+          pos += 4;
+        } else {
+          BinaryHelper.writeIntAtPos(2, pos, data);
+          pos += 4;
+          BinaryHelper.writeShortAtPos(in[i], pos, data);
+          pos += 2;
+        }
       }
       return data;
     }
@@ -350,7 +381,7 @@ public class BinaryGenerator {
   public static byte[] fromIntegerArray(Object input) {
     if (input instanceof Integer[]) {
       Integer[] in = (Integer[]) input;
-      int size = 20 + in.length * 8;
+      int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(i -> i == null ? 0 : 4).sum();
       byte[] data = new byte[size];
       int pos = 0;
       BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
@@ -364,10 +395,15 @@ public class BinaryGenerator {
       BinaryHelper.writeIntAtPos(1, pos, data); // lower b
       pos += 4;
       for (int i = 0; i < in.length; i++) {
-        BinaryHelper.writeIntAtPos(4, pos, data);
-        pos += 4;
-        BinaryHelper.writeIntAtPos(in[i], pos, data);
-        pos += 4;
+        if (in[i] == null) {
+          BinaryHelper.writeIntAtPos(-1, pos, data);
+          pos += 4;
+        } else {
+          BinaryHelper.writeIntAtPos(4, pos, data);
+          pos += 4;
+          BinaryHelper.writeIntAtPos(in[i], pos, data);
+          pos += 4;
+        }
       }
       return data;
     }
@@ -383,7 +419,7 @@ public class BinaryGenerator {
   public static byte[] fromLongArray(Object input) {
     if (input instanceof Long[]) {
       Long[] in = (Long[]) input;
-      int size = 20 + in.length * 12;
+      int size = 20 + in.length * 4 + Arrays.stream(in).mapToInt(l -> l == null ? 0 : 8).sum();
       byte[] data = new byte[size];
       int pos = 0;
       BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
@@ -397,10 +433,15 @@ public class BinaryGenerator {
       BinaryHelper.writeIntAtPos(1, pos, data); // lower b
       pos += 4;
       for (int i = 0; i < in.length; i++) {
-        BinaryHelper.writeIntAtPos(8, pos, data);
-        pos += 4;
-        BinaryHelper.writeLongAtPos(in[i], pos, data);
-        pos += 8;
+        if (in[i] == null) {
+          BinaryHelper.writeIntAtPos(-1, pos, data);
+          pos += 4;
+        } else {
+          BinaryHelper.writeIntAtPos(8, pos, data);
+          pos += 4;
+          BinaryHelper.writeLongAtPos(in[i], pos, data);
+          pos += 8;
+        }
       }
       return data;
     }
@@ -416,7 +457,7 @@ public class BinaryGenerator {
   public static byte[] fromBooleanArray(Object input) {
     if (input instanceof Boolean[]) {
       Boolean[] in = (Boolean[]) input;
-      int size = 20 + in.length * 5;
+      int size = 20 + Arrays.stream(in).mapToInt(b -> b == null ? 4 : 5).sum();
       byte[] data = new byte[size];
       int pos = 0;
       BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
@@ -430,10 +471,15 @@ public class BinaryGenerator {
       BinaryHelper.writeIntAtPos(1, pos, data); // lower b
       pos += 4;
       for (int i = 0; i < in.length; i++) {
-        BinaryHelper.writeIntAtPos(1, pos, data);
-        pos += 4;
-        BinaryHelper.writeBooleanAtPos(in[i], pos, data);
-        pos += 1;
+        if (in[i] == null) {
+          BinaryHelper.writeIntAtPos(-1, pos, data);
+          pos += 4;
+        } else {
+          BinaryHelper.writeIntAtPos(1, pos, data);
+          pos += 4;
+          BinaryHelper.writeBooleanAtPos(in[i], pos, data);
+          pos += 1;
+        }
       }
       return data;
     }
@@ -451,9 +497,13 @@ public class BinaryGenerator {
       String[] in = (String[]) input;
       byte[][] parts = new byte[in.length][];
       for (int i = 0; i < in.length; i++) {
-        parts[i] = in[i].getBytes(StandardCharsets.UTF_8);
+        if (in[i] == null) {
+          parts[i] = null;
+        } else {
+          parts[i] = in[i].getBytes(StandardCharsets.UTF_8);
+        }
       }
-      int size = 20 + in.length * 4 + Arrays.stream(parts).mapToInt(a -> a.length).sum();
+      int size = 20 + in.length * 4 + Arrays.stream(parts).mapToInt(a -> a == null ? 0 : a.length).sum();
       byte[] data = new byte[size];
       int pos = 0;
       BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
@@ -467,10 +517,15 @@ public class BinaryGenerator {
       BinaryHelper.writeIntAtPos(1, pos, data); // lower b
       pos += 4;
       for (int i = 0; i < in.length; i++) {
-        BinaryHelper.writeIntAtPos(parts[i].length, pos, data);
-        pos += 4;
-        System.arraycopy(parts[i], 0, data, pos, parts[i].length);
-        pos += parts[i].length;
+        if (parts[i] == null) {
+          BinaryHelper.writeIntAtPos(-1, pos, data);
+          pos += 4;
+        } else {
+          BinaryHelper.writeIntAtPos(parts[i].length, pos, data);
+          pos += 4;
+          System.arraycopy(parts[i], 0, data, pos, parts[i].length);
+          pos += parts[i].length;
+        }
       }
       return data;
     }
@@ -524,6 +579,11 @@ public class BinaryGenerator {
         for (int i = 0; i < in.length; i++) {
           if (i != 0) {
             baos.write(',');
+          }
+
+          if (in[i] == null) {
+            baos.write("NULL".getBytes(StandardCharsets.UTF_8));
+            continue;
           }
 
           if (in[i] == LocalDate.MAX) {
@@ -581,7 +641,11 @@ public class BinaryGenerator {
           if (i != 0) {
             baos.write(',');
           }
-          baos.write(in[i].format(localTimeFormatter).getBytes(StandardCharsets.UTF_8));
+          if (in[i] == null) {
+            baos.write("NULL".getBytes(StandardCharsets.UTF_8));
+          } else {
+            baos.write(in[i].format(localTimeFormatter).getBytes(StandardCharsets.UTF_8));
+          }
         }
         baos.write('}');
       } catch (IOException e) {
@@ -638,6 +702,11 @@ public class BinaryGenerator {
         for (int i = 0; i < in.length; i++) {
           if (i != 0) {
             baos.write(',');
+          }
+
+          if (in[i] == null) {
+            baos.write("NULL".getBytes(StandardCharsets.UTF_8));
+            continue;
           }
 
           if (in[i] == LocalDateTime.MAX) {
@@ -736,8 +805,11 @@ public class BinaryGenerator {
             baos.write(',');
           }
 
-
-          baos.write(in[i].format(offsetTimeFormatter).getBytes(StandardCharsets.UTF_8));
+          if (in[i] == null) {
+            baos.write("NULL".getBytes(StandardCharsets.UTF_8));
+          } else {
+            baos.write(in[i].format(offsetTimeFormatter).getBytes(StandardCharsets.UTF_8));
+          }
         }
         baos.write('}');
       } catch (IOException e) {
@@ -794,6 +866,11 @@ public class BinaryGenerator {
         for (int i = 0; i < in.length; i++) {
           if (i != 0) {
             baos.write(',');
+          }
+
+          if (in[i] == null) {
+            baos.write("NULL".getBytes(StandardCharsets.UTF_8));
+            continue;
           }
 
           if (in[i] == OffsetDateTime.MAX) {
