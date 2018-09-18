@@ -245,7 +245,9 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     PooledByteBuffer pooledBuffer = this.outputStream.getNextWrittenBuffer();
     if (pooledBuffer == null) {
       //System.out.println("pooledBuffer = " + null);
-      this.context.setInterestedOps(SelectionKey.OP_READ);
+      if (requests.size() == 0) {
+        this.context.setInterestedOps(SelectionKey.OP_READ);
+      }
       return;
     }
     ByteBuffer byteBuffer = pooledBuffer.getByteBuffer();
@@ -264,7 +266,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     pooledBuffer.release();
 
     // As here all data written
-    if (outputStream.hasMoreToWrite()) {
+    if (outputStream.hasMoreToWrite() || requests.size() != 0) {
       this.context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
     } else {
       this.context.setInterestedOps(SelectionKey.OP_READ);
