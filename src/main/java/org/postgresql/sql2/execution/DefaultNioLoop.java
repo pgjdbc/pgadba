@@ -6,6 +6,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,6 +18,8 @@ import java.util.logging.Logger;
 public class DefaultNioLoop implements NioLoop, Runnable {
 
   private Logger logger = Logger.getLogger(DefaultNioLoop.class.getName());
+
+  private final ReentrantLock selectorLock = new ReentrantLock();
 
   /**
    * {@link Selector}.
@@ -74,6 +77,8 @@ public class DefaultNioLoop implements NioLoop, Runnable {
 
         // Select keys
         try {
+          selectorLock.lock();
+          selectorLock.unlock();
           this.selector.select(50);
         } catch (IOException ex) {
           // Should not occur
@@ -166,8 +171,14 @@ public class DefaultNioLoop implements NioLoop, Runnable {
       }
 
       // Undertake registration
-      this.selectionKey = channel.register(DefaultNioLoop.this.selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ,
-          this);
+      selectorLock.lock();
+      try {
+        selector.wakeup();
+        this.selectionKey = channel.register(DefaultNioLoop.this.selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ,
+            this);
+      } finally {
+        selectorLock.unlock();
+      }
     }
 
     /*
