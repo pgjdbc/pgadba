@@ -23,7 +23,7 @@ public class ParseResponse extends AbstractPortalResponse {
     switch (frame.getTag()) {
 
       case PARSE_COMPLETE:
-        this.portal.getQuery().flagParsed();
+        portal.getQuery().flagParsed();
         return null; // nothing further
 
       default:

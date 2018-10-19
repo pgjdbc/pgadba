@@ -76,7 +76,7 @@ public class Portal {
    * @param submission {@link PgSubmission}.
    */
   public Portal(PgSubmission<?> submission) {
-    this.name = "p" + nameIndex.incrementAndGet();
+    name = "p" + nameIndex.incrementAndGet();
     this.submission = submission;
   }
 
@@ -86,7 +86,7 @@ public class Portal {
    * @return SQL.
    */
   public String getSql() {
-    return this.submission.getSql();
+    return submission.getSql();
   }
 
   /**
@@ -95,7 +95,7 @@ public class Portal {
    * @return {@link ParameterHolder}.
    */
   public ParameterHolder getParameterHolder() {
-    return this.submission.getHolder();
+    return submission.getHolder();
   }
 
   /**
@@ -104,7 +104,7 @@ public class Portal {
    * @return Portal name.
    */
   public String getPortalName() {
-    return this.name;
+    return name;
   }
 
   /**
@@ -113,7 +113,7 @@ public class Portal {
    * @param ex {@link Throwable}.
    */
   public void handleException(Throwable ex) {
-    doHandleException(this.submission, ex);
+    doHandleException(submission, ex);
   }
 
   /**
@@ -122,7 +122,7 @@ public class Portal {
    * @return {@link Query}. May be <code>null</code>.
    */
   Query getQuery() {
-    return this.query;
+    return query;
   }
 
   /**
@@ -140,7 +140,7 @@ public class Portal {
    * @return Next row number.
    */
   long nextRowNumber() {
-    return this.nextRowNumber++;
+    return nextRowNumber++;
   }
 
   /**
@@ -149,7 +149,7 @@ public class Portal {
    * @param dataRow {@link DataRow}.
    */
   void addDataRow(DataRow dataRow) {
-    this.submission.addRow(dataRow);
+    submission.addRow(dataRow);
   }
 
   /**

@@ -38,20 +38,20 @@ public class ParseRequest<T> implements NetworkRequest {
       PreparedStatementCache cache = context.getPreparedStatementCache();
 
       // Obtain the query
-      String sql = this.portal.getSql();
-      ParameterHolder holder = this.portal.getParameterHolder();
+      String sql = portal.getSql();
+      ParameterHolder holder = portal.getParameterHolder();
       query = cache.getQuery(sql, holder.getParamTypes());
 
       // Associate query to portal
-      this.portal.setQuery(query);
+      portal.setQuery(query);
     }
 
     // Determine if prepare query
     if ((!query.isParsed()) && (!query.isWaitingParse())) {
 
       // Obtain the query details
-      String sql = this.portal.getSql();
-      ParameterHolder holder = this.portal.getParameterHolder();
+      String sql = portal.getSql();
+      ParameterHolder holder = portal.getParameterHolder();
 
       // Send the prepare packet
       NetworkOutputStream wire = context.getOutputStream();
@@ -67,18 +67,18 @@ public class ParseRequest<T> implements NetworkRequest {
     }
 
     // Determine if describe or bind
-    return new DescribeRequest<>(this.portal);
+    return new DescribeRequest<>(portal);
 
   }
 
   @Override
   public NetworkResponse getRequiredResponse() {
-    Query query = this.portal.getQuery();
+    Query query = portal.getQuery();
 
     // Determine if waiting on parse
     if (!query.isWaitingParse()) {
       query.flagWaitingParse();
-      return new ParseResponse(this.portal);
+      return new ParseResponse(portal);
     }
 
     // Already waiting on parse

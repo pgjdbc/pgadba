@@ -76,7 +76,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     this.properties = properties;
     this.connection = connection;
     this.loop = loop;
-    this.outputStream = new ByteBufferPoolOutputStream(bufferPool);
+    outputStream = new ByteBufferPoolOutputStream(bufferPool);
   }
 
   /**
@@ -90,19 +90,19 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     // (Connections should be long running so low impact)
 
     // Ensure only one connect
-    if (this.connect != null) {
+    if (connect != null) {
       throw new IllegalStateException("Connection already being established");
     }
-    this.connect = networkConnect;
+    connect = networkConnect;
 
     // Initialise the network request
     try {
 
       // Register the connection
-      this.socketChannel = SocketChannel.open();
-      this.socketChannel.configureBlocking(false);
-      this.loop.registerNioService(this.socketChannel, (context) -> {
-        this.context = context;
+      socketChannel = SocketChannel.open();
+      socketChannel.configureBlocking(false);
+      loop.registerNioService(socketChannel, (context) -> {
+        context = context;
         return this;
       });
 
@@ -122,8 +122,8 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   public void sendNetworkRequest(NetworkRequest request) {
 
     // Ready network request for writing
-    this.requestQueue.add(request);
-    this.context.writeRequired();
+    requestQueue.add(request);
+    context.writeRequired();
   }
 
   /**
@@ -142,15 +142,15 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   @Override
   public synchronized void handleConnect() throws Exception {
 
-    if (this.connect == null) {
+    if (connect == null) {
       throw new IllegalStateException("No " + NetworkConnect.class.getSimpleName() + " to handle connect");
     }
 
     // Specify to write immediately
-    NetworkRequest initialRequest = this.connect.finishConnect(this);
+    NetworkRequest initialRequest = connect.finishConnect(this);
 
     // As connected, may now start writing
-    this.blockingResponse = null;
+    blockingResponse = null;
 
     // Load initial action to be undertaken first
     if (initialRequest != null) {
@@ -158,13 +158,13 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
       // Run initial request
       Queue<NetworkRequest> queue = new LinkedList<>();
       queue.add(initialRequest);
-      this.handleWrite(queue);
+      handleWrite(queue);
     }
   }
 
   @Override
   public void handleWrite() throws Exception {
-    this.handleWrite(this.requestQueue);
+    handleWrite(requestQueue);
   }
 
   /**
@@ -189,12 +189,12 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
         // Determine if requires response
         NetworkResponse response = request.getRequiredResponse();
         if (response != null) {
-          this.awaitingResponses.add(response);
+          awaitingResponses.add(response);
         }
 
         // Determine if request blocks for further interaction
         if (request.isBlocking()) {
-          this.blockingResponse = response;
+          blockingResponse = response;
           return true; // can not send further requests
         }
 
@@ -221,32 +221,32 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   private void handleWrite(Queue<NetworkRequest> requests) throws Exception {
 
     // Only flush further requests if no blocking response
-    if (this.blockingResponse == null) {
+    if (blockingResponse == null) {
 
       // Flush out the requests (doing priority queue first)
-      if (!this.flushRequests(this.priorityRequestQueue)) {
-        this.flushRequests(requests);
+      if (!flushRequests(priorityRequestQueue)) {
+        flushRequests(requests);
       }
     }
 
     // Write the previous incomplete write buffer
-    if (this.incompleteWriteBuffer != null) {
-      this.socketChannel.write(this.incompleteWriteBuffer.getByteBuffer());
-      if (this.incompleteWriteBuffer.getByteBuffer().hasRemaining()) {
+    if (incompleteWriteBuffer != null) {
+      socketChannel.write(incompleteWriteBuffer.getByteBuffer());
+      if (incompleteWriteBuffer.getByteBuffer().hasRemaining()) {
         // Further writes required
-        this.context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
         return;
       }
-      this.incompleteWriteBuffer.release();
-      this.incompleteWriteBuffer = null;
+      incompleteWriteBuffer.release();
+      incompleteWriteBuffer = null;
     }
 
     // Write data to network
-    PooledByteBuffer pooledBuffer = this.outputStream.getNextWrittenBuffer();
+    PooledByteBuffer pooledBuffer = outputStream.getNextWrittenBuffer();
     if (pooledBuffer == null) {
       //System.out.println("pooledBuffer = " + null);
       if (requests.size() == 0) {
-        this.context.setInterestedOps(SelectionKey.OP_READ);
+        context.setInterestedOps(SelectionKey.OP_READ);
       }
       return;
     }
@@ -254,11 +254,11 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
     // Write the buffer
     byteBuffer.flip();
-    this.socketChannel.write(byteBuffer);
+    socketChannel.write(byteBuffer);
     if (byteBuffer.hasRemaining()) {
       // Socket buffer full (clear written buffers)
-      this.incompleteWriteBuffer = pooledBuffer;
-      this.context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+      incompleteWriteBuffer = pooledBuffer;
+      context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       return;
     }
 
@@ -267,9 +267,9 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
     // As here all data written
     if (outputStream.hasMoreToWrite() || requests.size() != 0) {
-      this.context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+      context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
     } else {
-      this.context.setInterestedOps(SelectionKey.OP_READ);
+      context.setInterestedOps(SelectionKey.OP_READ);
     }
   }
 
@@ -312,11 +312,11 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
     // Reset for reads
     int bytesRead = -1;
-    this.isWriteRequired = false;
+    isWriteRequired = false;
     try {
 
       // Consume data on the socket
-      while ((bytesRead = this.socketChannel.read(readBuffer)) > 0) {
+      while ((bytesRead = socketChannel.read(readBuffer)) > 0) {
 
         // Setup for consuming parts
         readBuffer.flip();
@@ -324,11 +324,11 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
         // Service the BE frames
         BeFrame frame;
-        while ((frame = this.parser.parseBeFrame(readBuffer, position, bytesRead)) != null) {
-          position += this.parser.getConsumedBytes();
+        while ((frame = parser.parseBeFrame(readBuffer, position, bytesRead)) != null) {
+          position += parser.getConsumedBytes();
 
           // Obtain the awaiting response
-          NetworkResponse awaitingResponse = this.getAwaitingResponse();
+          NetworkResponse awaitingResponse = getAwaitingResponse();
 
           // Ensure have awaiting response
           if (awaitingResponse == null) {
@@ -340,21 +340,21 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
           switch (frame.getTag()) {
             case ERROR_RESPONSE:
               // Handle error
-              this.immediateResponse = awaitingResponse.handleException(new ErrorPacket(frame.getPayload()));
+              immediateResponse = awaitingResponse.handleException(new ErrorPacket(frame.getPayload()));
               break;
 
             default:
               // Provide frame to awaiting response
-              this.beFrame = frame;
-              this.immediateResponse = awaitingResponse.read(this);
+              beFrame = frame;
+              immediateResponse = awaitingResponse.read(this);
           }
 
           // Remove if blocking writing
-          if (awaitingResponse == this.blockingResponse) {
-            this.blockingResponse = null;
+          if (awaitingResponse == blockingResponse) {
+            blockingResponse = null;
 
             // Flag to write (as very likely have writes)
-            this.isWriteRequired = true;
+            isWriteRequired = true;
           }
         }
 
@@ -366,7 +366,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
       throw ignore;
     } finally {
       if (isWriteRequired) {
-        this.context.writeRequired();
+        context.writeRequired();
       }
     }
     if (bytesRead < 0) {
@@ -378,7 +378,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   public void handleException(Throwable ex) {
 
     // Unregister the connection (as closed)
-    this.connection.unregister();
+    connection.unregister();
 
     // Ignore close exception
     if (ex != CLOSE_EXCEPTION) {
@@ -387,10 +387,10 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     }
 
     // Close the connection (if open)
-    if (this.socketChannel.isOpen()) {
+    if (socketChannel.isOpen()) {
       try {
-        this.socketChannel.close();
-        this.context.unregister();
+        socketChannel.close();
+        context.unregister();
       } catch (IOException closeEx) {
 
         // TODO consider handle close exception
@@ -405,12 +405,12 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   @Override
   public SocketChannel getSocketChannel() {
-    return this.socketChannel;
+    return socketChannel;
   }
 
   @Override
   public Map<ConnectionProperty, Object> getProperties() {
-    return this.properties;
+    return properties;
   }
 
   /*
@@ -419,18 +419,18 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   @Override
   public BeFrame getBeFrame() {
-    return this.beFrame;
+    return beFrame;
   }
 
   @Override
   public void write(NetworkRequest request) {
-    this.priorityRequestQueue.add(request);
-    this.isWriteRequired = true;
+    priorityRequestQueue.add(request);
+    isWriteRequired = true;
   }
 
   @Override
   public void writeRequired() {
-    this.isWriteRequired = true;
+    isWriteRequired = true;
   }
 
   /*
@@ -439,17 +439,17 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   @Override
   public NetworkOutputStream getOutputStream() {
-    return this.outputStream;
+    return outputStream;
   }
 
   @Override
   public PreparedStatementCache getPreparedStatementCache() {
-    return this.preparedStatementCache;
+    return preparedStatementCache;
   }
 
   @Override
   public void setProperty(ConnectionProperty property, Object value) {
-    this.properties.put(property, value);
+    properties.put(property, value);
   }
 
 }

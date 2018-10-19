@@ -27,7 +27,7 @@ public class PreparedStatementCache {
     }
 
     // Obtain or create the query
-    return this.sqlToQuery.computeIfAbsent(new StatementKey(sql, params), key -> new Query());
+    return sqlToQuery.computeIfAbsent(new StatementKey(sql, params), key -> new Query());
   }
 
   private class StatementKey {

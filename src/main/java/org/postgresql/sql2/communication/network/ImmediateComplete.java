@@ -19,7 +19,7 @@ public class ImmediateComplete implements NetworkRequest {
 
   @Override
   public NetworkRequest write(NetworkWriteContext context) throws Exception {
-    this.submission.finish(null);
+    submission.finish(null);
     return null;
   }
 

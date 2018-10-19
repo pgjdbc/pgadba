@@ -25,21 +25,21 @@ public class ExecuteResponse extends AbstractPortalResponse {
     switch (frame.getTag()) {
 
       case DATA_ROW:
-        DataRow dataRow = new DataRow(frame.getPayload(), this.portal.getQuery().getRowDescription().getDescriptions(),
-            this.portal.nextRowNumber());
-        this.portal.addDataRow(dataRow);
+        DataRow dataRow = new DataRow(frame.getPayload(), portal.getQuery().getRowDescription().getDescriptions(),
+            portal.nextRowNumber());
+        portal.addDataRow(dataRow);
         return this;
 
       case COMMAND_COMPLETE:
         CommandComplete complete = new CommandComplete(frame.getPayload());
-        this.portal.commandComplete(complete, context.getSocketChannel());
+        portal.commandComplete(complete, context.getSocketChannel());
         return this;
 
       case READY_FOR_QUERY:
         return null;
 
       default:
-        throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
+        throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + getClass().getSimpleName());
     }
   }
 

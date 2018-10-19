@@ -112,13 +112,13 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
 
           case MD5:
             // Password authentication required
-            context.write(new PasswordRequest(authentication, this.connectSubmission));
+            context.write(new PasswordRequest(authentication, connectSubmission));
             return null;
 
           case SUCCESS:
             // Connected, so trigger any waiting submissions
             context.writeRequired();
-            return new AuthenticationResponse(this.connectSubmission);
+            return new AuthenticationResponse(connectSubmission);
 
           default:
             throw new IllegalStateException("Unhandled authentication " + authentication.getType());
@@ -131,7 +131,7 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
 
   @Override
   public NetworkResponse handleException(Throwable ex) {
-    Portal.doHandleException(this.connectSubmission, ex);
+    Portal.doHandleException(connectSubmission, ex);
     return null;
   }
 

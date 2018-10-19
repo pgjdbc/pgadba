@@ -31,7 +31,7 @@ public class DescribeResponse extends AbstractPortalResponse {
 
       case ROW_DESCRIPTION:
         RowDescription rowDescription = new RowDescription(frame.getPayload());
-        this.portal.getQuery().setRowDescription(rowDescription);
+        portal.getQuery().setRowDescription(rowDescription);
         return null; // nothing further
 
       default:

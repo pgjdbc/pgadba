@@ -40,7 +40,7 @@ public class Query {
    * Instantiate.
    */
   public Query() {
-    this.name = "q" + nameIndex.incrementAndGet();
+    name = "q" + nameIndex.incrementAndGet();
   }
 
   /**
@@ -49,7 +49,7 @@ public class Query {
    * @return Name.
    */
   public String getQueryName() {
-    return this.name;
+    return name;
   }
 
   /**
@@ -58,14 +58,14 @@ public class Query {
    * @return Parsed.
    */
   public boolean isParsed() {
-    return this.isParsed;
+    return isParsed;
   }
 
   /**
    * Flags that the query has parsed.
    */
   void flagParsed() {
-    this.isParsed = true;
+    isParsed = true;
   }
 
   /**
@@ -74,14 +74,14 @@ public class Query {
    * @return Waiting on parse.
    */
   public boolean isWaitingParse() {
-    return this.isAwaitingParse;
+    return isAwaitingParse;
   }
   
   /**
    * Flags that waiting on parse.
    */
   void flagWaitingParse() {
-    this.isAwaitingParse = true;
+    isAwaitingParse = true;
   }
 
   /**
@@ -90,7 +90,7 @@ public class Query {
    * @return {@link RowDescription}.
    */
   RowDescription getRowDescription() {
-    return this.rowDescription;
+    return rowDescription;
   }
 
   /**

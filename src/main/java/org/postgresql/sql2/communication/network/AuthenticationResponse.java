@@ -37,7 +37,7 @@ public class AuthenticationResponse implements NetworkResponse {
 
           case SUCCESS:
             // Connected, so trigger any waiting submissions
-            this.connectSubmission.finish(null);
+            connectSubmission.finish(null);
             return this;
 
           default:
@@ -64,9 +64,9 @@ public class AuthenticationResponse implements NetworkResponse {
 
   @Override
   public NetworkResponse handleException(Throwable ex) {
-    Consumer<Throwable> errorHandler = this.connectSubmission.getErrorHandler();
+    Consumer<Throwable> errorHandler = connectSubmission.getErrorHandler();
     if (errorHandler != null) {
-      this.connectSubmission.getErrorHandler().accept(ex);
+      connectSubmission.getErrorHandler().accept(ex);
     }
     ((CompletableFuture<Void>)connectSubmission.getCompletionStage()).completeExceptionally(ex);
     return null;

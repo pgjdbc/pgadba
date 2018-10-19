@@ -31,7 +31,7 @@ public class ExecuteRequest<T> implements NetworkRequest {
     NetworkOutputStream wire = context.getOutputStream();
     wire.write(FeFrame.FrontendTag.EXECUTE.getByte());
     wire.initPacket();
-    wire.write(this.portal.getPortalName());
+    wire.write(portal.getPortalName());
     wire.write(BinaryHelper.writeInt(0)); // number of rows to return, 0 == all
     wire.completePacket();
 
@@ -41,7 +41,7 @@ public class ExecuteRequest<T> implements NetworkRequest {
 
   @Override
   public NetworkResponse getRequiredResponse() {
-    return new ExecuteResponse(this.portal);
+    return new ExecuteResponse(portal);
   }
 
 }

@@ -44,7 +44,7 @@ public class PasswordRequest implements NetworkRequest {
     String username = (String) properties.get(AdbaConnectionProperty.USER);
     String password = (String) properties.get(AdbaConnectionProperty.PASSWORD);
     byte[] content = BinaryHelper.encode(username.getBytes(StandardCharsets.UTF_8),
-        password.getBytes(StandardCharsets.UTF_8), this.authentication.getSalt());
+        password.getBytes(StandardCharsets.UTF_8), authentication.getSalt());
 
     // Write the request
     NetworkOutputStream wire = context.getOutputStream();
@@ -65,7 +65,7 @@ public class PasswordRequest implements NetworkRequest {
 
   @Override
   public NetworkResponse getRequiredResponse() {
-    return new AuthenticationResponse(this.connectSubmission);
+    return new AuthenticationResponse(connectSubmission);
   }
 
 }

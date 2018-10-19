@@ -36,16 +36,16 @@ public class DescribeRequest<T> implements NetworkRequest {
     wire.write(FeFrame.FrontendTag.DESCRIBE.getByte());
     wire.initPacket();
     wire.write('S');
-    wire.write(this.portal.getQuery().getQueryName());
+    wire.write(portal.getQuery().getQueryName());
     wire.completePacket();
 
     // Next step to bind
-    return new BindRequest<>(this.portal);
+    return new BindRequest<>(portal);
   }
 
   @Override
   public NetworkResponse getRequiredResponse() {
-    return new DescribeResponse(this.portal);
+    return new DescribeResponse(portal);
   }
 
 }

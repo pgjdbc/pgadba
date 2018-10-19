@@ -30,17 +30,17 @@ public class BindRequest<T> implements NetworkRequest {
   public NetworkRequest write(NetworkWriteContext context) throws Exception {
 
     // Obtain the query details
-    String portalName = this.portal.getPortalName();
-    String queryName = this.portal.getQuery().getQueryName();
-    String sql = this.portal.getSql();
-    ParameterHolder holder = this.portal.getParameterHolder();
+    String portalName = portal.getPortalName();
+    String queryName = portal.getQuery().getQueryName();
+    String sql = portal.getSql();
+    ParameterHolder holder = portal.getParameterHolder();
 
     // Write the packet
     NetworkOutputStream wire = context.getOutputStream();
     wire.write(FeFrame.FrontendTag.BIND.getByte());
     wire.initPacket();
-    wire.write(this.portal.getPortalName());
-    wire.write(this.portal.getQuery().getQueryName());
+    wire.write(portal.getPortalName());
+    wire.write(portal.getQuery().getQueryName());
     wire.write(BinaryHelper.writeShort(holder.size()));
     for (QueryParameter qp : holder.parameters()) {
       wire.write(BinaryHelper.writeShort(qp.getParameterFormatCode()));
@@ -61,12 +61,12 @@ public class BindRequest<T> implements NetworkRequest {
     wire.completePacket();
 
     // Next step to execute
-    return new ExecuteRequest<>(this.portal);
+    return new ExecuteRequest<>(portal);
   }
 
   @Override
   public NetworkResponse getRequiredResponse() {
-    return new BindResponse(this.portal);
+    return new BindResponse(portal);
   }
 
 }
