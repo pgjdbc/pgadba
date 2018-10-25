@@ -1,7 +1,6 @@
 package org.postgresql.sql2.communication;
 
 import java.nio.ByteBuffer;
-
 import org.postgresql.sql2.util.BinaryHelper;
 
 /**
@@ -9,10 +8,10 @@ import org.postgresql.sql2.util.BinaryHelper;
  */
 public class BeFrameParser {
   private enum States {
-    BETWEEN, READ_TAG, READ_LEN1, READ_LEN2, READ_LEN3, READ_LEN4
+    NEVER_USED, BETWEEN, READ_TAG, READ_LEN1, READ_LEN2, READ_LEN3, READ_LEN4
   }
 
-  private States state = States.BETWEEN;
+  private States state = States.NEVER_USED;
 
   private byte tag;
   private byte len1;
@@ -46,6 +45,14 @@ public class BeFrameParser {
     for (int i = position; i < bytesRead; i++) {
       this.consumedBytes++;
       switch (state) {
+        case NEVER_USED:
+          if (readBuffer.get(i) == 'S' || readBuffer.get(i) == 'N') {
+            state = States.BETWEEN;
+            return new BeFrame((byte)'/', new byte[] {readBuffer.get(i)});
+          }
+          tag = readBuffer.get(i);
+          state = States.READ_TAG;
+          break;
         case BETWEEN:
           tag = readBuffer.get(i);
           state = States.READ_TAG;

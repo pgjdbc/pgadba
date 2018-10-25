@@ -1,12 +1,7 @@
 package org.postgresql.sql2.submissions;
 
-import org.postgresql.sql2.PgSubmission;
-import org.postgresql.sql2.communication.NetworkConnect;
-import org.postgresql.sql2.communication.network.NetworkConnectRequest;
-import org.postgresql.sql2.communication.packets.DataRow;
-import org.postgresql.sql2.operations.helpers.ParameterHolder;
-
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -14,6 +9,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import jdk.incubator.sql2.ConnectionProperty;
+import org.postgresql.sql2.PgConnectionProperty;
+import org.postgresql.sql2.PgSubmission;
+import org.postgresql.sql2.communication.NetworkConnect;
+import org.postgresql.sql2.communication.network.NetworkConnectRequest;
+import org.postgresql.sql2.communication.network.TlsConnectRequest;
+import org.postgresql.sql2.communication.packets.DataRow;
+import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
 public class ConnectSubmission implements PgSubmission<Void> {
 
@@ -27,19 +30,25 @@ public class ConnectSubmission implements PgSubmission<Void> {
 
   private GroupSubmission groupSubmission;
   
-  private NetworkConnectRequest request;
+  private NetworkConnect request;
 
   /**
    * Creates the connect submission.
    * @param cancel cancel method
    * @param errorHandler error handler method
    * @param groupSubmission group submission this submission is a part of
+   * @param properties properties for the connection, to determine if tls should be used or not
    */
-  public ConnectSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, GroupSubmission groupSubmission) {
+  public ConnectSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, GroupSubmission groupSubmission,
+      Map<ConnectionProperty, Object> properties) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.groupSubmission = groupSubmission;
-    this.request = new NetworkConnectRequest(this);
+    if (properties.containsKey(PgConnectionProperty.SSL) && (Boolean)properties.get(PgConnectionProperty.SSL)) {
+      this.request = new TlsConnectRequest(this);
+    } else {
+      this.request = new NetworkConnectRequest(this);
+    }
 
     if (groupSubmission != null) {
       groupSubmission.stackFuture((CompletableFuture<Void>) getCompletionStage());
@@ -47,7 +56,7 @@ public class ConnectSubmission implements PgSubmission<Void> {
   }
   
   public NetworkConnect getNetworkConnect() {
-    return this.request;
+    return request;
   }
 
   @Override

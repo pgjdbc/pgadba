@@ -1,10 +1,10 @@
 package org.postgresql.sql2.execution;
 
+import jdk.incubator.sql2.Operation;
+
 import java.io.IOException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.Selector;
-
-import jdk.incubator.sql2.Operation;
 
 /**
  * Provides an event loop for servicing communication.

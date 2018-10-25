@@ -6,10 +6,12 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.NotYetConnectedException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import javax.net.ssl.SSLContext;
 import jdk.incubator.sql2.ConnectionProperty;
 import org.postgresql.sql2.PgConnection;
 import org.postgresql.sql2.buffer.ByteBufferPool;
@@ -19,6 +21,10 @@ import org.postgresql.sql2.communication.packets.ErrorPacket;
 import org.postgresql.sql2.execution.NioLoop;
 import org.postgresql.sql2.execution.NioService;
 import org.postgresql.sql2.execution.NioServiceContext;
+import org.postgresql.sql2.util.tlschannel.ClientTlsChannel;
+import org.postgresql.sql2.util.tlschannel.NeedsReadException;
+import org.postgresql.sql2.util.tlschannel.NeedsWriteException;
+import org.postgresql.sql2.util.tlschannel.TlsChannel;
 
 public class NetworkConnection implements NioService, NetworkConnectContext, NetworkWriteContext, NetworkReadContext {
 
@@ -46,7 +52,11 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   private SocketChannel socketChannel;
 
+  private TlsChannel tlsChannel;
+
   private NioServiceContext context = null;
+
+  private ByteBuffer tlsHandshakePayload = ByteBuffer.allocate(0);
 
   /**
    * Possible blocking {@link NetworkResponse}.
@@ -102,7 +112,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
       socketChannel = SocketChannel.open();
       socketChannel.configureBlocking(false);
       loop.registerNioService(socketChannel, (context) -> {
-        context = context;
+        this.context = context;
         return this;
       });
 
@@ -231,7 +241,17 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
     // Write the previous incomplete write buffer
     if (incompleteWriteBuffer != null) {
-      socketChannel.write(incompleteWriteBuffer.getByteBuffer());
+      if (tlsChannel == null) {
+        socketChannel.write(incompleteWriteBuffer.getByteBuffer());
+      } else {
+        try {
+          tlsChannel.write(incompleteWriteBuffer.getByteBuffer());
+        } catch (NeedsReadException e) {
+          context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+        } catch (NeedsWriteException e) {
+          isWriteRequired = true;
+        }
+      }
       if (incompleteWriteBuffer.getByteBuffer().hasRemaining()) {
         // Further writes required
         context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
@@ -244,7 +264,6 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     // Write data to network
     PooledByteBuffer pooledBuffer = outputStream.getNextWrittenBuffer();
     if (pooledBuffer == null) {
-      //System.out.println("pooledBuffer = " + null);
       if (requests.size() == 0) {
         context.setInterestedOps(SelectionKey.OP_READ);
       }
@@ -254,7 +273,17 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
     // Write the buffer
     byteBuffer.flip();
-    socketChannel.write(byteBuffer);
+    if (tlsChannel == null) {
+      socketChannel.write(byteBuffer);
+    } else {
+      try {
+        tlsChannel.write(byteBuffer);
+      } catch (NeedsReadException e) {
+        context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+      } catch (NeedsWriteException e) {
+        isWriteRequired = true;
+      }
+    }
     if (byteBuffer.hasRemaining()) {
       // Socket buffer full (clear written buffers)
       incompleteWriteBuffer = pooledBuffer;
@@ -316,7 +345,8 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     try {
 
       // Consume data on the socket
-      while ((bytesRead = socketChannel.read(readBuffer)) > 0) {
+      while (tlsChannel == null ? (bytesRead = socketChannel.read(readBuffer)) > 0
+          : (bytesRead = tlsChannel.read(readBuffer)) > 0) {
 
         // Setup for consuming parts
         readBuffer.flip();
@@ -361,6 +391,10 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
         // Clear buffer for re-use
         readBuffer.clear();
       }
+    } catch (NeedsReadException e) {
+      context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+    } catch (NeedsWriteException e) {
+      isWriteRequired = true;
     } catch (NotYetConnectedException | ClosedChannelException ignore) {
       ignore.printStackTrace();
       throw ignore;
@@ -397,6 +431,16 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
         closeEx.printStackTrace();
       }
     }
+    if (tlsChannel.isOpen()) {
+      try {
+        tlsChannel.close();
+        context.unregister();
+      } catch (IOException closeEx) {
+
+        // TODO consider handle close exception
+        closeEx.printStackTrace();
+      }
+    }
   }
 
   /*
@@ -411,6 +455,16 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   @Override
   public Map<ConnectionProperty, Object> getProperties() {
     return properties;
+  }
+
+  @Override
+  public void startTls() {
+    try {
+      ClientTlsChannel.Builder builder = ClientTlsChannel.newBuilder(socketChannel, SSLContext.getDefault());
+      tlsChannel = builder.build();
+    } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
+    }
   }
 
   /*

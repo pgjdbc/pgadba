@@ -1,6 +1,8 @@
 package org.postgresql.sql2.communication.network;
 
-import jdk.incubator.sql2.AdbaConnectionProperty;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Map;
 import jdk.incubator.sql2.ConnectionProperty;
 import org.postgresql.sql2.PgConnectionProperty;
 import org.postgresql.sql2.communication.BeFrame;
@@ -11,20 +13,10 @@ import org.postgresql.sql2.communication.NetworkReadContext;
 import org.postgresql.sql2.communication.NetworkRequest;
 import org.postgresql.sql2.communication.NetworkResponse;
 import org.postgresql.sql2.communication.NetworkWriteContext;
-import org.postgresql.sql2.communication.packets.AuthenticationRequest;
 import org.postgresql.sql2.submissions.ConnectSubmission;
 import org.postgresql.sql2.util.BinaryHelper;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Map;
-
-/**
- * Connect {@link NetworkRequest}.
- *
- * @author Daniel Sagenschneider
- */
-public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, NetworkResponse {
+public class TlsConnectRequest implements NetworkConnect, NetworkRequest, NetworkResponse {
 
   /**
    * {@link ConnectSubmission}.
@@ -36,7 +28,7 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
    *
    * @param connectSubmission {@link ConnectSubmission}.
    */
-  public NetworkConnectRequest(ConnectSubmission connectSubmission) {
+  public TlsConnectRequest(ConnectSubmission connectSubmission) {
     this.connectSubmission = connectSubmission;
   }
 
@@ -66,22 +58,9 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
 
   @Override
   public NetworkRequest write(NetworkWriteContext context) throws IOException {
-
-    // Obtain the properties
-    Map<ConnectionProperty, Object> properties = context.getProperties();
-
-    // As now connected, send start up
     NetworkOutputStream wire = context.getOutputStream();
     wire.initPacket();
-    wire.write(BinaryHelper.writeInt(3 * 65536));
-    wire.write("user");
-    wire.write(((String) properties.get(AdbaConnectionProperty.USER)));
-    wire.write("database");
-    wire.write(((String) properties.get(PgConnectionProperty.DATABASE)));
-    wire.write("application_name");
-    wire.write("java_sql2_client");
-    wire.write("client_encoding");
-    wire.write("UTF8");
+    wire.write(BinaryHelper.writeInt(80877103)); // fake version string to indicate that we want to start tls
     wire.writeTerminator();
     wire.completePacket();
 
@@ -101,31 +80,20 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
 
   @Override
   public NetworkResponse read(NetworkReadContext context) throws IOException {
-
     // Expecting authentication challenge
     BeFrame frame = context.getBeFrame();
-    switch (frame.getTag()) {
 
-      case AUTHENTICATION:
-        AuthenticationRequest authentication = new AuthenticationRequest(frame.getPayload());
-        switch (authentication.getType()) {
+    if (frame.getPayload()[0] == 'S') {
+      context.startTls();
 
-          case MD5:
-            // Password authentication required
-            context.write(new PasswordRequest(authentication, connectSubmission));
-            return null;
+      NetworkConnectRequest req = new NetworkConnectRequest(connectSubmission);
 
-          case SUCCESS:
-            // Connected, so trigger any waiting submissions
-            context.writeRequired();
-            return new AuthenticationResponse(connectSubmission);
+      context.write(req);
 
-          default:
-            throw new IllegalStateException("Unhandled authentication " + authentication.getType());
-        }
-
-      default:
-        throw new IllegalStateException("Invalid tag '" + frame.getTag() + "' for " + this.getClass().getSimpleName());
+      context.writeRequired();
+      return null;
+    } else {
+      throw new IllegalStateException("server doesn't support TLS, but TLS was required");
     }
   }
 
@@ -134,5 +102,4 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
     Portal.doHandleException(connectSubmission, ex);
     return null;
   }
-
 }

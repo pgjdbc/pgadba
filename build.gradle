@@ -36,3 +36,14 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+/*
+compileJava {
+    inputs.property("moduleName", "org.postgresql.sql2")
+    doFirst {
+        options.compilerArgs = [
+                '--module-path', classpath.asPath,
+        ]
+        classpath = files()
+    }
+}
+*/

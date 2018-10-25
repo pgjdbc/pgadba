@@ -290,7 +290,7 @@ public class PgConnection extends PgOperationGroup<Object, Object> implements Co
    */
   @Override
   public Map<ConnectionProperty, Object> getProperties() {
-    return null;
+    return properties;
   }
 
   /**

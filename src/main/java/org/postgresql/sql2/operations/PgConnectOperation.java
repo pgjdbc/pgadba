@@ -2,14 +2,11 @@ package org.postgresql.sql2.operations;
 
 import java.time.Duration;
 import java.util.function.Consumer;
-
-import org.postgresql.sql2.PgConnection;
-import org.postgresql.sql2.submissions.BaseSubmission;
-import org.postgresql.sql2.submissions.ConnectSubmission;
-import org.postgresql.sql2.submissions.GroupSubmission;
-
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.Submission;
+import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.submissions.ConnectSubmission;
+import org.postgresql.sql2.submissions.GroupSubmission;
 
 public class PgConnectOperation implements Operation<Void> {
 
@@ -41,7 +38,7 @@ public class PgConnectOperation implements Operation<Void> {
 
   @Override
   public Submission<Void> submit() {
-    ConnectSubmission submission = new ConnectSubmission(this::cancel, errorHandler, groupSubmission);
+    ConnectSubmission submission = new ConnectSubmission(this::cancel, errorHandler, groupSubmission, connection.getProperties());
     submission.getCompletionStage().thenAccept(s -> {
       connection.setLifeCycleOpen();
     });

@@ -1,9 +1,9 @@
 package org.postgresql.sql2.communication;
 
+import jdk.incubator.sql2.ConnectionProperty;
+
 import java.nio.channels.SocketChannel;
 import java.util.Map;
-
-import jdk.incubator.sql2.ConnectionProperty;
 
 /**
  * Context available to all {@link NetworkRequest} events.
@@ -26,4 +26,5 @@ public interface NetworkContext {
    */
   Map<ConnectionProperty, Object> getProperties();
 
+  void startTls();
 }

@@ -34,7 +34,7 @@ public class DefaultNioLoop implements NioLoop, Runnable {
   /**
    * Instantiate.
    * 
-   * @throws IOException If fails to setup.
+   * @throws IllegalStateException If fails to setup.
    */
   public DefaultNioLoop() {
 
@@ -110,9 +110,11 @@ public class DefaultNioLoop implements NioLoop, Runnable {
 
             if (attachment == null) {
               System.out.println("Attachement is null");
+              continue;
             }
             if (attachment.service == null) {
               System.out.println("Service is null");
+              continue;
             }
 
             // Determine if connect

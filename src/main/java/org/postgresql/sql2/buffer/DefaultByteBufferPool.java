@@ -42,7 +42,7 @@ public class DefaultByteBufferPool implements ByteBufferPool {
   public PooledByteBuffer getPooledByteBuffer() {
 
     // Obtain the next pooled buffer
-    PooledByteBuffer buffer = this.pool.poll();
+    PooledByteBuffer buffer = pool.poll();
     if (buffer != null) {
       return buffer;
     }
@@ -54,7 +54,7 @@ public class DefaultByteBufferPool implements ByteBufferPool {
 
   private class PooledByteBufferImpl implements PooledByteBuffer {
 
-    private final ByteBuffer buffer = ByteBuffer.allocateDirect(DefaultByteBufferPool.this.bufferSize);
+    private final ByteBuffer buffer = ByteBuffer.allocateDirect(bufferSize);
 
     /*
      * =============== PooledByteBuffer ====================
@@ -67,7 +67,7 @@ public class DefaultByteBufferPool implements ByteBufferPool {
 
     @Override
     public void release() {
-      DefaultByteBufferPool.this.pool.add(this);
+      pool.add(this);
     }
   }
 
