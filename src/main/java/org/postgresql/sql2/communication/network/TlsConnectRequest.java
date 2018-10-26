@@ -91,10 +91,11 @@ public class TlsConnectRequest implements NetworkConnect, NetworkRequest, Networ
       context.write(req);
 
       context.writeRequired();
-      return null;
     } else {
-      throw new IllegalStateException("server doesn't support TLS, but TLS was required");
+      connectSubmission.getCompletionStage().toCompletableFuture()
+          .completeExceptionally(new IllegalStateException("server doesn't support TLS, but TLS was required"));
     }
+    return null;
   }
 
   @Override
