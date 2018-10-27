@@ -17,6 +17,7 @@ import org.postgresql.sql2.PgConnection;
 import org.postgresql.sql2.buffer.ByteBufferPool;
 import org.postgresql.sql2.buffer.ByteBufferPoolOutputStream;
 import org.postgresql.sql2.buffer.PooledByteBuffer;
+import org.postgresql.sql2.communication.network.CloseResponse;
 import org.postgresql.sql2.communication.packets.ErrorPacket;
 import org.postgresql.sql2.execution.NioLoop;
 import org.postgresql.sql2.execution.NioService;
@@ -27,8 +28,6 @@ import org.postgresql.sql2.util.tlschannel.NeedsWriteException;
 import org.postgresql.sql2.util.tlschannel.TlsChannel;
 
 public class NetworkConnection implements NioService, NetworkConnectContext, NetworkWriteContext, NetworkReadContext {
-
-  private static ClosedChannelException CLOSE_EXCEPTION = new ClosedChannelException();
 
   private final Map<ConnectionProperty, Object> properties;
 
@@ -56,8 +55,6 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   private NioServiceContext context = null;
 
-  private ByteBuffer tlsHandshakePayload = ByteBuffer.allocate(0);
-
   /**
    * Possible blocking {@link NetworkResponse}.
    */
@@ -69,7 +66,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
     @Override
     public NetworkResponse handleException(Throwable ex) {
-      throw new IllegalStateException("Should not read until connected");
+      throw new IllegalStateException("Should not read until connected", ex);
     }
   };
 
@@ -264,6 +261,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     // Write data to network
     PooledByteBuffer pooledBuffer = outputStream.getNextWrittenBuffer();
     if (pooledBuffer == null) {
+      checkIfCloseAndPerformClose();
       if (requests.size() == 0) {
         context.setInterestedOps(SelectionKey.OP_READ);
       }
@@ -297,8 +295,26 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     // As here all data written
     if (outputStream.hasMoreToWrite() || requests.size() != 0) {
       context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+    } else if (outputStream.isClosed()) {
+      checkIfCloseAndPerformClose();
     } else {
       context.setInterestedOps(SelectionKey.OP_READ);
+    }
+  }
+
+  private void checkIfCloseAndPerformClose() throws IOException {
+    if (outputStream.isClosed()) {
+      if (tlsChannel != null) {
+        tlsChannel.close();
+      } else {
+        socketChannel.close();
+      }
+      if (awaitingResponses.peek() instanceof CloseResponse) {
+        NetworkResponse response = awaitingResponses.poll();
+        if (response != null) {
+          response.read(null);
+        }
+      }
     }
   }
 
@@ -404,7 +420,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
       }
     }
     if (bytesRead < 0) {
-      throw CLOSE_EXCEPTION;
+      throw new ClosedChannelException();
     }
   }
 
@@ -415,7 +431,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     connection.unregister();
 
     // Ignore close exception
-    if (ex != CLOSE_EXCEPTION) {
+    if (!(ex instanceof ClosedChannelException)) {
       // TODO consider how to handle exception
       ex.printStackTrace();
     }

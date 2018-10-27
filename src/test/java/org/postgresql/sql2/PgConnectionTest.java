@@ -54,6 +54,15 @@ public class PgConnectionTest {
   }
 
   @Test
+  public void validateCloseCompletesNormally() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Connection conn = ds.getConnection()) {
+      Submission<Void> sub = conn.closeOperation().submit();
+
+      get10(sub.getCompletionStage());
+    }
+  }
+
+  @Test
   public void selectWithBrokenCollectorSupplier() throws InterruptedException, ExecutionException, TimeoutException {
 
     String sql = "select 1 as t";

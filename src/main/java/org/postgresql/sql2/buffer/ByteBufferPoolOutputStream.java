@@ -53,6 +53,8 @@ public class ByteBufferPoolOutputStream extends NetworkOutputStream {
    */
   private int packetSize = 0;
 
+  private volatile boolean closed = false;
+
   /**
    * Instantiate.
    * 
@@ -219,6 +221,11 @@ public class ByteBufferPoolOutputStream extends NetworkOutputStream {
     }
   }
 
+  @Override
+  public void close() {
+    closed = true;
+  }
+
   /**
    * Recursively writes packet length to avoid object creation.
    * 
@@ -250,6 +257,10 @@ public class ByteBufferPoolOutputStream extends NetworkOutputStream {
       }
       pooledByteBuffer.getByteBuffer().put(this.packetStartPosition++, byteLengthValue);
     }
+  }
+
+  public boolean isClosed() {
+    return closed;
   }
 
   /**

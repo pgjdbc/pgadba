@@ -1,12 +1,5 @@
 package org.postgresql.sql2.submissions;
 
-import org.postgresql.sql2.PgSubmission;
-import org.postgresql.sql2.communication.network.CloseRequest;
-import org.postgresql.sql2.communication.packets.DataRow;
-import org.postgresql.sql2.operations.helpers.ParameterHolder;
-
-import java.io.IOException;
-import java.nio.channels.SocketChannel;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -15,8 +8,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import org.postgresql.sql2.PgSubmission;
+import org.postgresql.sql2.communication.packets.DataRow;
+import org.postgresql.sql2.operations.helpers.ParameterHolder;
 
-public class CloseSubmission extends CloseRequest implements PgSubmission<Void> {
+public class CloseSubmission implements PgSubmission<Void> {
   private final Supplier<Boolean> cancel;
   private CompletableFuture<Void> publicStage;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
@@ -73,14 +69,6 @@ public class CloseSubmission extends CloseRequest implements PgSubmission<Void> 
 
   @Override
   public Object finish(Object socketChannel) {
-    try {
-      ((SocketChannel)socketChannel).close();
-      ((CompletableFuture<Void>) getCompletionStage())
-          .complete(null);
-    } catch (IOException | Error e) {
-      ((CompletableFuture) getCompletionStage())
-          .completeExceptionally(e);
-    }
     return null;
   }
 
