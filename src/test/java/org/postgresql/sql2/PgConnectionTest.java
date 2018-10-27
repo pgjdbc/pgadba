@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -14,6 +16,7 @@ import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.Submission;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.postgresql.sql2.testutil.CollectorUtils;
 import org.postgresql.sql2.testutil.ConnectUtil;
@@ -50,6 +53,54 @@ public class PgConnectionTest {
           .collect(CollectorUtils.singleCollector(Integer.class))
           .submit().getCompletionStage());
       assertEquals(Integer.valueOf(1), result);
+    }
+  }
+
+  @Test
+  @Disabled
+  public void largeNumberOfConnections() throws InterruptedException, ExecutionException, TimeoutException {
+    Instant lastTime = Instant.now();
+    Instant nowTime = Instant.now();
+
+    long sum1 = 0;
+    long sum2 = 0;
+    long sum3 = 0;
+    long sum4 = 0;
+    long sum5 = 0;
+
+    String sql = "select 1 as t";
+    for (int i = 0; i < 100000; i++) {
+      nowTime = Instant.now();
+      sum1 += ChronoUnit.NANOS.between(lastTime, nowTime);
+      lastTime = Instant.now();
+
+      try (Connection conn = ds.getConnection()) {
+        nowTime = Instant.now();
+        sum2 += ChronoUnit.NANOS.between(lastTime, nowTime);
+        lastTime = Instant.now();
+        Integer result = get10(conn.<Integer>rowOperation(sql)
+            .collect(CollectorUtils.singleCollector(Integer.class))
+            .submit().getCompletionStage());
+        nowTime = Instant.now();
+        sum3 += ChronoUnit.NANOS.between(lastTime, nowTime);
+        lastTime = Instant.now();
+        assertEquals(Integer.valueOf(1), result);
+        nowTime = Instant.now();
+        sum4 += ChronoUnit.NANOS.between(lastTime, nowTime);
+        lastTime = Instant.now();
+      }
+      nowTime = Instant.now();
+      sum5 += ChronoUnit.NANOS.between(lastTime, nowTime);
+      lastTime = Instant.now();
+
+      if (i != 0 && i % 100 == 0) {
+        System.out.println("sum1 = " + sum1 / i);
+        System.out.println("sum2 = " + sum2 / i);
+        System.out.println("sum3 = " + sum3 / i);
+        System.out.println("sum4 = " + sum4 / i);
+        System.out.println("sum5 = " + sum5 / i);
+        System.out.println();
+      }
     }
   }
 
