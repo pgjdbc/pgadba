@@ -17,11 +17,14 @@ import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
+import jdk.incubator.sql2.AdbaType;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.Session;
 import jdk.incubator.sql2.Submission;
@@ -61,6 +64,21 @@ public class SelectDataTypesTest {
 
       assertEquals(Integer.valueOf(100), get10(idF));
     }
+  }
+
+  @Test
+  public void selectIntegerExample() throws ExecutionException, InterruptedException, TimeoutException {
+    List<Integer> result = new ArrayList<>();
+    try (Session session = ds.getSession()) {
+      Submission<List<Integer>> sub = session.<List<Integer>>rowOperation("select $1 as id")
+          .set("$1", 1, AdbaType.INTEGER)
+          .collect(() -> result,
+              (list, row) -> list.add(row.at("id").get(Integer.class)))
+          .submit();
+      get10(sub.getCompletionStage());
+    }
+    assertEquals(1, result.size());
+    assertEquals(Integer.valueOf(1), result.get(0));
   }
 
   @Test
