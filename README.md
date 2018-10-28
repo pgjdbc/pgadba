@@ -7,12 +7,12 @@ This library decouples the network communication to the database, from the busin
 that produces queries and consumes the results.
 
 This reduces the number of threads needed in the application, since there isn't any need
-for threads to stand and wait for the database to produce results.
+for threads wait for the database to produce results.
 
 This in turn reduces memory footprint and the amount of context switching needed.
 
 It accomplishes this by letting the programmer send in queries to the library and returning
-futures, and when the database returns a result it completes the future, either normally or
+futures. When the database returns a result it completes the future, either normally or
 exceptionally if the query had an error.
 
 ## Structural improvements over JDBC
@@ -36,7 +36,7 @@ The programmer interface is a significant rework and upgrade of the old JDBC sta
 
 The core concepts are DataSources, Sessions and Operations.
 
-* DataSource kind of represents the database on the other side of the network, you can start 
+* DataSource represents the database on the other side of the network, you can start 
 Sessions from it.
 * Session is a connection to the database, over TCP and optionally TLS in the case of 
 Postgresql. Sessions is where you send in Operations containing SQL queries and get Futures 
