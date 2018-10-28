@@ -12,11 +12,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 import jdk.incubator.sql2.AdbaType;
-import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.Result;
+import jdk.incubator.sql2.Session;
 import jdk.incubator.sql2.SqlException;
-import jdk.incubator.sql2.Transaction;
+import jdk.incubator.sql2.TransactionCompletion;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.postgresql.sql2.testutil.ConnectUtil;
@@ -30,24 +30,24 @@ public class FirstLight {
 
   @BeforeAll
   public static void setup() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ConnectUtil.openDb(postgres).getConnection()) {
-      get10(conn.operation("create table emp(id int, empno int, ename varchar(10), deptno int)")
+    try (Session session = ConnectUtil.openDb(postgres).getSession()) {
+      get10(session.operation("create table emp(id int, empno int, ename varchar(10), deptno int)")
           .submit().getCompletionStage());
-      get10(conn.operation("insert into emp(id, empno, ename, deptno) values(1, 2, 'empname', 3)")
+      get10(session.operation("insert into emp(id, empno, ename, deptno) values(1, 2, 'empname', 3)")
           .submit().getCompletionStage());
     }
   }
 
   /**
-   * create a Connection and send a SQL to the database.
+   * create a Session and send a SQL to the database.
    */
   @Test
   public void sqlOperation() {
     DataSource ds = ConnectUtil.openDb(postgres);
-    Connection conn = ds.getConnection(t -> fail("ERROR: " + t.getMessage()));
-    try (conn) {
-      assertNotNull(conn);
-      conn.operation(TRIVIAL).submit();
+    Session session = ds.getSession(t -> fail("ERROR: " + t.getMessage()));
+    try (session) {
+      assertNotNull(session);
+      session.operation(TRIVIAL).submit();
     }
     ForkJoinPool.commonPool().awaitQuiescence(1, TimeUnit.MINUTES);
   }
@@ -58,14 +58,14 @@ public class FirstLight {
   @Test
   public void rowOperation() {
     try (DataSource ds = ConnectUtil.openDb(postgres);
-         Connection conn = ds.getConnection(t -> fail("ERROR: " + t.getMessage()))) {
-      assertNotNull(conn);
-      conn.<Void>rowOperation(TRIVIAL)
+         Session session = ds.getSession(t -> fail("ERROR: " + t.getMessage()))) {
+      assertNotNull(session);
+      session.<Void>rowOperation(TRIVIAL)
           .collect(Collector.of(() -> null,
               (a, r) -> assertEquals(Integer.valueOf(1), r.at("1").get(Integer.class)),
               (x, y) -> null))
           .submit();
-      conn.<Integer>rowOperation("select * from emp")
+      session.<Integer>rowOperation("select * from emp")
           .collect(Collector.<Result.RowColumn, int[], Integer>of(
               () -> new int[1],
               (int[] a, Result.RowColumn r) -> {
@@ -77,7 +77,7 @@ public class FirstLight {
           .getCompletionStage()
           .thenAccept(n -> assertEquals(Integer.valueOf(2), n))
           .toCompletableFuture();
-      conn.<Integer>rowOperation("select * from emp where empno = $1")
+      session.<Integer>rowOperation("select * from emp where empno = $1")
           .set("$1", 7782)
           .collect(Collector.of(
               () -> null,
@@ -96,8 +96,8 @@ public class FirstLight {
   @Test
   public void errorHandling() {
     try (DataSource ds = ConnectUtil.openDb(postgres);
-         Connection conn = ds.getConnection(t -> fail("ERROR: " + t.toString()))) {
-      conn.<Void>rowOperation(TRIVIAL)
+         Session session = ds.getSession(t -> fail("ERROR: " + t.toString()))) {
+      session.<Void>rowOperation(TRIVIAL)
           .collect(Collector.of(() -> null,
               (a, r) -> assertEquals(Integer.valueOf(1), r.at("1").get(Integer.class)),
               (x, y) -> null))
@@ -106,8 +106,8 @@ public class FirstLight {
     }
 
     try (DataSource ds = ConnectUtil.openDb(postgres);
-         Connection conn = ds.getConnection(t -> System.out.println("ERROR: " + t.toString()))) {
-      conn.<Integer>rowOperation("select * from emp where empno = $1")
+         Session session = ds.getSession(t -> System.out.println("ERROR: " + t.toString()))) {
+      session.<Integer>rowOperation("select * from emp where empno = $1")
           .set("$1", 7782)
           .collect(Collector.of(
               () -> null,
@@ -126,9 +126,9 @@ public class FirstLight {
   @Test
   public void transaction() {
     try (DataSource ds = ConnectUtil.openDb(postgres);
-         Connection conn = ds.getConnection(t -> fail("ERROR: " + t.toString()))) {
-      Transaction trans = conn.transaction();
-      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select empno, ename from emp where ename = $1 for update")
+         Session session = ds.getSession(t -> fail("ERROR: " + t.toString()))) {
+      TransactionCompletion trans = session.transactionCompletion();
+      CompletionStage<Integer> idF = session.<Integer>rowOperation("select empno, ename from emp where ename = $1 for update")
           .set("$1", "CLARK", AdbaType.VARCHAR)
           .collect(Collector.of(
               () -> new int[1],
@@ -139,7 +139,7 @@ public class FirstLight {
           .submit()
           .getCompletionStage();
       idF.thenAccept(id -> assertEquals(Integer.valueOf(1), id));
-      conn.<Long>rowCountOperation("update emp set deptno = $1 where empno = $2")
+      session.<Long>rowCountOperation("update emp set deptno = $1 where empno = $2")
           .set("$1", 50, AdbaType.INTEGER)
           .set("$2", idF, AdbaType.INTEGER)
           .apply(c -> {
@@ -153,8 +153,8 @@ public class FirstLight {
           .submit()
           .getCompletionStage()
           .thenAccept(c -> assertEquals(Long.valueOf(1), c));
-      conn.catchErrors();
-      conn.commitMaybeRollback(trans);
+      session.catchErrors();
+      session.commitMaybeRollback(trans);
     }
     ForkJoinPool.commonPool().awaitQuiescence(1, TimeUnit.MINUTES);
   }

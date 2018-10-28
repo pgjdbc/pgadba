@@ -51,7 +51,7 @@ public class ArrayQueryParameter implements QueryParameter {
 
   @Override
   public int getOid() {
-    return type.getVendorTypeNumber();
+    return type.getOid();
   }
 
   @Override

@@ -1,8 +1,8 @@
 package org.postgresql.sql2.operations.helpers;
 
-import jdk.incubator.sql2.Transaction;
+import jdk.incubator.sql2.TransactionCompletion;
 
-public class PgTransaction implements Transaction {
+public class PgTransaction implements TransactionCompletion {
   private boolean rollbackOnly;
 
   @Override

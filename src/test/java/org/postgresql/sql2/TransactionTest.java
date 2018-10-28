@@ -8,9 +8,9 @@ import static org.postgresql.sql2.testutil.FutureUtil.get10;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
-import jdk.incubator.sql2.Transaction;
+import jdk.incubator.sql2.Session;
+import jdk.incubator.sql2.TransactionCompletion;
 import jdk.incubator.sql2.TransactionOutcome;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -39,20 +39,20 @@ public class TransactionTest {
 
   @Test
   public void insertAndRollback() throws ExecutionException, InterruptedException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      Transaction transaction = conn.transaction();
-      conn.operation("start transaction")
+    try (Session session = ds.getSession()) {
+      TransactionCompletion transaction = session.transactionCompletion();
+      session.operation("start transaction")
           .submit();
-      conn.operation("create table tab(i int)")
+      session.operation("create table tab(i int)")
           .submit();
-      conn.rowCountOperation("insert into tab(i) values(123)")
+      session.rowCountOperation("insert into tab(i) values(123)")
           .submit();
       transaction.setRollbackOnly();
-      CompletionStage<TransactionOutcome> roll = conn.commitMaybeRollback(transaction);
+      CompletionStage<TransactionOutcome> roll = session.commitMaybeRollback(transaction);
 
       assertEquals(TransactionOutcome.ROLLBACK, get10(roll));
 
-      CompletionStage<Boolean> idF = conn.<Boolean>rowOperation("SELECT EXISTS (\n"
+      CompletionStage<Boolean> idF = session.<Boolean>rowOperation("SELECT EXISTS (\n"
           + "   SELECT 1 \n"
           + "   FROM   pg_catalog.pg_class c\n"
           + "   JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
@@ -70,26 +70,26 @@ public class TransactionTest {
 
   @Test
   public void insertAndCommit() throws ExecutionException, InterruptedException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      Transaction transaction = conn.transaction();
-      conn.operation("start transaction")
+    try (Session session = ds.getSession()) {
+      TransactionCompletion transaction = session.transactionCompletion();
+      session.operation("start transaction")
           .submit();
-      conn.operation("create table tab(i int)")
+      session.operation("create table tab(i int)")
           .submit();
-      conn.rowCountOperation("insert into tab(i) values(123)")
+      session.rowCountOperation("insert into tab(i) values(123)")
           .submit();
-      CompletionStage<TransactionOutcome> roll = conn.commitMaybeRollback(transaction);
+      CompletionStage<TransactionOutcome> roll = session.commitMaybeRollback(transaction);
 
       assertEquals(TransactionOutcome.COMMIT, get10(roll));
 
-      CompletionStage<Long> idF = conn.<Long>rowOperation("select count(*) as t from tab")
+      CompletionStage<Long> idF = session.<Long>rowOperation("select count(*) as t from tab")
           .collect(singleCollector(Long.class))
           .submit()
           .getCompletionStage();
 
       assertEquals(Long.valueOf(1), get10(idF));
 
-      get10(conn.rowCountOperation("drop table tab")
+      get10(session.rowCountOperation("drop table tab")
           .submit().getCompletionStage());
     }
   }

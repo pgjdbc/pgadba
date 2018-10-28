@@ -14,7 +14,7 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
   private Map<String, Integer> columnNames;
   private Map<Integer, TableCell> columns;
   private long rowNumber;
-  private int currentPos = 0;
+  private int currentPos = 1;
 
   /**
    * parses the bytes that describe one data row in a result set.

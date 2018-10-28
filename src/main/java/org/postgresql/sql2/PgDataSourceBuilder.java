@@ -1,38 +1,44 @@
 package org.postgresql.sql2;
 
-import jdk.incubator.sql2.ConnectionProperty;
-import jdk.incubator.sql2.DataSource;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.LongConsumer;
+import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.DataSource.Builder;
+import jdk.incubator.sql2.DataSourceProperty;
+import jdk.incubator.sql2.SessionProperty;
 
 public class PgDataSourceBuilder implements DataSource.Builder {
-  private Map<ConnectionProperty, Object> properties = new HashMap<>();
+  private Map<SessionProperty, Object> properties = new HashMap<>();
 
   @Override
-  public DataSource.Builder defaultConnectionProperty(ConnectionProperty property, Object value) {
+  public Builder property(DataSourceProperty p, Object v) {
+    return null;
+  }
+
+  @Override
+  public DataSource.Builder defaultSessionProperty(SessionProperty property, Object value) {
     properties.put(property, value);
 
     return this;
   }
 
   @Override
-  public DataSource.Builder connectionProperty(ConnectionProperty property, Object value) {
+  public DataSource.Builder sessionProperty(SessionProperty property, Object value) {
     properties.put(property, value);
 
     return this;
   }
 
   @Override
-  public DataSource.Builder registerConnectionProperty(ConnectionProperty property) {
+  public DataSource.Builder registerSessionProperty(SessionProperty property) {
     properties.put(property, null);
 
     return this;
   }
 
   @Override
-  public DataSource.Builder requestHook(Consumer<Long> request) {
+  public DataSource.Builder requestHook(LongConsumer request) {
     return this;
   }
 

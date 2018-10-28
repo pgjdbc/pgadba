@@ -10,8 +10,8 @@ import java.nio.file.Paths;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.Session;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ import org.postgresql.sql2.testutil.ConnectUtil;
 import org.postgresql.sql2.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-public class PgConnectionTlsTest {
+public class PgSessionTlsTest {
   public static PostgreSQLContainer postgresTls = DatabaseHolder.getNewWithTls();
   public static PostgreSQLContainer postgres = DatabaseHolder.getNew();
 
@@ -47,8 +47,8 @@ public class PgConnectionTlsTest {
   public void connectWithoutTlsToTlsOnlyDb() throws InterruptedException, ExecutionException, TimeoutException {
 
     String sql = "select 1 as t";
-    try (Connection conn = ds.getConnection()) {
-      get10(conn.rowOperation(sql)
+    try (Session session = ds.getSession()) {
+      get10(session.rowOperation(sql)
           .collect(CollectorUtils.singleCollector(Integer.class))
           .submit().getCompletionStage());
       fail("Exception should have been thrown, as the connection properties doesn't include TLS");
@@ -60,12 +60,12 @@ public class PgConnectionTlsTest {
 
   @Test
   public void connectWithTls() throws InterruptedException, ExecutionException, TimeoutException, URISyntaxException {
-    URL resource = PgConnectionTlsTest.class.getResource("/keystore.jks");
+    URL resource = PgSessionTlsTest.class.getResource("/keystore.jks");
     System.setProperty("javax.net.ssl.trustStore", String.valueOf(Paths.get(resource.toURI()).toFile()));
     System.setProperty("javax.net.ssl.trustStorePassword","changeit");
     String sql = "select 1 as t";
-    try (Connection conn = dsTls.getConnection()) {
-      Integer result = conn.<Integer>rowOperation(sql)
+    try (Session session = dsTls.getSession()) {
+      Integer result = session.<Integer>rowOperation(sql)
           .collect(CollectorUtils.singleCollector(Integer.class))
           .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
       assertEquals(Integer.valueOf(1), result);
@@ -76,12 +76,12 @@ public class PgConnectionTlsTest {
 
   @Test
   public void connectWithTlsToDbWithoutTls() throws InterruptedException, TimeoutException, URISyntaxException {
-    URL resource = PgConnectionTlsTest.class.getResource("/keystore.jks");
+    URL resource = PgSessionTlsTest.class.getResource("/keystore.jks");
     System.setProperty("javax.net.ssl.trustStore", String.valueOf(Paths.get(resource.toURI()).toFile()));
     System.setProperty("javax.net.ssl.trustStorePassword","changeit");
     String sql = "select 1 as t";
-    try (Connection conn = dsWithoutTls.getConnection()) {
-      Integer result = conn.<Integer>rowOperation(sql)
+    try (Session session = dsWithoutTls.getSession()) {
+      Integer result = session.<Integer>rowOperation(sql)
           .collect(CollectorUtils.singleCollector(Integer.class))
           .submit().getCompletionStage().toCompletableFuture().get(10, TimeUnit.SECONDS);
       assertEquals(Integer.valueOf(1), result);

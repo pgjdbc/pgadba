@@ -3,8 +3,8 @@ package org.postgresql.sql2.communication.network;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import jdk.incubator.sql2.AdbaConnectionProperty;
-import jdk.incubator.sql2.ConnectionProperty;
+import jdk.incubator.sql2.AdbaSessionProperty;
+import jdk.incubator.sql2.SessionProperty;
 import org.postgresql.sql2.communication.FeFrame;
 import org.postgresql.sql2.communication.NetworkOutputStream;
 import org.postgresql.sql2.communication.NetworkRequest;
@@ -38,11 +38,11 @@ public class PasswordRequest implements NetworkRequest {
   public NetworkRequest write(NetworkWriteContext context) throws IOException {
 
     // Obtain the properties
-    Map<ConnectionProperty, Object> properties = context.getProperties();
+    Map<SessionProperty, Object> properties = context.getProperties();
 
     // Create the payload (TODO determine if can reduce object creation)
-    String username = (String) properties.get(AdbaConnectionProperty.USER);
-    String password = (String) properties.get(AdbaConnectionProperty.PASSWORD);
+    String username = (String) properties.get(AdbaSessionProperty.USER);
+    String password = (String) properties.get(AdbaSessionProperty.PASSWORD);
     byte[] content = BinaryHelper.encode(username.getBytes(StandardCharsets.UTF_8),
         password.getBytes(StandardCharsets.UTF_8), authentication.getSalt());
 

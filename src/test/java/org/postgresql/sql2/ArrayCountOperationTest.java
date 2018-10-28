@@ -12,8 +12,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 import jdk.incubator.sql2.AdbaType;
-import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.Session;
 import jdk.incubator.sql2.Submission;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -42,17 +42,17 @@ public class ArrayCountOperationTest {
 
   @Test
   public void multiInsertWithATable() throws ExecutionException, InterruptedException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      conn.rowCountOperation("create table tabForInsert(id int)")
+    try (Session session = ds.getSession()) {
+      session.rowCountOperation("create table tabForInsert(id int)")
           .submit();
       Submission<List<Integer>> arrayCount =
-          conn.<List<Integer>>arrayRowCountOperation("insert into tabForInsert(id) values ($1)")
+          session.<List<Integer>>arrayRowCountOperation("insert into tabForInsert(id) values ($1)")
           .set("$1", new Integer[]{1, 2, 3}, AdbaType.NUMERIC)
           .submit();
-      Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
+      Submission<Long> count = session.<Long>rowOperation("select count(*) as t from tabForInsert")
           .collect(CollectorUtils.singleCollector(Long.class))
           .submit();
-      Submission<Object> drop = conn.operation("drop table tabForInsert")
+      Submission<Object> drop = session.operation("drop table tabForInsert")
           .submit();
 
       assertArrayEquals(new PgCount[]{new PgCount(1), new PgCount(1), new PgCount(1)},
@@ -65,17 +65,17 @@ public class ArrayCountOperationTest {
   @Test
   public void multiInsertFutureWithATable() throws ExecutionException, InterruptedException, TimeoutException {
     CompletableFuture<Integer[]> f = CompletableFuture.supplyAsync(() -> new Integer[]{1, 2, 3});
-    try (Connection conn = ds.getConnection()) {
-      Submission<Object> noReturn = conn.operation("create table tabForInsert(id int)")
+    try (Session session = ds.getSession()) {
+      Submission<Object> noReturn = session.operation("create table tabForInsert(id int)")
           .submit();
       Submission<List<Integer>> arrayCount =
-          conn.<List<Integer>>arrayRowCountOperation("insert into tabForInsert(id) values ($1)")
+          session.<List<Integer>>arrayRowCountOperation("insert into tabForInsert(id) values ($1)")
           .set("$1", f, AdbaType.NUMERIC)
           .submit();
-      Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from tabForInsert")
+      Submission<Long> count = session.<Long>rowOperation("select count(*) as t from tabForInsert")
           .collect(CollectorUtils.singleCollector(Long.class))
           .submit();
-      Submission<Object> drop = conn.operation("drop table tabForInsert")
+      Submission<Object> drop = session.operation("drop table tabForInsert")
           .submit();
 
       assertNull(get10(noReturn.getCompletionStage()));
@@ -89,11 +89,11 @@ public class ArrayCountOperationTest {
 
   @Test
   public void multiInsertWithCustomCollector() throws ExecutionException, InterruptedException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      conn.rowCountOperation("create table secondTabForInsert(id int)")
+    try (Session session = ds.getSession()) {
+      session.rowCountOperation("create table secondTabForInsert(id int)")
           .submit();
       Submission<List<Long>> arrayCount =
-          conn.<List<Long>>arrayRowCountOperation("insert into secondTabForInsert(id) values ($1)")
+          session.<List<Long>>arrayRowCountOperation("insert into secondTabForInsert(id) values ($1)")
           .set("$1", new Integer[]{1, 2, 3}, AdbaType.NUMERIC)
           .collect(Collector.of(
               () -> new ArrayList<Long>(),
@@ -102,10 +102,10 @@ public class ArrayCountOperationTest {
               a -> a
           ))
           .submit();
-      Submission<Long> count = conn.<Long>rowOperation("select count(*) as t from secondTabForInsert")
+      Submission<Long> count = session.<Long>rowOperation("select count(*) as t from secondTabForInsert")
           .collect(CollectorUtils.singleCollector(Long.class))
           .submit();
-      Submission<Object> drop = conn.operation("drop table secondTabForInsert")
+      Submission<Object> drop = session.operation("drop table secondTabForInsert")
           .submit();
 
       assertArrayEquals(new Long[]{1L, 1L, 1L},

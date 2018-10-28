@@ -1,19 +1,18 @@
 package org.postgresql.sql2;
 
-import jdk.incubator.sql2.AdbaConnectionProperty;
-import jdk.incubator.sql2.Connection;
-import jdk.incubator.sql2.ConnectionProperty;
-import org.postgresql.sql2.exceptions.PropertyException;
-
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import jdk.incubator.sql2.AdbaSessionProperty;
+import jdk.incubator.sql2.Session;
+import jdk.incubator.sql2.SessionProperty;
+import org.postgresql.sql2.exceptions.PropertyException;
 
-public class PgConnectionBuilder implements Connection.Builder {
-  private Map<ConnectionProperty, Object> properties = new HashMap<>();
+public class PgSessionBuilder implements Session.Builder {
+  private Map<SessionProperty, Object> properties = new HashMap<>();
   private PgDataSource dataSource;
 
   /**
@@ -21,25 +20,25 @@ public class PgConnectionBuilder implements Connection.Builder {
    *
    * @param dataSource dataSource that the created connections should be a part of.
    */
-  public PgConnectionBuilder(PgDataSource dataSource) {
+  public PgSessionBuilder(PgDataSource dataSource) {
     this.dataSource = dataSource;
-    for (PgConnectionProperty prop : PgConnectionProperty.values()) {
+    for (PgSessionProperty prop : PgSessionProperty.values()) {
       properties.put(prop, prop.defaultValue());
     }
 
-    for (Map.Entry<ConnectionProperty, Object> prop : dataSource.getProperties().entrySet()) {
+    for (Map.Entry<SessionProperty, Object> prop : dataSource.getProperties().entrySet()) {
       properties.put(prop.getKey(), prop.getValue());
     }
   }
 
   @Override
-  public Connection.Builder property(ConnectionProperty p, Object v) {
-    if (!(p instanceof PgConnectionProperty)) {
-      throw new PropertyException("Please make sure that the ConnectionProperty is of type PGConnectionProperties");
+  public Session.Builder property(SessionProperty p, Object v) {
+    if (!(p instanceof PgSessionProperty)) {
+      throw new PropertyException("Please make sure that the SessionProperty is of type PGConnectionProperties");
     }
 
     if (!(v.getClass().isAssignableFrom(p.range()))) {
-      throw new PropertyException("Please make sure that the ConnectionProperty is of type PGConnectionProperties");
+      throw new PropertyException("Please make sure that the SessionProperty is of type PGConnectionProperties");
     }
 
     properties.put(p, v);
@@ -48,17 +47,17 @@ public class PgConnectionBuilder implements Connection.Builder {
   }
 
   @Override
-  public Connection build() {
-    Map<ConnectionProperty, Object> props = parseUrl((String) properties.get(AdbaConnectionProperty.URL), null);
+  public Session build() {
+    Map<SessionProperty, Object> props = parseUrl((String) properties.get(AdbaSessionProperty.URL), null);
 
     if (props != null) {
-      for (Map.Entry<ConnectionProperty, Object> prop : props.entrySet()) {
+      for (Map.Entry<SessionProperty, Object> prop : props.entrySet()) {
         properties.put(prop.getKey(), prop.getValue());
       }
     }
 
     try {
-      PgConnection connection = new PgConnection(properties, this.dataSource, this.dataSource.getNioLoop(),
+      PgSession connection = new PgSession(properties, this.dataSource, this.dataSource.getNioLoop(),
           this.dataSource.getByteBufferPool());
       dataSource.registerConnection(connection);
       return connection;
@@ -73,8 +72,8 @@ public class PgConnectionBuilder implements Connection.Builder {
    * @param defaults the default values that's used if the user doesn't override them
    * @return a map of properties
    */
-  public static Map<ConnectionProperty, Object> parseUrl(String url, Properties defaults) {
-    Map<ConnectionProperty, Object> urlProps = new HashMap<>();
+  public static Map<SessionProperty, Object> parseUrl(String url, Properties defaults) {
+    Map<SessionProperty, Object> urlProps = new HashMap<>();
 
     String urlServer = url;
     String urlArgs = "";
@@ -96,7 +95,7 @@ public class PgConnectionBuilder implements Connection.Builder {
       if (slash == -1) {
         return null;
       }
-      urlProps.put(PgConnectionProperty.DATABASE,
+      urlProps.put(PgSessionProperty.DATABASE,
           URLDecoder.decode(urlServer.substring(slash + 1), StandardCharsets.UTF_8));
 
       String[] addresses = urlServer.substring(0, slash).split(",");
@@ -124,21 +123,21 @@ public class PgConnectionBuilder implements Connection.Builder {
       }
       ports.setLength(ports.length() - 1);
       hosts.setLength(hosts.length() - 1);
-      urlProps.put(PgConnectionProperty.PORT, Integer.parseInt(ports.toString()));
-      urlProps.put(PgConnectionProperty.HOST, hosts.toString());
+      urlProps.put(PgSessionProperty.PORT, Integer.parseInt(ports.toString()));
+      urlProps.put(PgSessionProperty.HOST, hosts.toString());
     } else {
       /*
        * if there are no defaults set or any one of PORT, HOST, DBNAME not set then
        * set it to default
        */
-      if (defaults == null || !defaults.containsKey(PgConnectionProperty.PORT.name())) {
-        urlProps.put(PgConnectionProperty.PORT, 5432);
+      if (defaults == null || !defaults.containsKey(PgSessionProperty.PORT.name())) {
+        urlProps.put(PgSessionProperty.PORT, 5432);
       }
-      if (defaults == null || !defaults.containsKey(PgConnectionProperty.HOST.name())) {
-        urlProps.put(PgConnectionProperty.HOST, "localhost");
+      if (defaults == null || !defaults.containsKey(PgSessionProperty.HOST.name())) {
+        urlProps.put(PgSessionProperty.HOST, "localhost");
       }
-      if (defaults == null || !defaults.containsKey(PgConnectionProperty.DATABASE.name())) {
-        urlProps.put(PgConnectionProperty.DATABASE, URLDecoder.decode(urlServer, StandardCharsets.UTF_8));
+      if (defaults == null || !defaults.containsKey(PgSessionProperty.DATABASE.name())) {
+        urlProps.put(PgSessionProperty.DATABASE, URLDecoder.decode(urlServer, StandardCharsets.UTF_8));
       }
     }
 
@@ -150,9 +149,9 @@ public class PgConnectionBuilder implements Connection.Builder {
       }
       int pos = token.indexOf('=');
       if (pos == -1) {
-        urlProps.put(PgConnectionProperty.lookup(token), "");
+        urlProps.put(PgSessionProperty.lookup(token), "");
       } else {
-        urlProps.put(PgConnectionProperty.lookup(token.substring(0, pos)),
+        urlProps.put(PgSessionProperty.lookup(token.substring(0, pos)),
             URLDecoder.decode(token.substring(pos + 1), StandardCharsets.UTF_8));
       }
     }

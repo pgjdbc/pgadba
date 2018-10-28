@@ -3,12 +3,12 @@ package org.postgresql.sql2;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
-import jdk.incubator.sql2.AdbaConnectionProperty;
-import jdk.incubator.sql2.ConnectionProperty;
+import jdk.incubator.sql2.AdbaSessionProperty;
+import jdk.incubator.sql2.SessionProperty;
 import org.postgresql.sql2.buffer.ByteBufferPool;
 import org.postgresql.sql2.execution.NioLoop;
 
-public enum PgConnectionProperty implements ConnectionProperty {
+public enum PgSessionProperty implements SessionProperty {
   /**
    * The host name of the server. Defaults to localhost. To specify an IPv6 address your must enclose the host parameter
    * with square brackets, for example:
@@ -370,7 +370,7 @@ public enum PgConnectionProperty implements ConnectionProperty {
   private Object defaultValue;
   private boolean sensitive;
 
-  PgConnectionProperty(Class range, Object defaultValue, boolean sensitive) {
+  PgSessionProperty(Class range, Object defaultValue, boolean sensitive) {
     this.range = range;
     this.defaultValue = defaultValue;
     this.sensitive = sensitive;
@@ -397,14 +397,14 @@ public enum PgConnectionProperty implements ConnectionProperty {
    * @param name name to search for
    * @return the matching property
    */
-  public static ConnectionProperty lookup(String name) {
-    for (PgConnectionProperty prop : values()) {
+  public static SessionProperty lookup(String name) {
+    for (PgSessionProperty prop : values()) {
       if (prop.toString().equalsIgnoreCase(name)) {
         return prop;
       }
     }
 
-    for (AdbaConnectionProperty prop : AdbaConnectionProperty.values()) {
+    for (AdbaSessionProperty prop : AdbaSessionProperty.values()) {
       if (prop.toString().equalsIgnoreCase(name)) {
         return prop;
       }

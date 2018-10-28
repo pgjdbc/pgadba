@@ -10,10 +10,11 @@ import jdk.incubator.sql2.ParameterizedRowCountOperation;
 import jdk.incubator.sql2.ParameterizedRowOperation;
 import jdk.incubator.sql2.ParameterizedRowPublisherOperation;
 import jdk.incubator.sql2.PrimitiveOperation;
+import jdk.incubator.sql2.Session.Lifecycle;
 import jdk.incubator.sql2.Submission;
-import jdk.incubator.sql2.Transaction;
+import jdk.incubator.sql2.TransactionCompletion;
 import jdk.incubator.sql2.TransactionOutcome;
-import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.submissions.GroupSubmission;
 
 import java.time.Duration;
@@ -32,8 +33,8 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
       (a, b) -> null,
       a -> null);
 
-  private PgConnection connection;
-  private Logger logger = Logger.getLogger(PgConnection.class.getName());
+  private PgSession connection;
+  private Logger logger = Logger.getLogger(PgSession.class.getName());
   protected Consumer<Throwable> errorHandler = null;
   private boolean held = true;
 
@@ -45,11 +46,11 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
 
   }
 
-  public PgOperationGroup(PgConnection connection) {
+  public PgOperationGroup(PgSession connection) {
     this.connection = connection;
   }
 
-  public void setConnection(PgConnection connection) {
+  public void setConnection(PgSession connection) {
     this.connection = connection;
   }
 
@@ -70,7 +71,7 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
   }
 
   @Override
-  public Submission<T> submitHoldingForMoreMembers() {
+  public Submission<T> submit() {
     GroupSubmission<T> sub = new GroupSubmission<>(this::cancel, errorHandler);
     sub.setCollector(collector);
 
@@ -80,12 +81,10 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
   }
 
   @Override
-  public Submission<T> releaseProhibitingMoreMembers() {
+  public void close() {
     held = false;
     
-    // TODO is this to be a group of submissions?
     connection.submit(groupSubmission);
-    return groupSubmission;
   }
 
   @Override
@@ -96,8 +95,8 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public PrimitiveOperation<S> catchOperation() {
-    if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle()
+    if (connection.getSessionLifecycle() != Lifecycle.NEW && connection.getSessionLifecycle() != Lifecycle.ATTACHED) {
+      throw new IllegalStateException("session lifecycle in state: " + connection.getSessionLifecycle()
           + " and not open for new work");
     }
 
@@ -114,8 +113,8 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public <R extends S> ArrayRowCountOperation<R> arrayRowCountOperation(String sql) {
-    if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle()
+    if (connection.getSessionLifecycle() != Lifecycle.NEW && connection.getSessionLifecycle() != Lifecycle.ATTACHED) {
+      throw new IllegalStateException("session lifecycle in state: " + connection.getSessionLifecycle()
           + " and not open for new work");
     }
 
@@ -132,8 +131,8 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public <R extends S> ParameterizedRowCountOperation<R> rowCountOperation(String sql) {
-    if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle()
+    if (connection.getSessionLifecycle() != Lifecycle.NEW && connection.getSessionLifecycle() != Lifecycle.ATTACHED) {
+      throw new IllegalStateException("session lifecycle in state: " + connection.getSessionLifecycle()
           + " and not open for new work");
     }
 
@@ -150,8 +149,8 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public Operation<S> operation(String sql) {
-    if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle()
+    if (connection.getSessionLifecycle() != Lifecycle.NEW && connection.getSessionLifecycle() != Lifecycle.ATTACHED) {
+      throw new IllegalStateException("session lifecycle in state: " + connection.getSessionLifecycle()
           + " and not open for new work");
     }
 
@@ -168,8 +167,8 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public <R extends S> OutOperation<R> outOperation(String sql) {
-    if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle()
+    if (connection.getSessionLifecycle() != Lifecycle.NEW && connection.getSessionLifecycle() != Lifecycle.ATTACHED) {
+      throw new IllegalStateException("session lifecycle in state: " + connection.getSessionLifecycle()
           + " and not open for new work");
     }
 
@@ -186,8 +185,8 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public <R extends S> ParameterizedRowOperation<R> rowOperation(String sql) {
-    if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle()
+    if (connection.getSessionLifecycle() != Lifecycle.NEW && connection.getSessionLifecycle() != Lifecycle.ATTACHED) {
+      throw new IllegalStateException("session lifecycle in state: " + connection.getSessionLifecycle()
           + " and not open for new work");
     }
 
@@ -204,8 +203,8 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public <R extends S> ParameterizedRowPublisherOperation<R> rowPublisherOperation(String sql) {
-    if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle()
+    if (connection.getSessionLifecycle() != Lifecycle.NEW && connection.getSessionLifecycle() != Lifecycle.ATTACHED) {
+      throw new IllegalStateException("session lifecycle in state: " + connection.getSessionLifecycle()
           + " and not open for new work");
     }
 
@@ -226,9 +225,9 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
   }
 
   @Override
-  public Operation<TransactionOutcome> endTransactionOperation(Transaction trans) {
-    if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle()
+  public Operation<TransactionOutcome> endTransactionOperation(TransactionCompletion trans) {
+    if (connection.getSessionLifecycle() != Lifecycle.NEW && connection.getSessionLifecycle() != Lifecycle.ATTACHED) {
+      throw new IllegalStateException("session lifecycle in state: " + connection.getSessionLifecycle()
           + " and not open for new work");
     }
 
@@ -245,8 +244,8 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public <R extends S> LocalOperation<R> localOperation() {
-    if (!connection.getConnectionLifecycle().isOpen() || !connection.getConnectionLifecycle().isActive()) {
-      throw new IllegalStateException("connection lifecycle in state: " + connection.getConnectionLifecycle()
+    if (connection.getSessionLifecycle() != Lifecycle.NEW && connection.getSessionLifecycle() != Lifecycle.ATTACHED) {
+      throw new IllegalStateException("session lifecycle in state: " + connection.getSessionLifecycle()
           + " and not open for new work");
     }
 
@@ -289,11 +288,6 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
     this.errorHandler = errorHandler;
 
     return this;
-  }
-
-  @Override
-  public Submission<T> submit() {
-    return null;
   }
 
   private boolean cancel() {

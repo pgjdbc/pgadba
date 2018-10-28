@@ -372,13 +372,12 @@ public enum PgAdbaType implements SqlType {
   }
 
   @Override
-  public Integer getVendorTypeNumber() {
-    return oid;
+  public Class<?> getJavaType() {
+    return null;
   }
 
-  @Override
-  public <T> Class<T> getJavaType() {
-    return null;
+  public Integer getOid() {
+    return oid;
   }
 
   public Function<Object, byte[]> getByteGenerator() {

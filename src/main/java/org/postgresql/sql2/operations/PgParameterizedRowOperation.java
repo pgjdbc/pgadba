@@ -4,7 +4,7 @@ import jdk.incubator.sql2.ParameterizedRowOperation;
 import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.SqlType;
 import jdk.incubator.sql2.Submission;
-import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.operations.helpers.FutureQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.operations.helpers.ValueQueryParameter;
@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collector;
 
 public class PgParameterizedRowOperation<R> implements ParameterizedRowOperation<R> {
-  private PgConnection connection;
+  private PgSession connection;
   private String sql;
   private ParameterHolder holder;
   private Collector collector = Collector.of(() -> null, (a, v) -> {
@@ -31,7 +31,7 @@ public class PgParameterizedRowOperation<R> implements ParameterizedRowOperation
    * @param sql the query
    * @param groupSubmission the group that this execution should be part of
    */
-  public PgParameterizedRowOperation(PgConnection connection, String sql, GroupSubmission groupSubmission) {
+  public PgParameterizedRowOperation(PgSession connection, String sql, GroupSubmission groupSubmission) {
     this.connection = connection;
     this.sql = sql;
     this.holder = new ParameterHolder();

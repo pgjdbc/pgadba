@@ -165,7 +165,7 @@ public class ByteBufferPoolOutputStream extends NetworkOutputStream {
   }
 
   @Override
-  public void write(int b) throws IOException {
+  public void write(int b) {
     synchronized (writtenByteBuffers) {
       this.getCurrentBuffer().getByteBuffer().put((byte) b);
       this.packetSize++;
@@ -173,7 +173,7 @@ public class ByteBufferPoolOutputStream extends NetworkOutputStream {
   }
 
   @Override
-  public void write(byte[] bytes, int off, int len) throws IOException {
+  public void write(byte[] bytes, int off, int len) {
     synchronized (writtenByteBuffers) {
 
       // Increasing packet size

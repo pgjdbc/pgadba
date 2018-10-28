@@ -1,20 +1,19 @@
 package org.postgresql.sql2.operations;
 
-import jdk.incubator.sql2.Connection;
+import java.time.Duration;
+import java.util.function.Consumer;
+import java.util.stream.Collector;
 import jdk.incubator.sql2.Operation;
+import jdk.incubator.sql2.Session;
 import jdk.incubator.sql2.Submission;
-import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.submissions.BaseSubmission;
 import org.postgresql.sql2.submissions.RowSubmission;
 
-import java.time.Duration;
-import java.util.function.Consumer;
-import java.util.stream.Collector;
-
 public class PgValidationOperation implements Operation<Void> {
-  private final PgConnection connection;
-  private final Connection.Validation depth;
+  private final PgSession connection;
+  private final Session.Validation depth;
   private Consumer<Throwable> errorHandler;
 
   /**
@@ -22,7 +21,7 @@ public class PgValidationOperation implements Operation<Void> {
    * @param connection connection to validate
    * @param depth to what depth the validation should happen
    */
-  public PgValidationOperation(PgConnection connection, Connection.Validation depth) {
+  public PgValidationOperation(PgSession connection, Session.Validation depth) {
     this.connection = connection;
     this.depth = depth;
   }

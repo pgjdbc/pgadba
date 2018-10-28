@@ -4,7 +4,7 @@ import jdk.incubator.sql2.OutOperation;
 import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.SqlType;
 import jdk.incubator.sql2.Submission;
-import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.operations.helpers.FutureQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class PgOutOperation<R> implements OutOperation<R> {
-  private final PgConnection connection;
+  private final PgSession connection;
   private final String sql;
   private ParameterHolder holder;
   private Consumer<Throwable> errorHandler;
@@ -34,7 +34,7 @@ public class PgOutOperation<R> implements OutOperation<R> {
    * @param sql the query
    * @param groupSubmission the group that this execution should be part of
    */
-  public PgOutOperation(PgConnection connection, String sql, GroupSubmission groupSubmission) {
+  public PgOutOperation(PgSession connection, String sql, GroupSubmission groupSubmission) {
     this.connection = connection;
     this.sql = sql;
     this.holder = new ParameterHolder();

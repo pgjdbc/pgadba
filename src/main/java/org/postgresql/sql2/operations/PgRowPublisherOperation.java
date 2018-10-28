@@ -4,7 +4,7 @@ import jdk.incubator.sql2.ParameterizedRowPublisherOperation;
 import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.SqlType;
 import jdk.incubator.sql2.Submission;
-import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.operations.helpers.FutureQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
@@ -19,7 +19,7 @@ import java.util.concurrent.SubmissionPublisher;
 import java.util.function.Consumer;
 
 public class PgRowPublisherOperation<R> implements ParameterizedRowPublisherOperation<R> {
-  private PgConnection connection;
+  private PgSession connection;
   private String sql;
   private ParameterHolder holder;
   private Consumer<Throwable> errorHandler;
@@ -35,7 +35,7 @@ public class PgRowPublisherOperation<R> implements ParameterizedRowPublisherOper
    * @param sql the query
    * @param groupSubmission the group that this execution should be part of
    */
-  public PgRowPublisherOperation(PgConnection connection, String sql, GroupSubmission groupSubmission) {
+  public PgRowPublisherOperation(PgSession connection, String sql, GroupSubmission groupSubmission) {
     this.connection = connection;
     this.sql = sql;
     this.holder = new ParameterHolder();

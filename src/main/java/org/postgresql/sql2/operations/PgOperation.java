@@ -2,7 +2,7 @@ package org.postgresql.sql2.operations;
 
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.Submission;
-import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
 import org.postgresql.sql2.submissions.VoidSubmission;
@@ -11,11 +11,11 @@ import java.time.Duration;
 import java.util.function.Consumer;
 
 public class PgOperation<S> implements Operation<S> {
-  private final PgConnection connection;
+  private final PgSession connection;
   private final String sql;
   private Consumer<Throwable> errorHandler;
 
-  public PgOperation(PgConnection connection, String sql) {
+  public PgOperation(PgSession connection, String sql) {
     this.connection = connection;
     this.sql = sql;
   }

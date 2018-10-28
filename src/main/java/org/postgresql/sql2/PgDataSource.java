@@ -8,22 +8,20 @@ package org.postgresql.sql2;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-
+import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.Session;
+import jdk.incubator.sql2.SessionProperty;
 import org.postgresql.sql2.buffer.ByteBufferPool;
 import org.postgresql.sql2.buffer.DefaultByteBufferPool;
 import org.postgresql.sql2.execution.DefaultNioLoop;
 import org.postgresql.sql2.execution.NioLoop;
 
-import jdk.incubator.sql2.Connection;
-import jdk.incubator.sql2.ConnectionProperty;
-import jdk.incubator.sql2.DataSource;
-
 public class PgDataSource implements DataSource {
   private final NioLoop loop;
   private final ByteBufferPool bufferPool;
-  private Queue<PgConnection> connections = new ConcurrentLinkedQueue<>();
+  private Queue<PgSession> connections = new ConcurrentLinkedQueue<>();
   private boolean closed;
-  private Map<ConnectionProperty, Object> properties;
+  private Map<SessionProperty, Object> properties;
   private DefaultNioLoop defaultLoop = null;
 
   /**
@@ -31,11 +29,11 @@ public class PgDataSource implements DataSource {
    *
    * @param properties the properties that govern the connections
    */
-  public PgDataSource(Map<ConnectionProperty, Object> properties) {
+  public PgDataSource(Map<SessionProperty, Object> properties) {
     this.properties = properties;
 
     // Obtain the NIO loop
-    NioLoop loop = (NioLoop) this.properties.get(PgConnectionProperty.NIO_LOOP);
+    NioLoop loop = (NioLoop) this.properties.get(PgSessionProperty.NIO_LOOP);
     if (loop == null) {
       // Provide default loop
       this.defaultLoop = new DefaultNioLoop();
@@ -45,7 +43,7 @@ public class PgDataSource implements DataSource {
     this.loop = loop;
     
     // Obtain the byte buffer pool
-    ByteBufferPool pool = (ByteBufferPool) this.properties.get(PgConnectionProperty.BYTE_BUFFER_POOL);
+    ByteBufferPool pool = (ByteBufferPool) this.properties.get(PgSessionProperty.BYTE_BUFFER_POOL);
     if (pool == null) {
       // Provide default pool
       pool = new DefaultByteBufferPool(properties);
@@ -72,29 +70,29 @@ public class PgDataSource implements DataSource {
   }
 
   /**
-   * Returns a {@link Connection} builder. By default that builder will return
-   * {@link Connection}s with the {@code ConnectionProperty}s specified when
-   * creating this DataSource. Default and unspecified {@link ConnectionProperty}s
+   * Returns a {@link Session} builder. By default that builder will return
+   * {@link Session}s with the {@code SessionProperty}s specified when
+   * creating this DataSource. Default and unspecified {@link SessionProperty}s
    * can be set with the returned builder.
    *
-   * @return a new {@link Connection} builder. Not {@code null}.
+   * @return a new {@link Session} builder. Not {@code null}.
    */
   @Override
-  public Connection.Builder builder() {
+  public Session.Builder builder() {
     if (closed) {
       throw new IllegalStateException("this datasource has already been closed");
     }
 
-    return new PgConnectionBuilder(this);
+    return new PgSessionBuilder(this);
   }
   
-  public void unregisterConnection(PgConnection connection) {
+  public void unregisterConnection(PgSession connection) {
     this.connections.remove(connection);
   }
 
   @Override
   public void close() {
-    for (PgConnection connection : connections) {
+    for (PgSession connection : connections) {
       connection.close();
     }
     if (this.defaultLoop != null) {
@@ -103,11 +101,11 @@ public class PgDataSource implements DataSource {
     closed = true;
   }
 
-  public void registerConnection(PgConnection connection) {
+  public void registerConnection(PgSession connection) {
     connections.add(connection);
   }
 
-  public Map<ConnectionProperty, Object> getProperties() {
+  public Map<SessionProperty, Object> getProperties() {
     return properties;
   }
 }

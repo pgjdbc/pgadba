@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.util.function.Consumer;
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.Submission;
-import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.submissions.ConnectSubmission;
 import org.postgresql.sql2.submissions.GroupSubmission;
 
@@ -12,10 +12,10 @@ public class PgConnectOperation implements Operation<Void> {
 
   private Consumer<Throwable> errorHandler;
   private Duration minTime;
-  private PgConnection connection;
+  private PgSession connection;
   private GroupSubmission groupSubmission;
 
-  public PgConnectOperation(PgConnection connection, GroupSubmission groupSubmission) {
+  public PgConnectOperation(PgSession connection, GroupSubmission groupSubmission) {
     this.connection = connection;
     this.groupSubmission = groupSubmission;
   }

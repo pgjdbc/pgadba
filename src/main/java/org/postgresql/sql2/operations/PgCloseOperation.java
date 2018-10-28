@@ -2,7 +2,7 @@ package org.postgresql.sql2.operations;
 
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.Submission;
-import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.communication.network.CloseRequest;
 import org.postgresql.sql2.submissions.CloseSubmission;
 
@@ -10,10 +10,10 @@ import java.time.Duration;
 import java.util.function.Consumer;
 
 public class PgCloseOperation implements Operation<Void> {
-  private PgConnection connection;
+  private PgSession connection;
   private Consumer<Throwable> errorHandler;
 
-  public PgCloseOperation(PgConnection connection) {
+  public PgCloseOperation(PgSession connection) {
     this.connection = connection;
   }
 
@@ -35,6 +35,7 @@ public class PgCloseOperation implements Operation<Void> {
   @Override
   public Submission<Void> submit() {
     CloseSubmission submission = new CloseSubmission(this::cancel, errorHandler);
+    submission.getCompletionStage().thenAccept(s -> connection.setLifeCycleClosed());
     CloseRequest closeRequest = new CloseRequest(submission);
     connection.sendNetworkRequest(closeRequest);
     

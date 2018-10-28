@@ -1,6 +1,6 @@
 package org.postgresql.sql2.communication;
 
-import jdk.incubator.sql2.ConnectionProperty;
+import jdk.incubator.sql2.SessionProperty;
 
 /**
  * Context for writing to the network.
@@ -24,12 +24,12 @@ public interface NetworkReadContext extends NetworkContext {
   PreparedStatementCache getPreparedStatementCache();
 
   /**
-   * Allows overriding {@link ConnectionProperty}.
+   * Allows overriding {@link SessionProperty}.
    * 
-   * @param property {@link ConnectionProperty}.
+   * @param property {@link SessionProperty}.
    * @param value    Value.
    */
-  void setProperty(ConnectionProperty property, Object value);
+  void setProperty(SessionProperty property, Object value);
 
   /**
    * Triggers for a {@link NetworkRequest} to be undertaken.

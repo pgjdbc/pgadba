@@ -7,12 +7,14 @@ import static org.postgresql.sql2.testutil.FutureUtil.get10;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 import jdk.incubator.sql2.AdbaType;
-import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.Session;
+import jdk.incubator.sql2.Session.Lifecycle;
 import jdk.incubator.sql2.Submission;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -24,7 +26,7 @@ import org.postgresql.sql2.testutil.DatabaseHolder;
 import org.postgresql.sql2.testutil.SimpleRowSubscriber;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-public class PgConnectionTest {
+public class PgSessionTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
 
   private static DataSource ds;
@@ -40,20 +42,6 @@ public class PgConnectionTest {
   @AfterAll
   public static void tearDown() {
     ds.close();
-  }
-
-  @Test
-  public void selectAfterDeactivateActivate() throws InterruptedException, ExecutionException, TimeoutException {
-
-    String sql = "select 1 as t";
-    try (Connection conn = ds.getConnection()) {
-      conn.deactivate();
-      conn.activate();
-      Integer result = get10(conn.<Integer>rowOperation(sql)
-          .collect(CollectorUtils.singleCollector(Integer.class))
-          .submit().getCompletionStage());
-      assertEquals(Integer.valueOf(1), result);
-    }
   }
 
   @Test
@@ -74,11 +62,11 @@ public class PgConnectionTest {
       sum1 += ChronoUnit.NANOS.between(lastTime, nowTime);
       lastTime = Instant.now();
 
-      try (Connection conn = ds.getConnection()) {
+      try (Session session = ds.getSession()) {
         nowTime = Instant.now();
         sum2 += ChronoUnit.NANOS.between(lastTime, nowTime);
         lastTime = Instant.now();
-        Integer result = get10(conn.<Integer>rowOperation(sql)
+        Integer result = get10(session.<Integer>rowOperation(sql)
             .collect(CollectorUtils.singleCollector(Integer.class))
             .submit().getCompletionStage());
         nowTime = Instant.now();
@@ -106,8 +94,8 @@ public class PgConnectionTest {
 
   @Test
   public void validateCloseCompletesNormally() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      Submission<Void> sub = conn.closeOperation().submit();
+    try (Session session = ds.getSession()) {
+      Submission<Void> sub = session.closeOperation().submit();
 
       get10(sub.getCompletionStage());
     }
@@ -117,8 +105,8 @@ public class PgConnectionTest {
   public void selectWithBrokenCollectorSupplier() throws InterruptedException, ExecutionException, TimeoutException {
 
     String sql = "select 1 as t";
-    try (Connection conn = ds.getConnection()) {
-      conn.<Integer>rowOperation(sql)
+    try (Session session = ds.getSession()) {
+      session.<Integer>rowOperation(sql)
           .collect(Collector.of(
               () -> {
                 throw new Error("exception thrown in supplier");
@@ -137,8 +125,8 @@ public class PgConnectionTest {
   public void selectWithBrokenCollectorAccumulator() throws InterruptedException, ExecutionException, TimeoutException {
 
     String sql = "select 1 as t";
-    try (Connection conn = ds.getConnection()) {
-      get10(conn.<Integer>rowOperation(sql)
+    try (Session session = ds.getSession()) {
+      get10(session.<Integer>rowOperation(sql)
           .collect(Collector.of(
               () -> new Integer[] {0},
               (a, r) -> {
@@ -157,8 +145,8 @@ public class PgConnectionTest {
   public void selectWithBrokenCollectorFinisher() throws InterruptedException, ExecutionException, TimeoutException {
 
     String sql = "select 1 as t";
-    try (Connection conn = ds.getConnection()) {
-      get10(conn.<Integer>rowOperation(sql)
+    try (Session session = ds.getSession()) {
+      get10(session.<Integer>rowOperation(sql)
           .collect(Collector.of(
               () -> new Integer[] {0},
               (a, r) -> a[0] += r.at("t").get(Integer.class),
@@ -176,9 +164,9 @@ public class PgConnectionTest {
 
   @Test
   public void connectTwice() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      Thread.sleep(1000); // wait a bit so that the connection have time to come up
-      conn.connectOperation();
+    try (Session session = ds.getSession()) {
+      Thread.sleep(1000); // wait a bit so that the Session have time to come up
+      session.attachOperation();
       fail("you are not allowed to connect twice");
     } catch (IllegalStateException e) {
       assertEquals("only connections in state NEW are allowed to start connecting", e.getMessage());
@@ -188,42 +176,38 @@ public class PgConnectionTest {
   @Test
   public void deactivationListener() throws InterruptedException, ExecutionException, TimeoutException {
 
-    try (Connection conn = ds.getConnection()) {
-      final Connection[] eventConn = new Connection[1];
-      final Connection.Lifecycle[] eventPrevious = new Connection.Lifecycle[1];
-      final Connection.Lifecycle[] eventCurrent = new Connection.Lifecycle[1];
+    try (Session session = ds.getSession()) {
+      final Session[] eventSession = new Session[1];
+      final Session.Lifecycle[] eventPrevious = new Session.Lifecycle[1];
+      final Session.Lifecycle[] eventCurrent = new Session.Lifecycle[1];
 
-      conn.registerLifecycleListener(new Connection.ConnectionLifecycleListener() {
+      session.registerLifecycleListener(new Session.SessionLifecycleListener() {
         @Override
-        public void lifecycleEvent(Connection conn, Connection.Lifecycle previous, Connection.Lifecycle current) {
-          eventConn[0] = conn;
+        public void lifecycleEvent(Session session, Session.Lifecycle previous, Session.Lifecycle current) {
+          eventSession[0] = session;
           eventPrevious[0] = previous;
           eventCurrent[0] = current;
         }
       });
-      conn.deactivate();
+      Submission<Void> close = session.closeOperation().submit();
 
-      assertEquals(conn, eventConn[0]);
-      assertEquals(Connection.Lifecycle.NEW, eventPrevious[0]);
-      assertEquals(Connection.Lifecycle.NEW_INACTIVE, eventCurrent[0]);
+      assertEquals(session, eventSession[0]);
+      assertEquals(Lifecycle.NEW, eventPrevious[0]);
+      assertEquals(Lifecycle.CLOSING, eventCurrent[0]);
 
-      conn.activate();
+      CompletionStage<Void> stage = close.getCompletionStage();
+      get10(stage);
 
-      assertEquals(conn, eventConn[0]);
-      assertEquals(Connection.Lifecycle.NEW_INACTIVE, eventPrevious[0]);
-      assertEquals(Connection.Lifecycle.NEW, eventCurrent[0]);
-
-      Integer result = get10(conn.<Integer>rowOperation("select 1 as t")
-          .collect(CollectorUtils.singleCollector(Integer.class))
-          .submit().getCompletionStage());
-      assertEquals(Integer.valueOf(1), result);
+      assertEquals(session, eventSession[0]);
+      assertEquals(Lifecycle.CLOSING, eventPrevious[0]);
+      assertEquals(Lifecycle.CLOSED, eventCurrent[0]);
     }
   }
 
   @Test
   public void validateCompleteGoodConnection() throws TimeoutException, ExecutionException, InterruptedException {
-    try (Connection conn = ds.getConnection()) {
-      Submission<Void> sub = conn.validationOperation(Connection.Validation.COMPLETE).submit();
+    try (Session session = ds.getSession()) {
+      Submission<Void> sub = session.validationOperation(Session.Validation.COMPLETE).submit();
 
       get10(sub.getCompletionStage());
     }
@@ -231,12 +215,12 @@ public class PgConnectionTest {
 
   @Test
   public void validateLocalGoodConnection() throws TimeoutException, ExecutionException, InterruptedException {
-    try (Connection conn = ds.getConnection()) {
-      //First do a normal query so that the connection has time to get established
-      get10(conn.rowOperation("select 1").submit().getCompletionStage());
+    try (Session session = ds.getSession()) {
+      //First do a normal query so that the Session has time to get established
+      get10(session.rowOperation("select 1").submit().getCompletionStage());
 
       //now validate it
-      Submission<Void> sub = conn.validationOperation(Connection.Validation.LOCAL).submit();
+      Submission<Void> sub = session.validationOperation(Session.Validation.LOCAL).submit();
 
       get10(sub.getCompletionStage());
     }
@@ -244,9 +228,9 @@ public class PgConnectionTest {
 
   @Test
   public void localOperationSimple() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      //First do a normal query so that the connection has time to get established
-      Integer result = get10(conn.<Integer>localOperation().onExecution(() -> {
+    try (Session session = ds.getSession()) {
+      //First do a normal query so that the Session has time to get established
+      Integer result = get10(session.<Integer>localOperation().onExecution(() -> {
         return 100;
       }).submit().getCompletionStage());
 
@@ -256,9 +240,9 @@ public class PgConnectionTest {
 
   @Test
   public void localOperationExceptional() {
-    try (Connection conn = ds.getConnection()) {
-      //First do a normal query so that the connection has time to get established
-      get10(conn.<Integer>localOperation().onExecution(() -> {
+    try (Session session = ds.getSession()) {
+      //First do a normal query so that the Session has time to get established
+      get10(session.<Integer>localOperation().onExecution(() -> {
         throw new Exception("thrown from a local operation");
       }).submit().getCompletionStage());
 
@@ -270,10 +254,10 @@ public class PgConnectionTest {
 
   @Test
   public void rowPublisherOperation() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
+    try (Session session = ds.getSession()) {
       CompletableFuture<Integer> result1 = new CompletableFuture<>();
-      //First do a normal query so that the connection has time to get established
-      Integer result = get10(conn.<Integer>rowPublisherOperation("select 321 as t")
+      //First do a normal query so that the Session has time to get established
+      Integer result = get10(session.<Integer>rowPublisherOperation("select 321 as t")
           .subscribe(new SimpleRowSubscriber(result1), result1)
           .submit().getCompletionStage());
 
@@ -283,8 +267,8 @@ public class PgConnectionTest {
 
   @Test
   public void outParameterTest() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      get10(conn.operation("CREATE OR REPLACE FUNCTION get_test(OUT x integer, OUT y integer)\n"
+    try (Session session = ds.getSession()) {
+      get10(session.operation("CREATE OR REPLACE FUNCTION get_test(OUT x integer, OUT y integer)\n"
           + "AS $$\n"
           + "BEGIN\n"
           + "   x := 1;\n"
@@ -292,7 +276,7 @@ public class PgConnectionTest {
           + "END;\n"
           + "$$  LANGUAGE plpgsql").submit().getCompletionStage());
 
-      get10(conn.outOperation("select * from get_test() as result")
+      get10(session.outOperation("select * from get_test() as result")
           .outParameter("$1", AdbaType.INTEGER)
           .outParameter("$2", AdbaType.INTEGER)
           .apply((r) -> {
@@ -301,14 +285,14 @@ public class PgConnectionTest {
             return null;
           }).submit().getCompletionStage());
 
-      get10(conn.operation("DROP FUNCTION get_test()").submit().getCompletionStage());
+      get10(session.operation("DROP FUNCTION get_test()").submit().getCompletionStage());
     }
   }
 
   @Test
   public void outParameterTestReturnedValue() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      get10(conn.operation("CREATE OR REPLACE FUNCTION outParameterTestReturnedValue(OUT x integer, OUT y integer)\n"
+    try (Session session = ds.getSession()) {
+      get10(session.operation("CREATE OR REPLACE FUNCTION outParameterTestReturnedValue(OUT x integer, OUT y integer)\n"
           + "AS $$\n"
           + "BEGIN\n"
           + "   x := 1;\n"
@@ -316,13 +300,13 @@ public class PgConnectionTest {
           + "END;\n"
           + "$$  LANGUAGE plpgsql").submit().getCompletionStage());
 
-      Integer result = get10(conn.<Integer>outOperation("select * from outParameterTestReturnedValue() as result")
+      Integer result = get10(session.<Integer>outOperation("select * from outParameterTestReturnedValue() as result")
           .outParameter("$1", AdbaType.INTEGER)
           .outParameter("$2", AdbaType.INTEGER)
           .apply((r) -> r.at("x").get(Integer.class) + r.at("y").get(Integer.class))
           .submit().getCompletionStage());
 
-      get10(conn.operation("DROP FUNCTION outParameterTestReturnedValue()").submit()
+      get10(session.operation("DROP FUNCTION outParameterTestReturnedValue()").submit()
           .getCompletionStage());
 
       assertEquals(Integer.valueOf(3), result);

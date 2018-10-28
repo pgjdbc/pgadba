@@ -3,8 +3,8 @@ package org.postgresql.sql2.communication.network;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import jdk.incubator.sql2.ConnectionProperty;
-import org.postgresql.sql2.PgConnectionProperty;
+import jdk.incubator.sql2.SessionProperty;
+import org.postgresql.sql2.PgSessionProperty;
 import org.postgresql.sql2.communication.BeFrame;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.NetworkConnectContext;
@@ -39,9 +39,9 @@ public class TlsConnectRequest implements NetworkConnect, NetworkRequest, Networ
   @Override
   public void connect(NetworkConnectContext context) throws IOException {
     // Undertake connecting
-    Map<ConnectionProperty, Object> properties = context.getProperties();
-    context.getSocketChannel().connect(new InetSocketAddress((String) properties.get(PgConnectionProperty.HOST),
-        (Integer) properties.get(PgConnectionProperty.PORT)));
+    Map<SessionProperty, Object> properties = context.getProperties();
+    context.getSocketChannel().connect(new InetSocketAddress((String) properties.get(PgSessionProperty.HOST),
+        (Integer) properties.get(PgSessionProperty.PORT)));
   }
 
   @Override

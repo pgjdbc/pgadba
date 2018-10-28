@@ -7,9 +7,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
-import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.Result;
+import jdk.incubator.sql2.Session;
 import jdk.incubator.sql2.SqlType;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -36,8 +36,8 @@ public class ResultTest {
 
   @Test
   public void resultForEach() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      Integer result = conn.<Integer>rowOperation("select 1, 2, 3")
+    try (Session session = ds.getSession()) {
+      Integer result = session.<Integer>rowOperation("select 1, 2, 3")
           .collect(Collector.of(
               () -> new Integer[] {0},
               (a, r) -> {
@@ -50,7 +50,7 @@ public class ResultTest {
           .submit()
           .getCompletionStage()
           .toCompletableFuture()
-          .get(10, TimeUnit.SECONDS);
+          .get(1000, TimeUnit.SECONDS);
 
       assertEquals(Integer.valueOf(6), result);
     }
@@ -58,8 +58,8 @@ public class ResultTest {
 
   @Test
   public void resultIteration() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      Integer result = conn.<Integer>rowOperation("select 1, 2, 3")
+    try (Session session = ds.getSession()) {
+      Integer result = session.<Integer>rowOperation("select 1, 2, 3")
           .collect(Collector.of(
               () -> new Integer[] {0},
               (a, r) -> {
@@ -80,9 +80,9 @@ public class ResultTest {
 
   @Test
   public void resultGetThrowsOnBeforeColumn() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
+    try (Session session = ds.getSession()) {
       try {
-        conn.rowOperation("select 1, 2, 3")
+        session.rowOperation("select 1, 2, 3")
             .collect(Collector.of(
                 () -> new Integer[]{0},
                 (a, r) -> {
@@ -103,8 +103,8 @@ public class ResultTest {
 
   @Test
   public void resultIdentifierUnnamedColumn() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      String result = conn.<String>rowOperation("select 1")
+    try (Session session = ds.getSession()) {
+      String result = session.<String>rowOperation("select 1")
           .collect(Collector.of(
               () -> new String[] {""},
               (a, r) -> {
@@ -123,8 +123,8 @@ public class ResultTest {
 
   @Test
   public void resultIdentifierNamedColumn() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      String result = conn.<String>rowOperation("select 1 as t")
+    try (Session session = ds.getSession()) {
+      String result = session.<String>rowOperation("select 1 as t")
           .collect(Collector.of(
               () -> new String[] {""},
               (a, r) -> {
@@ -143,8 +143,8 @@ public class ResultTest {
 
   @Test
   public void resultSqlType() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      SqlType result = conn.<SqlType>rowOperation("select 1 as t")
+    try (Session session = ds.getSession()) {
+      SqlType result = session.<SqlType>rowOperation("select 1 as t")
           .collect(Collector.of(
               () -> new SqlType[] {null},
               (a, r) -> {
@@ -162,14 +162,14 @@ public class ResultTest {
   }
 
   @Test
-  public void resultSqlTypeIllegalColumn() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
+  public void resultIllegalColumn() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Session session = ds.getSession()) {
       try {
-        conn.<SqlType>rowOperation("select 1 as t")
+        session.<SqlType>rowOperation("select 1 as t")
             .collect(Collector.of(
                 () -> new SqlType[]{null},
                 (a, r) -> {
-                  a[0] = r.sqlType();
+                  r.at("0");
                 },
                 (l, r) -> null,
                 a -> a[0]))
@@ -187,8 +187,8 @@ public class ResultTest {
 
   @Test
   public void resultJavaType() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      Class result = conn.<Class>rowOperation("select 1 as t")
+    try (Session session = ds.getSession()) {
+      Class result = session.<Class>rowOperation("select 1 as t")
           .collect(Collector.of(
               () -> new Class[] {null},
               (a, r) -> {
@@ -206,33 +206,9 @@ public class ResultTest {
   }
 
   @Test
-  public void resultJavaTypeIllegalColumn() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      try {
-        conn.<Class>rowOperation("select 1 as t")
-            .collect(Collector.of(
-                () -> new Class[]{null},
-                (a, r) -> {
-                  a[0] = r.javaType();
-                },
-                (l, r) -> null,
-                a -> a[0]))
-            .submit()
-            .getCompletionStage()
-            .toCompletableFuture()
-            .get(10, TimeUnit.SECONDS);
-
-        fail("an ExecutionException should have been thrown");
-      } catch (ExecutionException ee) {
-        assertEquals("no column with id 0", ee.getCause().getMessage());
-      }
-    }
-  }
-
-  @Test
   public void resultClone() throws InterruptedException, ExecutionException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      Integer result = conn.<Integer>rowOperation("select 1 union all select 2 union all select 3")
+    try (Session session = ds.getSession()) {
+      Integer result = session.<Integer>rowOperation("select 1 union all select 2 union all select 3")
           .collect(Collector.of(
               () -> new Integer[]{0},
               (a, r) -> {

@@ -31,15 +31,10 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
 
 /**
- * A set of {@link ConnectionProperty}  commonly supported. Implementations are not
+ * A set of {@link SessionProperty} commonly supported. Implementations are not
  * required to support all of these properties.
- * 
- * ISSUE: Need others such as IDLE_TIMEOUT, TIME_TO_LIVE_TIMEOUT, etc. Can we
- * get away with just ConnectionProperties or do we need DataSourceProperties
- * as well, MAX_CACHED_CONNECTIONS, etc?
- *
  */
-public enum AdbaConnectionProperty implements ConnectionProperty {
+public enum AdbaSessionProperty implements SessionProperty {
   
   /**
    *
@@ -50,28 +45,20 @@ public enum AdbaConnectionProperty implements ConnectionProperty {
           false),
   
   /**
+   * 
+   */
+  COMMIT_ON_CLOSE(Boolean.class,
+                  v -> v instanceof Boolean,
+                  Boolean.FALSE,
+                  false),
+  
+  /**
    *
    */
   EXECUTOR(Executor.class,
            v -> v instanceof Executor,
            ForkJoinPool.commonPool(),
            false),
-
-  /**
-   * 
-   */
-  CONNECT_TIMEOUT(Duration.class,
-          v -> v instanceof Duration && ! ((Duration)v).isNegative(),
-          Duration.ofSeconds(Long.MAX_VALUE),
-          false),
-  
-  /**
-   *
-   */
-  HOLDABILITY(Holdability.class, 
-          v -> v instanceof Holdability,
-          Holdability.HOLD_OVER_COMMIT,
-          false),
 
   /**
    *
@@ -142,7 +129,7 @@ public enum AdbaConnectionProperty implements ConnectionProperty {
   private final Object defaultValue;
   private final boolean isSensitive;
 
-  private AdbaConnectionProperty(Class<?> range, 
+  private AdbaSessionProperty(Class<?> range, 
           Function<Object, Boolean> validator,
           Object value,
           boolean isSensitive) {
@@ -152,48 +139,63 @@ public enum AdbaConnectionProperty implements ConnectionProperty {
     this.isSensitive = isSensitive;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Class<?> range() {
     return range;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean validate(Object value) {
     return validator.apply(value);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public Object defaultValue() {
     return defaultValue;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean isSensitive() {
     return isSensitive;
   }
 
   /**
-   *
+   * Specifies how much flexibility the {@link DataSource} has in satisfying a
+   * request for a {@link Session} possibly by using cached data source resources.
    */
   public enum Caching {
     /**
-     * The returned {@link Connection} is required to be completely new and configured
-     * exactly as specified by the other properties. Use this with caution and
+     * The returned {@link Session} is required to be backed by a completely new 
+     * data source resource configured exactly as specified by the other properties. Use this with caution and
      * only when absolutely necessary. Use {@link AS_NEW} instead if at all possible.
      * This should be used only to work around some limitation of the database
      * or the implementation.
      */
     NEW,
     /**
-     * The returned {@link Connection} has no state other than that of a new Connection
-     * modified as specified by the other properties. May not be strictly new
-     * but has the same behavior as a new {@link Connection}. The {@link Connection} may be {@link NEW}. The default.
+     * The returned {@link Session} has no state other than that of a {@link Session}
+     * attached to a newly created data source resource modified as specified by 
+     * the other properties. May not be strictly new
+     * but has the same behavior as if it were. The {@link Session} 
+     * may be {@link NEW}. The default.
      */
     AS_NEW,
     /**
-     * The returned {@link Connection} has the state specified by the other properties
-     * but may have additional state that differs from that of a new {@link Connection}.
-     * The {@link Connection} may be {@link AS_NEW}.
+     * The returned {@link Session} has the state specified by the other properties
+     * but may have additional state that differs from that of a new {@link Session}.
+     * The {@link Session} may be {@link AS_NEW}.
      */
     CACHED;
   }
@@ -227,22 +229,6 @@ public enum AdbaConnectionProperty implements ConnectionProperty {
      *
      */
     SERIALIZABLE;
-  }
-
-  /**
-   *
-   */
-  public enum Holdability {
-
-    /**
-     *
-     */
-    HOLD_OVER_COMMIT,
-
-    /**
-     *
-     */
-    CLOSE_AT_COMMIT;
   }
 
 }

@@ -5,7 +5,7 @@ import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.RowOperation;
 import jdk.incubator.sql2.SqlType;
 import jdk.incubator.sql2.Submission;
-import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.operations.helpers.FutureQueryParameter;
 import org.postgresql.sql2.operations.helpers.ParameterHolder;
@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class PgRowCountOperation<R> implements ParameterizedRowCountOperation<R> {
-  private PgConnection connection;
+  private PgSession connection;
   private String sql;
   private ParameterHolder holder;
   private Consumer<Throwable> errorHandler;
@@ -32,7 +32,7 @@ public class PgRowCountOperation<R> implements ParameterizedRowCountOperation<R>
    * @param sql the query
    * @param groupSubmission the group that this execution should be part of
    */
-  public PgRowCountOperation(PgConnection connection, String sql, GroupSubmission groupSubmission) {
+  public PgRowCountOperation(PgSession connection, String sql, GroupSubmission groupSubmission) {
     this.connection = connection;
     this.sql = sql;
     this.holder = new ParameterHolder();

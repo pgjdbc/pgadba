@@ -12,8 +12,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.net.ssl.SSLContext;
-import jdk.incubator.sql2.ConnectionProperty;
-import org.postgresql.sql2.PgConnection;
+import jdk.incubator.sql2.SessionProperty;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.buffer.ByteBufferPool;
 import org.postgresql.sql2.buffer.ByteBufferPoolOutputStream;
 import org.postgresql.sql2.buffer.PooledByteBuffer;
@@ -29,9 +29,9 @@ import org.postgresql.sql2.util.tlschannel.TlsChannel;
 
 public class NetworkConnection implements NioService, NetworkConnectContext, NetworkWriteContext, NetworkReadContext {
 
-  private final Map<ConnectionProperty, Object> properties;
+  private final Map<SessionProperty, Object> properties;
 
-  private final PgConnection connection;
+  private final PgSession connection;
 
   private final NioLoop loop;
 
@@ -74,11 +74,11 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    * Instantiate.
    * 
    * @param properties Connection properties.
-   * @param connection {@link PgConnection}.
+   * @param connection {@link PgSession}.
    * @param loop       {@link NioLoop}.
    * @param bufferPool {@link ByteBufferPool}.
    */
-  public NetworkConnection(Map<ConnectionProperty, Object> properties, PgConnection connection, NioLoop loop,
+  public NetworkConnection(Map<SessionProperty, Object> properties, PgSession connection, NioLoop loop,
       ByteBufferPool bufferPool) {
     this.properties = properties;
     this.connection = connection;
@@ -303,7 +303,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   }
 
   private void checkIfCloseAndPerformClose() throws IOException {
-    if (outputStream.isClosed()) {
+    if (outputStream.isClosed() && awaitingResponses.size() == 1) {
       if (tlsChannel != null) {
         tlsChannel.close();
       } else {
@@ -351,7 +351,6 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
   @Override
   public void handleRead() throws IOException {
-
     // TODO use pooled byte buffers
     ByteBuffer readBuffer = ByteBuffer.allocate(1024);
 
@@ -422,6 +421,8 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
     if (bytesRead < 0) {
       throw new ClosedChannelException();
     }
+
+    checkIfCloseAndPerformClose();
   }
 
   @Override
@@ -447,7 +448,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
         closeEx.printStackTrace();
       }
     }
-    if (tlsChannel.isOpen()) {
+    if (tlsChannel != null && tlsChannel.isOpen()) {
       try {
         tlsChannel.close();
         context.unregister();
@@ -469,7 +470,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   }
 
   @Override
-  public Map<ConnectionProperty, Object> getProperties() {
+  public Map<SessionProperty, Object> getProperties() {
     return properties;
   }
 
@@ -518,7 +519,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   }
 
   @Override
-  public void setProperty(ConnectionProperty property, Object value) {
+  public void setProperty(SessionProperty property, Object value) {
     properties.put(property, value);
   }
 

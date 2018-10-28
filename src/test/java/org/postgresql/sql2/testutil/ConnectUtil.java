@@ -1,9 +1,9 @@
 package org.postgresql.sql2.testutil;
 
-import jdk.incubator.sql2.AdbaConnectionProperty;
+import jdk.incubator.sql2.AdbaSessionProperty;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.DataSourceFactory;
-import org.postgresql.sql2.PgConnectionProperty;
+import org.postgresql.sql2.PgSessionProperty;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 public class ConnectUtil {
@@ -20,8 +20,8 @@ public class ConnectUtil {
             + "/" + postgres.getDatabaseName())
         .username(postgres.getUsername())
         .password(postgres.getPassword())
-        .connectionProperty(AdbaConnectionProperty.TRANSACTION_ISOLATION,
-            AdbaConnectionProperty.TransactionIsolation.REPEATABLE_READ)
+        .sessionProperty(AdbaSessionProperty.TRANSACTION_ISOLATION,
+            AdbaSessionProperty.TransactionIsolation.REPEATABLE_READ)
         .build();
   }
 
@@ -37,9 +37,9 @@ public class ConnectUtil {
             + "/" + postgres.getDatabaseName())
         .username(postgres.getUsername())
         .password(postgres.getPassword())
-        .connectionProperty(AdbaConnectionProperty.TRANSACTION_ISOLATION,
-            AdbaConnectionProperty.TransactionIsolation.REPEATABLE_READ)
-        .connectionProperty(PgConnectionProperty.SSL, true)
+        .sessionProperty(AdbaSessionProperty.TRANSACTION_ISOLATION,
+            AdbaSessionProperty.TransactionIsolation.REPEATABLE_READ)
+        .sessionProperty(PgSessionProperty.SSL, true)
         .build();
   }
 

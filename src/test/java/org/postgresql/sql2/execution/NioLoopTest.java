@@ -6,14 +6,14 @@ import static org.postgresql.sql2.testutil.FutureUtil.get10;
 
 import java.io.IOException;
 import java.nio.channels.SelectableChannel;
-import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.DataSource.Builder;
 import jdk.incubator.sql2.DataSourceFactory;
+import jdk.incubator.sql2.Session;
 import jdk.incubator.sql2.Submission;
 import org.junit.After;
 import org.junit.jupiter.api.Test;
-import org.postgresql.sql2.PgConnectionProperty;
+import org.postgresql.sql2.PgSessionProperty;
 import org.postgresql.sql2.testutil.CollectorUtils;
 import org.postgresql.sql2.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -37,8 +37,8 @@ public class NioLoopTest {
   @Test
   public void ensureDefaultNioLoop() throws Exception {
     try (DataSource dataSource = createDataSource().build()) {
-      Connection connection = dataSource.getConnection();
-      Submission<Integer> submission = connection.<Integer>rowOperation("SELECT 1 as t")
+      Session session = dataSource.getSession();
+      Submission<Integer> submission = session.<Integer>rowOperation("SELECT 1 as t")
           .collect(CollectorUtils.singleCollector(Integer.class)).submit();
       Integer result = get10(submission.getCompletionStage());
       assertEquals("Incorrect result", Integer.valueOf(1), result);
@@ -48,11 +48,11 @@ public class NioLoopTest {
   @Test
   public void provideNioLoop() throws Exception {
     MockNioLoop loop = new MockNioLoop();
-    try (DataSource dataSource = createDataSource().connectionProperty(PgConnectionProperty.NIO_LOOP, loop).build()) {
-      Connection connection = dataSource.getConnection();
+    try (DataSource dataSource = createDataSource().sessionProperty(PgSessionProperty.NIO_LOOP, loop).build()) {
+      Session session = dataSource.getSession();
 
       // Undertake single request
-      Submission<Integer> submission = connection.<Integer>rowOperation("SELECT 1 as t")
+      Submission<Integer> submission = session.<Integer>rowOperation("SELECT 1 as t")
           .collect(CollectorUtils.singleCollector(Integer.class)).submit();
       Integer result = get10(submission.getCompletionStage());
       assertEquals("Incorrect result", Integer.valueOf(1), result);
@@ -65,13 +65,13 @@ public class NioLoopTest {
   @Test
   public void pipelineQueries() throws Exception {
     try (DataSource dataSource = createDataSource().build()) {
-      Connection connection = dataSource.getConnection();
+      Session session = dataSource.getSession();
 
       // Run multiple queries over the connection
       final int queryCount = 1000;
       Submission<Integer>[] submissions = new Submission[queryCount];
       for (int i = 0; i < queryCount; i++) {
-        submissions[i] = connection.<Integer>rowOperation("SELECT 1 as t")
+        submissions[i] = session.<Integer>rowOperation("SELECT 1 as t")
             .collect(CollectorUtils.singleCollector(Integer.class)).submit();
       }
 
@@ -86,14 +86,14 @@ public class NioLoopTest {
   @Test
   public void reuseNioLoopBetweenConnections() throws Exception {
     MockNioLoop loop = new MockNioLoop();
-    try (DataSource dataSource = createDataSource().connectionProperty(PgConnectionProperty.NIO_LOOP, loop).build()) {
+    try (DataSource dataSource = createDataSource().sessionProperty(PgSessionProperty.NIO_LOOP, loop).build()) {
 
       // Run queries on multiple connections
       final int connectionCount = 10;
       Submission<Integer>[] submissions = new Submission[connectionCount];
       for (int i = 0; i < connectionCount; i++) {
-        Connection connection = dataSource.getConnection();
-        submissions[i] = connection.<Integer>rowOperation("SELECT 1 as t")
+        Session session = dataSource.getSession();
+        submissions[i] = session.<Integer>rowOperation("SELECT 1 as t")
             .collect(CollectorUtils.singleCollector(Integer.class)).submit();
       }
 
@@ -109,16 +109,16 @@ public class NioLoopTest {
   public void reuseNioLoopBetweenDataSources() throws Exception {
     MockNioLoop loop = new MockNioLoop();
     try (
-        DataSource dataSourceOne = createDataSource().connectionProperty(PgConnectionProperty.NIO_LOOP, loop).build();
-        DataSource dataSourceTwo = createDataSource().connectionProperty(PgConnectionProperty.NIO_LOOP, loop)
+        DataSource dataSourceOne = createDataSource().sessionProperty(PgSessionProperty.NIO_LOOP, loop).build();
+        DataSource dataSourceTwo = createDataSource().sessionProperty(PgSessionProperty.NIO_LOOP, loop)
             .build()) {
 
       // Run query via each data source
       DataSource[] dataSources = new DataSource[] { dataSourceOne, dataSourceTwo };
       Submission<Integer>[] submissions = new Submission[dataSources.length];
       for (int i = 0; i < dataSources.length; i++) {
-        Connection connection = dataSources[i].getConnection();
-        submissions[i] = connection.<Integer>rowOperation("SELECT 1 as t")
+        Session session = dataSources[i].getSession();
+        submissions[i] = session.<Integer>rowOperation("SELECT 1 as t")
             .collect(CollectorUtils.singleCollector(Integer.class)).submit();
       }
 

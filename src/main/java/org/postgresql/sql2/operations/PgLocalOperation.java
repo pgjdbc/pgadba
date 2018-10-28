@@ -2,7 +2,7 @@ package org.postgresql.sql2.operations;
 
 import jdk.incubator.sql2.LocalOperation;
 import jdk.incubator.sql2.Submission;
-import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.submissions.GroupSubmission;
 import org.postgresql.sql2.submissions.LocalSubmission;
@@ -15,12 +15,12 @@ public class PgLocalOperation<T> implements LocalOperation<T> {
   private static final Callable defaultAction = () -> {
     return null;
   };
-  private PgConnection connection;
+  private PgSession connection;
   private Callable<T> action = defaultAction;
   private Consumer<Throwable> errorHandler;
   private GroupSubmission groupSubmission;
 
-  public PgLocalOperation(PgConnection connection, GroupSubmission groupSubmission) {
+  public PgLocalOperation(PgSession connection, GroupSubmission groupSubmission) {
     this.connection = connection;
     this.groupSubmission = groupSubmission;
   }

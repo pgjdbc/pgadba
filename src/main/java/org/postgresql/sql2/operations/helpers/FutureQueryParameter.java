@@ -40,7 +40,7 @@ public class FutureQueryParameter implements QueryParameter {
   public int getOid() throws ExecutionException, InterruptedException {
     resolveType();
 
-    return type.getVendorTypeNumber();
+    return type.getOid();
   }
 
   @Override

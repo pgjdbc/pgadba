@@ -29,8 +29,8 @@ import java.util.Collection;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
-import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.Session;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -111,17 +111,17 @@ public class InsertSelectDataTypesTest {
   @ParameterizedTest
   @MethodSource("data")
   public <T> void insertAndSelect(String dataTypeName, T insertData, Class<T> type) throws Exception {
-    try (Connection conn = ds.getConnection()) {
+    try (Session session = ds.getSession()) {
       String tableName = "insertAndSelect" + table.incrementAndGet();
-      get10(conn.rowCountOperation("create table " + tableName + "(t " + dataTypeName + ")")
+      get10(session.rowCountOperation("create table " + tableName + "(t " + dataTypeName + ")")
           .submit().getCompletionStage());
-      get10(conn.rowCountOperation("insert into " + tableName + "(t) values($1)")
+      get10(session.rowCountOperation("insert into " + tableName + "(t) values($1)")
           .set("$1", insertData).submit().getCompletionStage());
-      CompletionStage<T> idF = conn.<T>rowOperation("select t from " + tableName)
+      CompletionStage<T> idF = session.<T>rowOperation("select t from " + tableName)
           .collect(singleCollector(type))
           .submit()
           .getCompletionStage();
-      get10(conn.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+      get10(session.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
 
       if (type.isArray()) {
         assertArrayEquals((byte[])insertData, (byte[])get10(idF));
@@ -135,17 +135,17 @@ public class InsertSelectDataTypesTest {
   @MethodSource("data")
   public <T> void insertAndSelectWithTypeHinting(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType)
       throws Exception {
-    try (Connection conn = ds.getConnection()) {
+    try (Session session = ds.getSession()) {
       String tableName = "insertAndSelect" + table.incrementAndGet();
-      get10(conn.rowCountOperation("create table " + tableName + "(t " + dataTypeName + ")")
+      get10(session.rowCountOperation("create table " + tableName + "(t " + dataTypeName + ")")
           .submit().getCompletionStage());
-      get10(conn.rowCountOperation("insert into " + tableName + "(t) values($1)")
+      get10(session.rowCountOperation("insert into " + tableName + "(t) values($1)")
           .set("$1", insertData, adbaType).submit().getCompletionStage());
-      CompletionStage<T> idF = conn.<T>rowOperation("select t from " + tableName)
+      CompletionStage<T> idF = session.<T>rowOperation("select t from " + tableName)
           .collect(singleCollector(type))
           .submit()
           .getCompletionStage();
-      get10(conn.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+      get10(session.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
 
       if (type.isArray()) {
         assertArrayEquals((byte[])insertData, (byte[])get10(idF));
@@ -159,17 +159,17 @@ public class InsertSelectDataTypesTest {
   @MethodSource("data")
   public <T> void insertAndSelectNullWithTypeHinting(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType)
       throws Exception {
-    try (Connection conn = ds.getConnection()) {
+    try (Session session = ds.getSession()) {
       String tableName = "insertAndSelect" + table.incrementAndGet();
-      get10(conn.rowCountOperation("create table " + tableName + "(t " + dataTypeName + ")")
+      get10(session.rowCountOperation("create table " + tableName + "(t " + dataTypeName + ")")
           .submit().getCompletionStage());
-      get10(conn.rowCountOperation("insert into " + tableName + "(t) values($1)")
+      get10(session.rowCountOperation("insert into " + tableName + "(t) values($1)")
           .set("$1", null, adbaType).submit().getCompletionStage());
-      CompletionStage<T> idF = conn.<T>rowOperation("select t from " + tableName)
+      CompletionStage<T> idF = session.<T>rowOperation("select t from " + tableName)
           .collect(singleCollector(type))
           .submit()
           .getCompletionStage();
-      get10(conn.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+      get10(session.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
 
       assertNull(get10(idF));
     }
@@ -179,17 +179,17 @@ public class InsertSelectDataTypesTest {
   @MethodSource("data")
   public <T> void insertAndSelectArray(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType,
       Class<T[]> arrayType, T[] testArrayData) throws Exception {
-    try (Connection conn = ds.getConnection()) {
+    try (Session session = ds.getSession()) {
       String tableName = "insertAndSelect" + table.incrementAndGet();
-      get10(conn.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
+      get10(session.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
           .submit().getCompletionStage());
-      get10(conn.rowCountOperation("insert into " + tableName + "(t) values($1)")
+      get10(session.rowCountOperation("insert into " + tableName + "(t) values($1)")
           .set("$1", testArrayData).submit().getCompletionStage());
-      CompletionStage<T[]> idF = conn.<T[]>rowOperation("select t from " + tableName)
+      CompletionStage<T[]> idF = session.<T[]>rowOperation("select t from " + tableName)
           .collect(singleCollector(arrayType))
           .submit()
           .getCompletionStage();
-      get10(conn.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+      get10(session.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
 
       T[] result = get10(idF);
       assertArrayEquals(testArrayData, result);
@@ -200,17 +200,17 @@ public class InsertSelectDataTypesTest {
   @MethodSource("data")
   public <T> void insertAndSelectArrayWithTypeHinting(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType,
       Class<T[]> arrayType, T[] testArrayData, PgAdbaType arrayAdbaType) throws Exception {
-    try (Connection conn = ds.getConnection()) {
+    try (Session session = ds.getSession()) {
       String tableName = "insertAndSelect" + table.incrementAndGet();
-      get10(conn.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
+      get10(session.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
           .submit().getCompletionStage());
-      get10(conn.rowCountOperation("insert into " + tableName + "(t) values($1)")
+      get10(session.rowCountOperation("insert into " + tableName + "(t) values($1)")
           .set("$1", testArrayData, arrayAdbaType).submit().getCompletionStage());
-      CompletionStage<T[]> idF = conn.<T[]>rowOperation("select t from " + tableName)
+      CompletionStage<T[]> idF = session.<T[]>rowOperation("select t from " + tableName)
           .collect(singleCollector(arrayType))
           .submit()
           .getCompletionStage();
-      get10(conn.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+      get10(session.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
 
       T[] result = get10(idF);
       assertArrayEquals(testArrayData, result);
@@ -221,17 +221,17 @@ public class InsertSelectDataTypesTest {
   @MethodSource("data")
   public <T> void insertAndSelectEmptyArray(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType,
       Class<T[]> arrayType, T[] testArrayData, PgAdbaType arrayAdbaType, T[] emptyArrayData) throws Exception {
-    try (Connection conn = ds.getConnection()) {
+    try (Session session = ds.getSession()) {
       String tableName = "insertAndSelect" + table.incrementAndGet();
-      get10(conn.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
+      get10(session.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
           .submit().getCompletionStage());
-      get10(conn.rowCountOperation("insert into " + tableName + "(t) values($1)")
+      get10(session.rowCountOperation("insert into " + tableName + "(t) values($1)")
           .set("$1", emptyArrayData, arrayAdbaType).submit().getCompletionStage());
-      CompletionStage<T[]> idF = conn.<T[]>rowOperation("select t from " + tableName)
+      CompletionStage<T[]> idF = session.<T[]>rowOperation("select t from " + tableName)
           .collect(singleCollector(arrayType))
           .submit()
           .getCompletionStage();
-      get10(conn.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+      get10(session.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
 
       T[] result = get10(idF);
       assertArrayEquals(emptyArrayData, result);
@@ -243,17 +243,17 @@ public class InsertSelectDataTypesTest {
   public <T> void insertAndSelectArrayWithNull(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType,
       Class<T[]> arrayType, T[] testArrayData, PgAdbaType arrayAdbaType, T[] emptyArrayData, T[] arrayDataWithNull)
       throws Exception {
-    try (Connection conn = ds.getConnection()) {
+    try (Session session = ds.getSession()) {
       String tableName = "insertAndSelect" + table.incrementAndGet();
-      get10(conn.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
+      get10(session.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
           .submit().getCompletionStage());
-      get10(conn.rowCountOperation("insert into " + tableName + "(t) values($1)")
+      get10(session.rowCountOperation("insert into " + tableName + "(t) values($1)")
           .set("$1", arrayDataWithNull, arrayAdbaType).submit().getCompletionStage());
-      CompletionStage<T[]> idF = conn.<T[]>rowOperation("select t from " + tableName)
+      CompletionStage<T[]> idF = session.<T[]>rowOperation("select t from " + tableName)
           .collect(singleCollector(arrayType))
           .submit()
           .getCompletionStage();
-      get10(conn.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+      get10(session.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
 
       T[] result = get10(idF);
       assertArrayEquals(arrayDataWithNull, result);
@@ -264,17 +264,17 @@ public class InsertSelectDataTypesTest {
   @MethodSource("data")
   public <T> void insertAndSelectNullArray(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType,
       Class<T[]> arrayType, T[] testArrayData, PgAdbaType arrayAdbaType) throws Exception {
-    try (Connection conn = ds.getConnection()) {
+    try (Session session = ds.getSession()) {
       String tableName = "insertAndSelect" + table.incrementAndGet();
-      get10(conn.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
+      get10(session.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
           .submit().getCompletionStage());
-      get10(conn.rowCountOperation("insert into " + tableName + "(t) values($1)")
+      get10(session.rowCountOperation("insert into " + tableName + "(t) values($1)")
           .set("$1", null, arrayAdbaType).submit().getCompletionStage());
-      CompletionStage<T[]> idF = conn.<T[]>rowOperation("select t from " + tableName)
+      CompletionStage<T[]> idF = session.<T[]>rowOperation("select t from " + tableName)
           .collect(singleCollector(arrayType))
           .submit()
           .getCompletionStage();
-      get10(conn.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+      get10(session.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
 
       assertNull(get10(idF));
     }

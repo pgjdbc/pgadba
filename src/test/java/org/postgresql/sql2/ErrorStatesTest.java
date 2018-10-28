@@ -11,8 +11,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
-import jdk.incubator.sql2.Connection;
 import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.Session;
 import jdk.incubator.sql2.SqlException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -41,8 +41,8 @@ public class ErrorStatesTest {
 
   @Test
   public void testSqlError() throws InterruptedException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select select")
+    try (Session session = ds.getSession()) {
+      CompletionStage<Integer> idF = session.<Integer>rowOperation("select select")
           .submit()
           .getCompletionStage();
 
@@ -60,8 +60,8 @@ public class ErrorStatesTest {
   @Test
   public void testRowOperationOnError() throws InterruptedException, TimeoutException {
     final boolean[] onErrorResult = new boolean[] {false};
-    try (Connection conn = ds.getConnection()) {
-      get10(conn.rowOperation("select select")
+    try (Session session = ds.getSession()) {
+      get10(session.rowOperation("select select")
           .onError(t -> onErrorResult[0] = true)
           .submit()
           .getCompletionStage());
@@ -74,8 +74,8 @@ public class ErrorStatesTest {
   @Test
   public void testRowOperationOnErrorTwice() throws InterruptedException, TimeoutException, ExecutionException {
     final boolean[] onErrorResult = new boolean[] {false};
-    try (Connection conn = ds.getConnection()) {
-      get10(conn.rowOperation("select select")
+    try (Session session = ds.getSession()) {
+      get10(session.rowOperation("select select")
           .onError(t -> onErrorResult[0] = true)
           .onError(t -> onErrorResult[0] = true)
           .submit()
@@ -90,8 +90,8 @@ public class ErrorStatesTest {
   @Test
   public void testCountOperationOnError() throws InterruptedException, TimeoutException {
     final boolean[] onErrorResult = new boolean[] {false};
-    try (Connection conn = ds.getConnection()) {
-      get10(conn.rowCountOperation("select select")
+    try (Session session = ds.getSession()) {
+      get10(session.rowCountOperation("select select")
           .onError(t -> onErrorResult[0] = true)
           .submit()
           .getCompletionStage());
@@ -104,8 +104,8 @@ public class ErrorStatesTest {
   @Test
   public void testOperationOnError() throws InterruptedException, TimeoutException {
     final boolean[] onErrorResult = new boolean[] {false};
-    try (Connection conn = ds.getConnection()) {
-      get10(conn.operation("select select")
+    try (Session session = ds.getSession()) {
+      get10(session.operation("select select")
           .onError(t -> onErrorResult[0] = true)
           .submit()
           .getCompletionStage());
@@ -118,8 +118,8 @@ public class ErrorStatesTest {
   @Test
   public void testRowProcessorOperationOnError() throws InterruptedException, TimeoutException {
     final boolean[] onErrorResult = new boolean[] {false};
-    try (Connection conn = ds.getConnection()) {
-      get10(conn.rowPublisherOperation("select select")
+    try (Session session = ds.getSession()) {
+      get10(session.rowPublisherOperation("select select")
           .onError(t -> onErrorResult[0] = true)
           .submit()
           .getCompletionStage());
@@ -131,8 +131,8 @@ public class ErrorStatesTest {
 
   @Test
   public void testGetNameThatIsntUsed() throws InterruptedException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100 as t")
+    try (Session session = ds.getSession()) {
+      CompletionStage<Integer> idF = session.<Integer>rowOperation("select 100 as t")
           .collect(Collector.of(
               () -> new int[1],
               (a, r) -> a[0] = r.at("notused").get(Integer.class),
@@ -153,8 +153,8 @@ public class ErrorStatesTest {
 
   @Test
   public void testGetCaseInsensitive1() throws ExecutionException, InterruptedException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100 as t")
+    try (Session session = ds.getSession()) {
+      CompletionStage<Integer> idF = session.<Integer>rowOperation("select 100 as t")
           .collect(Collector.of(
               () -> new int[1],
               (a, r) -> a[0] = r.at("T").get(Integer.class),
@@ -170,8 +170,8 @@ public class ErrorStatesTest {
 
   @Test
   public void testGetCaseInsensitive2() throws ExecutionException, InterruptedException, TimeoutException {
-    try (Connection conn = ds.getConnection()) {
-      CompletionStage<Integer> idF = conn.<Integer>rowOperation("select 100 as T")
+    try (Session session = ds.getSession()) {
+      CompletionStage<Integer> idF = session.<Integer>rowOperation("select 100 as T")
           .collect(Collector.of(
               () -> new int[1],
               (a, r) -> a[0] = r.at("t").get(Integer.class),

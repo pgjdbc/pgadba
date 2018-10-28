@@ -1,8 +1,11 @@
 package org.postgresql.sql2.communication.network;
 
-import jdk.incubator.sql2.AdbaConnectionProperty;
-import jdk.incubator.sql2.ConnectionProperty;
-import org.postgresql.sql2.PgConnectionProperty;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Map;
+import jdk.incubator.sql2.AdbaSessionProperty;
+import jdk.incubator.sql2.SessionProperty;
+import org.postgresql.sql2.PgSessionProperty;
 import org.postgresql.sql2.communication.BeFrame;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.NetworkConnectContext;
@@ -14,10 +17,6 @@ import org.postgresql.sql2.communication.NetworkWriteContext;
 import org.postgresql.sql2.communication.packets.AuthenticationRequest;
 import org.postgresql.sql2.submissions.ConnectSubmission;
 import org.postgresql.sql2.util.BinaryHelper;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Map;
 
 /**
  * Connect {@link NetworkRequest}.
@@ -47,9 +46,9 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
   @Override
   public void connect(NetworkConnectContext context) throws IOException {
     // Undertake connecting
-    Map<ConnectionProperty, Object> properties = context.getProperties();
-    context.getSocketChannel().connect(new InetSocketAddress((String) properties.get(PgConnectionProperty.HOST),
-        (Integer) properties.get(PgConnectionProperty.PORT)));
+    Map<SessionProperty, Object> properties = context.getProperties();
+    context.getSocketChannel().connect(new InetSocketAddress((String) properties.get(PgSessionProperty.HOST),
+        (Integer) properties.get(PgSessionProperty.PORT)));
   }
 
   @Override
@@ -68,16 +67,16 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
   public NetworkRequest write(NetworkWriteContext context) throws IOException {
 
     // Obtain the properties
-    Map<ConnectionProperty, Object> properties = context.getProperties();
+    Map<SessionProperty, Object> properties = context.getProperties();
 
     // As now connected, send start up
     NetworkOutputStream wire = context.getOutputStream();
     wire.initPacket();
     wire.write(BinaryHelper.writeInt(3 * 65536));
     wire.write("user");
-    wire.write(((String) properties.get(AdbaConnectionProperty.USER)));
+    wire.write(((String) properties.get(AdbaSessionProperty.USER)));
     wire.write("database");
-    wire.write(((String) properties.get(PgConnectionProperty.DATABASE)));
+    wire.write(((String) properties.get(PgSessionProperty.DATABASE)));
     wire.write("application_name");
     wire.write("java_sql2_client");
     wire.write("client_encoding");
@@ -100,7 +99,7 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
   }
 
   @Override
-  public NetworkResponse read(NetworkReadContext context) throws IOException {
+  public NetworkResponse read(NetworkReadContext context) {
 
     // Expecting authentication challenge
     BeFrame frame = context.getBeFrame();

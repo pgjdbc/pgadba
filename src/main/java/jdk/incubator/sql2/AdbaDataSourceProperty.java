@@ -1,62 +1,90 @@
 /*
  * Copyright (c)  2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- * 
+ *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Oracle designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Oracle in the LICENSE file that accompanied this code.
- * 
+ *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- * 
+ *
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- * 
+ *
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package jdk.incubator.sql2;
 
-import java.time.Duration;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Flow;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
-public interface RowPublisherOperation<T> extends Operation<T> {
-
-  /**
-   * Subscribe to the stream of rows returned by this {@link Operation}. The
-   *  value of the {@code result} parameter is the result of this {@link Operation}.
-   *
-   * @param subscriber Not null.
-   * @param result Not null.
-   * @return this RowPublisherOperation
-   */
-  public RowPublisherOperation<T> subscribe(Flow.Subscriber<? super Result.RowColumn> subscriber,
-                                            CompletionStage<? extends T> result);
-  // Covariant overrides
+/**
+ * Properties that apply to the DataSource as a whole, not to the individual
+ * {@link Session}s that the {@link DataSource} creates.
+ */
+public enum AdbaDataSourceProperty implements DataSourceProperty {
   
+ 
+  MAX_RESOURCES(Integer.class,
+                v -> v instanceof Integer && (int) v >= 0,
+                Integer.MAX_VALUE,
+                false),
+  
+  MAX_IDLE_RESOURCES(Integer.class,
+                v -> v instanceof Integer && (int) v >= 0,
+                Integer.MAX_VALUE,
+                false);
+
+  private final Class<?> range;
+  private final Function<Object, Boolean> validator;
+  private final Object defaultValue;
+  private final boolean isSensitive;
+
+  private AdbaDataSourceProperty(Class<?> range, 
+          Function<Object, Boolean> validator,
+          Object value,
+          boolean isSensitive) {
+    this.range = range;
+    this.validator = validator;
+    this.defaultValue = value;
+    this.isSensitive = isSensitive;
+  }
+  
+  @Override
   /**
    * {@inheritDoc}
-   * 
-   * @return this {@code RowPublisherOperation}
    */
+  public Class<?> range() {
+    return range;
+  }
+
   @Override
-  public RowPublisherOperation<T> onError(Consumer<Throwable> handler);
-  
   /**
    * {@inheritDoc}
-   * 
-   * @return this {@code RowPublisherOperation}
    */
+  public Object defaultValue() {
+    return defaultValue;
+  }
+
   @Override
-  public RowPublisherOperation<T> timeout(Duration minTime);
+  /**
+   * {@inheritDoc}
+   */
+  public boolean isSensitive() {
+    return isSensitive;
+  }
   
+  @Override
+  public boolean validate(Object value) {
+    return validator.apply(value);
+  }
 }

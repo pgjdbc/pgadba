@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
-import jdk.incubator.sql2.ConnectionProperty;
-import org.postgresql.sql2.PgConnectionProperty;
+import jdk.incubator.sql2.SessionProperty;
+import org.postgresql.sql2.PgSessionProperty;
 import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.communication.NetworkConnect;
 import org.postgresql.sql2.communication.network.NetworkConnectRequest;
@@ -40,11 +40,11 @@ public class ConnectSubmission implements PgSubmission<Void> {
    * @param properties properties for the connection, to determine if tls should be used or not
    */
   public ConnectSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, GroupSubmission groupSubmission,
-      Map<ConnectionProperty, Object> properties) {
+      Map<SessionProperty, Object> properties) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.groupSubmission = groupSubmission;
-    if (properties.containsKey(PgConnectionProperty.SSL) && (Boolean)properties.get(PgConnectionProperty.SSL)) {
+    if (properties.containsKey(PgSessionProperty.SSL) && (Boolean)properties.get(PgSessionProperty.SSL)) {
       this.request = new TlsConnectRequest(this);
     } else {
       this.request = new NetworkConnectRequest(this);

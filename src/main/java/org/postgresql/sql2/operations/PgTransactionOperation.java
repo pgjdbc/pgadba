@@ -1,22 +1,21 @@
 package org.postgresql.sql2.operations;
 
+import java.time.Duration;
+import java.util.function.Consumer;
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.Submission;
-import jdk.incubator.sql2.Transaction;
+import jdk.incubator.sql2.TransactionCompletion;
 import jdk.incubator.sql2.TransactionOutcome;
-import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.submissions.TransactionSubmission;
 
-import java.time.Duration;
-import java.util.function.Consumer;
-
 public class PgTransactionOperation implements Operation<TransactionOutcome> {
-  private Transaction transaction;
-  private PgConnection connection;
+  private TransactionCompletion transaction;
+  private PgSession connection;
   private Consumer<Throwable> errorHandler;
 
-  public PgTransactionOperation(Transaction transaction, PgConnection connection) {
+  public PgTransactionOperation(TransactionCompletion transaction, PgSession connection) {
     this.transaction = transaction;
     this.connection = connection;
   }

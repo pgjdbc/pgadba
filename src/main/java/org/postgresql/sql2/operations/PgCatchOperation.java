@@ -2,14 +2,14 @@ package org.postgresql.sql2.operations;
 
 import jdk.incubator.sql2.PrimitiveOperation;
 import jdk.incubator.sql2.Submission;
-import org.postgresql.sql2.PgConnection;
+import org.postgresql.sql2.PgSession;
 import org.postgresql.sql2.PgSubmission;
 import org.postgresql.sql2.submissions.BaseSubmission;
 
 public class PgCatchOperation<S> implements PrimitiveOperation<S> {
-  private PgConnection connection;
+  private PgSession connection;
 
-  public PgCatchOperation(PgConnection connection) {
+  public PgCatchOperation(PgSession connection) {
     this.connection = connection;
   }
 
