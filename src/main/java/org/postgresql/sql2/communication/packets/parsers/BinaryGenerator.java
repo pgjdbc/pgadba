@@ -25,11 +25,11 @@ public class BinaryGenerator {
   private static final DateTimeFormatter offsetDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.nnnnnnnnn X");
 
   public static byte[] fromBit(Object input) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static byte[] fromTinyInt(Object input) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   /**
@@ -84,7 +84,8 @@ public class BinaryGenerator {
     if (input instanceof Float) {
       return ByteBuffer.allocate(4).putFloat((Float) input).array();
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a float to server");
   }
 
   /**
@@ -126,7 +127,7 @@ public class BinaryGenerator {
       return data;
     }
 
-    return null;
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a float[] to server");
   }
 
   /**
@@ -142,7 +143,8 @@ public class BinaryGenerator {
     if (input instanceof Double) {
       return ByteBuffer.allocate(8).putDouble((Double) input).array();
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a double to server");
   }
 
   /**
@@ -184,7 +186,7 @@ public class BinaryGenerator {
       return data;
     }
 
-    return null;
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a double[] to server");
   }
 
   /**
@@ -200,7 +202,8 @@ public class BinaryGenerator {
     if (input instanceof Number) {
       return input.toString().getBytes(StandardCharsets.UTF_8);
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a BigDecimal to server");
   }
 
   /**
@@ -235,7 +238,8 @@ public class BinaryGenerator {
       }
       return baos.toByteArray();
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a BigDecimal[] to server");
   }
 
   /**
@@ -251,7 +255,8 @@ public class BinaryGenerator {
     if (input instanceof Character) {
       return ((Character) input).toString().getBytes(StandardCharsets.UTF_8);
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a char to server");
   }
 
   /**
@@ -300,7 +305,7 @@ public class BinaryGenerator {
       return data;
     }
 
-    return null;
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a char[] to server");
   }
 
   /**
@@ -326,7 +331,7 @@ public class BinaryGenerator {
       return new byte[]{};
     }
 
-    return ((UUID)input).toString().getBytes(StandardCharsets.UTF_8);
+    return input.toString().getBytes(StandardCharsets.UTF_8);
   }
 
   /**
@@ -384,7 +389,7 @@ public class BinaryGenerator {
       return data;
     }
 
-    return new byte[] {};
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a byte[][] to server");
   }
 
   /**
@@ -637,7 +642,8 @@ public class BinaryGenerator {
         throw new IllegalArgumentException("couldn't parse input to byte array", e);
       }
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a LocalDate to server");
   }
 
   /**
@@ -687,7 +693,8 @@ public class BinaryGenerator {
       }
       return baos.toByteArray();
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a LocalDate[] to server");
   }
 
   /**
@@ -705,7 +712,8 @@ public class BinaryGenerator {
 
       return x.format(localTimeFormatter).getBytes(StandardCharsets.UTF_8);
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a LocalTime to server");
   }
 
   /**
@@ -741,7 +749,8 @@ public class BinaryGenerator {
       }
       return baos.toByteArray();
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a LocalTime[] to server");
   }
 
   /**
@@ -776,7 +785,8 @@ public class BinaryGenerator {
         throw new IllegalArgumentException("couldn't parse input to byte array", e);
       }
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a LocalDateTime to server");
   }
 
   /**
@@ -825,7 +835,9 @@ public class BinaryGenerator {
       }
       return baos.toByteArray();
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a LocalDateTime[] to server");
   }
 
   /**
@@ -843,7 +855,8 @@ public class BinaryGenerator {
       return (byte[])input;
     }
 
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a byte[] to server");
   }
 
   public static byte[] fromNull(Object input) {
@@ -860,7 +873,7 @@ public class BinaryGenerator {
       return new byte[]{};
     }
 
-    return null;
+    throw new RuntimeException("not implemented");
   }
 
   /**
@@ -880,11 +893,12 @@ public class BinaryGenerator {
         return new byte[]{0};
       }
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a boolean to server");
   }
 
   public static byte[] fromXml(Object input) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   /**
@@ -902,7 +916,8 @@ public class BinaryGenerator {
 
       return x.format(offsetTimeFormatter).getBytes(StandardCharsets.UTF_8);
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a OffsetTime to server");
   }
 
   /**
@@ -938,7 +953,8 @@ public class BinaryGenerator {
       }
       return baos.toByteArray();
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a OffsetTime[] to server");
   }
 
   /**
@@ -973,7 +989,9 @@ public class BinaryGenerator {
         throw new IllegalArgumentException("couldn't parse input to byte array", e);
       }
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a OffsetDateTime to server");
   }
 
   /**
@@ -1022,6 +1040,8 @@ public class BinaryGenerator {
       }
       return baos.toByteArray();
     }
-    return null;
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a OffsetDateTime to server");
   }
 }

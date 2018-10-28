@@ -48,7 +48,7 @@ public class TextParser {
   }
 
   public static Object nameout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   /**
@@ -88,7 +88,7 @@ public class TextParser {
   }
 
   public static Object int2vectorout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   /**
@@ -110,75 +110,75 @@ public class TextParser {
   }
 
   public static Object regprocout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object oidout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object tidout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object xidout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object cidout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object oidvectorout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object pg_ddl_command_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object json_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object xml_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object pg_node_tree_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object smgrout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object point_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object lseg_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object path_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object box_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object poly_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object line_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object cidr_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object float4Out(String in, Class<?> requestedClass) {
@@ -190,23 +190,23 @@ public class TextParser {
   }
 
   public static Object abstimeout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object reltimeout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object tintervalout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object unknownout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object circle_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object cash_out(String in, Class<?> requestedClass) {
@@ -214,15 +214,15 @@ public class TextParser {
   }
 
   public static Object macaddr_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object inet_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object aclitemout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object bpCharOut(String in, Class<?> requestedClass) {
@@ -512,11 +512,11 @@ public class TextParser {
   }
 
   public static Object bit_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object varbit_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object numericOut(String in, Class<?> requestedClass) {
@@ -554,63 +554,63 @@ public class TextParser {
   }
 
   public static Object regprocedureout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object regoperout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object regoperatorout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object regclassout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object regtypeout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object cstring_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object any_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object anyarray_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object void_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object trigger_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object language_handler_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object internal_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object opaque_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object anyelement_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object anynonarray_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object uuidOut(String in, Class<?> requestedClass) {
@@ -644,71 +644,71 @@ public class TextParser {
   }
 
   public static Object txid_snapshot_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object fdw_handler_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object pg_lsn_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object tsm_handler_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object anyenum_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object tsvectorout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object tsqueryout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object gtsvectorout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object regconfigout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object regdictionaryout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object jsonb_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object anyrange_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object event_trigger_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object range_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object regnamespaceout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object regroleout(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object array_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   /**
@@ -972,7 +972,7 @@ public class TextParser {
   }
 
   public static Object record_out(String in, Class<?> requestedClass) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public static Object passthrough(String in, Class<?> requestedClass) {

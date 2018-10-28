@@ -56,18 +56,17 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public OperationGroup<S, T> parallel() {
-    //this is a no-op since the postgresql wire format doesn't allow parallel queries
-    return this;
+    throw new RuntimeException("not implemented yet");
   }
 
   @Override
   public OperationGroup<S, T> independent() {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   @Override
   public OperationGroup<S, T> conditional(CompletionStage<Boolean> condition) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   @Override
@@ -221,7 +220,7 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public <R extends S> MultiOperation<R> multiOperation(String sql) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   @Override
@@ -276,7 +275,7 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
 
   @Override
   public OperationGroup<S, T> timeout(Duration minTime) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   @Override

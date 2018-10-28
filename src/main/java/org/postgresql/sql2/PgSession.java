@@ -218,7 +218,7 @@ public class PgSession extends PgOperationGroup<Object, Object> implements Sessi
       lifecycleListeners.remove(listener);
     }
 
-    return null;
+    return this;
   }
 
   /**
@@ -248,7 +248,7 @@ public class PgSession extends PgOperationGroup<Object, Object> implements Sessi
       listener.lifecycleEvent(this, oldLifecycle, lifecycle);
     }
 
-    return null;
+    return this;
   }
 
   /**
@@ -272,7 +272,7 @@ public class PgSession extends PgOperationGroup<Object, Object> implements Sessi
    */
   @Override
   public ShardingKey.Builder shardingKeyBuilder() {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   @Override

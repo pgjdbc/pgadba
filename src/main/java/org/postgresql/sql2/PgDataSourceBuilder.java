@@ -13,7 +13,7 @@ public class PgDataSourceBuilder implements DataSource.Builder {
 
   @Override
   public Builder property(DataSourceProperty p, Object v) {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   @Override

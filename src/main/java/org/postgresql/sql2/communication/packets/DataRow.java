@@ -142,7 +142,8 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
 
   @Override
   public Column slice(int numValues) {
-    return null;
+    throw new RuntimeException("not implemented yet");
+
   }
 
   @Override

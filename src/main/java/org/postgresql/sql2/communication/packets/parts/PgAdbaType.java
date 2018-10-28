@@ -373,7 +373,7 @@ public enum PgAdbaType implements SqlType {
 
   @Override
   public Class<?> getJavaType() {
-    return null;
+    throw new RuntimeException("not implemented yet");
   }
 
   public Integer getOid() {
