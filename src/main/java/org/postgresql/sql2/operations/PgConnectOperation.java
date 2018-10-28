@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 import jdk.incubator.sql2.Operation;
 import jdk.incubator.sql2.Submission;
 import org.postgresql.sql2.PgSession;
+import org.postgresql.sql2.communication.NetworkConnection;
 import org.postgresql.sql2.submissions.ConnectSubmission;
 import org.postgresql.sql2.submissions.GroupSubmission;
 
@@ -14,10 +15,18 @@ public class PgConnectOperation implements Operation<Void> {
   private Duration minTime;
   private PgSession connection;
   private GroupSubmission groupSubmission;
+  private NetworkConnection protocol;
 
-  public PgConnectOperation(PgSession connection, GroupSubmission groupSubmission) {
+  /**
+   * Initialize.
+   * @param connection the session that created this Operation
+   * @param groupSubmission if the operation is part of a group
+   * @param protocol network link
+   */
+  public PgConnectOperation(PgSession connection, GroupSubmission groupSubmission, NetworkConnection protocol) {
     this.connection = connection;
     this.groupSubmission = groupSubmission;
+    this.protocol = protocol;
   }
 
   @Override
@@ -42,7 +51,8 @@ public class PgConnectOperation implements Operation<Void> {
     submission.getCompletionStage().thenAccept(s -> {
       connection.setLifeCycleOpen();
     });
-    connection.sendNetworkConnect(submission.getNetworkConnect());
+    protocol.sendNetworkConnect(submission.getNetworkConnect());
+
     return submission;
   }
 
