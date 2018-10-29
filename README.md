@@ -1,27 +1,29 @@
 # pgsql2
-Implementation of a proposed asynchronous SQL specification for PostgreSQL
 
-## What problem does this library solve
+An implementation of [ADBA/jdk.sql2](http://cr.openjdk.java.net/%7Elancea/8188051/apidoc/jdk/incubator/sql2/package-summary.html), a proposed asynchronous SQL specification, for PostgreSQL.
 
-This library decouples the network communication to the database, from the business logic
-that produces queries and consumes the results.
+## Asynchronous querying with `Future`
+
+The primary difference from JDBC is that with ADBA, query execution is managed using futures. 
+When the database returns a result it completes the future, either normally or exceptionally 
+if the query had an error.
+
+Compared to plain JDBC, ADBA, this decouples the network communication to the database 
+from the business logic that produces queries and consumes the results.
 
 This reduces the number of threads needed in the application, since there isn't any need
-for threads wait for the database to produce results.
-
-This in turn reduces memory footprint and the amount of context switching needed.
-
-It accomplishes this by letting the programmer send in queries to the library and returning
-futures. When the database returns a result it completes the future, either normally or
-exceptionally if the query had an error.
+for threads to wait for the database to produce results. This in turn reduces memory 
+footprint and the amount of context switching needed.
 
 ## Structural improvements over JDBC
 
 * No parsing of queries in the connection library. This significantly reduces the amount of
 work the library needs to perform.
-* All queries are sent as prepared statements, this helps mitigate the problem with sql 
+
+* All queries are sent as prepared statements, this helps mitigate the problem with SQL 
 injection, as it's no longer possible to terminate one query and start a new one in the same
-statement. It doesn't solve the sql injection problem totally of course.
+statement. It doesn't solve the SQL injection problem totally of course.
+
 * Query pipelining, the library will send query number 2 over the network without 
 waiting for the result of query number 1 if the arguments to query 2 doesn't depend on 
 query 1. This helps a great deal in reducing query time in environments where there is 
@@ -34,12 +36,12 @@ The library's network stack is based on the asynchronous part of the NIO framewo
 
 The programmer interface is a significant rework and upgrade of the old JDBC standard.
 
-The core concepts are DataSources, Sessions and Operations.
+The core concepts are `DataSources`, `Sessions` and `Operations`.
 
-* DataSource represents the database on the other side of the network, you can start 
-Sessions from it.
-* Session is a connection to the database, over TCP and optionally TLS in the case of 
-Postgresql. Sessions is where you send in Operations containing SQL queries and get Futures 
+* `DataSource` represents the database on the other side of the network, you can start 
+`Session`s from it.
+* `Session` is a connection to the database, over TCP and optionally TLS in the case of 
+Postgresql. `Session`s is where you send in Operations containing SQL queries and get Futures 
 back
 * Operations represent SQL queries, since there is a large amount of different types of queries,
 there is also a number of different operations that perform different tasks.
@@ -77,7 +79,7 @@ This is a straightforward building pattern.
 Lets go over this line by line.
 
 0. Just a list to hold the result of the operation.
-1. We start by getting a session in a try-with-resources construct, getSession() is a 
+1. We start by getting a session in a try-with-resources construct. `getSession()` is a 
 convenience function that creates a ConnectionOperation and submits it to the operation 
 stack
 2. Here we create a row operation, queries that returns rows generally want to use row
@@ -87,9 +89,9 @@ the $1 with the parameter is done by the server in the same way that prepared st
 work in regular jdbc.
 4. The collect call takes a standard java.util.stream.Collector, and have a overloaded 
 default implementation that uses Collector.of().
-5. The submit call signals that we are done building the Operation and want to send it off
+5. `submit()` signals that we are done building the `Operation` and want to send it off
 to be executed by the server.
-6. get10 is just an helper function that waits for futures in the unit tests.
+6. get10 is a helper function that waits for a future to complete, with a timeout of 10s.
 
 ## How can I get involved
 
