@@ -1,6 +1,6 @@
 # pgsql2
 
-An implementation of [ADBA/jdk.sql2](http://cr.openjdk.java.net/%7Elancea/8188051/apidoc/jdk/incubator/sql2/package-summary.html), a proposed asynchronous SQL specification, for PostgreSQL.
+An implementation of [ADBA](http://cr.openjdk.java.net/%7Elancea/8188051/apidoc/jdk/incubator/sql2/package-summary.html), a proposed asynchronous SQL specification, for PostgreSQL.
 
 ## Asynchronous querying with `Future`
 
