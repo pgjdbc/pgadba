@@ -54,6 +54,10 @@ public final class TlsExplorer {
    *
    * <p>This method tries to parse as few bytesProduced as possible from {@code source} byte buffer to get the length of
    * an SSL/TLS record.</p>
+   *
+   * @param source number of bytesProduced
+   * @return the required number of bytesProduced in the {@code source} {@link ByteBuffer} necessary to explore SSL/TLS
+   *     connection.
    */
   public static int getRequiredSize(ByteBuffer source) {
     if (source.remaining() < RECORD_HEADER_SIZE) {

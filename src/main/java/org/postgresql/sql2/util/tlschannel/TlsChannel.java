@@ -75,6 +75,7 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
 
   /**
    * Return a reference to the underlying {@link ByteChannel}.
+   * @return the ByteChannel that transports the encrypted data
    */
   ByteChannel getUnderlying();
 
@@ -90,6 +91,7 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
    * Return the callback function to be executed when the TLS session is established (or re-established).
    *
    * @see TlsChannelBuilder#withSessionInitCallback(Consumer)
+   * @return the callback function
    */
   Consumer<SSLSession> getSessionInitCallback();
 
@@ -99,6 +101,7 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
    *
    * @see TlsChannelBuilder#withPlainBufferAllocator(BufferAllocator)
    * @see TrackingAllocator
+   * @return the {@link BufferAllocator} to use for unencrypted data
    */
   TrackingAllocator getPlainBufferAllocator();
 
@@ -108,6 +111,7 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
    *
    * @see TlsChannelBuilder#withEncryptedBufferAllocator(BufferAllocator)
    * @see TrackingAllocator
+   * @return the {@link BufferAllocator} to use for encrypted data
    */
   TrackingAllocator getEncryptedBufferAllocator();
 
@@ -115,6 +119,7 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
    * Return whether CPU-intensive tasks are run or not.
    *
    * @see TlsChannelBuilder#withRunTasks(boolean)
+   * @return whether CPU-intensive tasks are run or not.
    */
   boolean getRunTasks();
 

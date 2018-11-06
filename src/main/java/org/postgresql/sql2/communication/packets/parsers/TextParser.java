@@ -31,6 +31,7 @@ public class TextParser {
   /**
    * reads a hex string into byte array.
    * @param in the hex string
+   * @param requestedClass class requested by user
    * @return the bytes
    */
   public static Object byteaOut(String in, Class<?> requestedClass) {
@@ -394,6 +395,7 @@ public class TextParser {
   /**
    * parses a string representation of an interval.
    * @param in the string to parse
+   * @param requestedClass class requested by user
    * @return a Duration object
    */
   public static Object intervalOut(String in, Class<?> requestedClass) {

@@ -43,6 +43,8 @@ public class Util {
   /**
    * Convert a {@link SSLEngineResult} into a {@link String}, this is needed because the supplied method includes a log-breaking
    * newline.
+   * @param result raw data to be put into the log message
+   * @return line without newline
    */
   public static String resultToString(SSLEngineResult result) {
     return String.format("status=%s,handshakeStatus=%s,bytesConsumed=%d,bytesConsumed=%d", result.getStatus(),

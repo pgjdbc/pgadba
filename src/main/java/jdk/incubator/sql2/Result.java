@@ -171,7 +171,7 @@ public interface Result {
     /**
      * Modify this {@link Column} to point to a value identified by id.
      *
-     * @apiNote The value specified for {@code id} represents the name of a
+     * apiNote The value specified for {@code id} represents the name of a
      * column or parameter marker for the underlying data source and is
      * implementation specific. This may be a simple SQL identifier, a quoted
      * identifier, or any other type of identifier supported by the data source.

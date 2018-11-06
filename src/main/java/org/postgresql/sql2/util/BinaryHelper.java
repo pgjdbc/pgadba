@@ -66,6 +66,8 @@ public class BinaryHelper {
   /**
    * writes an int to a byte array in network byte order.
    * @param val the int to write
+   * @param pos position to write it
+   * @param bb byte array to write into
    */
   public static void writeIntAtPos(int val, int pos, byte[] bb) {
     bb[pos] = (byte) (val >>> 24);
@@ -77,6 +79,8 @@ public class BinaryHelper {
   /**
    * writes a float to a byte array in network byte order.
    * @param val the float to write
+   * @param pos position to write it
+   * @param bb byte array to write into
    */
   public static void writeFloatAtPos(float val, int pos, byte[] bb) {
     byte[] arr = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putFloat(val).array();
@@ -89,6 +93,8 @@ public class BinaryHelper {
   /**
    * writes a float to a byte array in network byte order.
    * @param val the float to write
+   * @param pos position to write it
+   * @param bb byte array to write into
    */
   public static void writeDoubleAtPos(double val, int pos, byte[] bb) {
     byte[] arr = ByteBuffer.allocate(8).order(ByteOrder.BIG_ENDIAN).putDouble(val).array();
@@ -122,6 +128,10 @@ public class BinaryHelper {
 
   /**
    * Turn 16-byte stream into a human-readable 32-byte hex string.
+   *
+   * @param bytes data to convert
+   * @param hex array to write to
+   * @param offset where to start writing in the hex array
    */
   public static void bytesToHex(byte[] bytes, byte[] hex, int offset) {
     final char[] lookup =

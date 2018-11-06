@@ -82,6 +82,7 @@ public class ClientTlsChannel implements TlsChannel {
    *
    * @param underlying a reference to the underlying {@link ByteChannel}
    * @param sslEngine the engine to use with this channel
+   * @return the builder
    */
   public static Builder newBuilder(ByteChannel underlying, SSLEngine sslEngine) {
     return new Builder(underlying, sslEngine);
@@ -92,6 +93,7 @@ public class ClientTlsChannel implements TlsChannel {
    *
    * @param underlying a reference to the underlying {@link ByteChannel}
    * @param sslContext a context to use with this channel, it will be used to create a client {@link SSLEngine}.
+   * @return the builder
    */
   public static Builder newBuilder(ByteChannel underlying, SSLContext sslContext) {
     return new Builder(underlying, sslContext);

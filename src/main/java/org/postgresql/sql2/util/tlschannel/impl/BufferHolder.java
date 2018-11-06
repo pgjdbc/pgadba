@@ -102,6 +102,7 @@ public class BufferHolder {
 
   /**
    * resizes the buffer.
+   * @param newCapacity size to resize to
    */
   public void resize(int newCapacity) {
     if (newCapacity > maxSize) {

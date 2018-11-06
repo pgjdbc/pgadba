@@ -55,6 +55,7 @@ public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel
    * <p> Otherwise this method works in the same manner as the {@link
    * AsynchronousByteChannel#read(ByteBuffer, Object, CompletionHandler)} method.
    *
+   * @param <A> class to Attach
    * @param dst The buffer into which bytes are to be transferred
    * @param timeout The maximum time for the I/O operation to complete
    * @param unit The time unit of the {@code timeout} argument
@@ -103,6 +104,7 @@ public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel
    * implementation cannot guarantee that bytes have not been read, or will not be read from the channel into the given buffers,
    * then further attempts to read from the channel will cause an unspecific runtime exception to be thrown.
    *
+   * @param <A> class to Attach
    * @param dsts The buffers into which bytes are to be transferred
    * @param offset The offset within the buffer array of the first buffer into which bytes are to be transferred; must be
    * non-negative and no larger than {@code dsts.length}
@@ -138,6 +140,7 @@ public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel
    * <p> Otherwise this method works in the same manner as the {@link
    * AsynchronousByteChannel#write(ByteBuffer, Object, CompletionHandler)} method.
    *
+   * @param <A> class to Attach
    * @param src The buffer from which bytes are to be retrieved
    * @param timeout The maximum time for the I/O operation to complete
    * @param unit The time unit of the {@code timeout} argument
@@ -184,6 +187,7 @@ public interface ExtendedAsynchronousByteChannel extends AsynchronousByteChannel
    * implementation cannot guarantee that bytes have not been written, or will not be written to the channel from the given
    * buffers, then further attempts to write to the channel will cause an unspecific runtime exception to be thrown.
    *
+   * @param <A> class to Attach
    * @param srcs The buffers from which bytes are to be retrieved
    * @param offset The offset within the buffer array of the first buffer from which bytes are to be retrieved; must be
    * non-negative and no larger than {@code srcs.length}

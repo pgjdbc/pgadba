@@ -162,6 +162,7 @@ public class ServerTlsChannel implements TlsChannel {
    *
    * @param underlying a reference to the underlying {@link ByteChannel}
    * @param sslContext a fixed {@link SSLContext} to be used
+   * @return a new Builder
    */
   public static Builder newBuilder(ByteChannel underlying, SSLContext sslContext) {
     return new Builder(underlying, sslContext);
@@ -179,6 +180,7 @@ public class ServerTlsChannel implements TlsChannel {
    * @param underlying a reference to the underlying {@link ByteChannel}
    * @param sslContextFactory a function from an optional SNI to the {@link SSLContext} to be used
    * @see <a href="https://tools.ietf.org/html/rfc6066#section-3">Server Name Indication</a>
+   * @return a new Builder
    */
   public static Builder newBuilder(ByteChannel underlying, SniSslContextFactory sslContextFactory) {
     return new Builder(underlying, sslContextFactory);
