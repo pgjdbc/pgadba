@@ -167,11 +167,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.22.1</version>
         <configuration>
-          <additionalClasspathElements>
-            <additionalClasspathElement>${basedir}/path/to/additional/resources</additionalClasspathElement>
-            <additionalClasspathElement>path/to/additional/jar</additionalClasspathElement>
-            <additionalClasspathElement>path/to/csv/jar1, path/to/csv/jar2</additionalClasspathElement>
-          </additionalClasspathElements>
+          <forkCount>0</forkCount>
         </configuration>
       </plugin>
     </plugins>
