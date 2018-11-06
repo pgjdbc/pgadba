@@ -1,1 +1,1 @@
-org.postgresql.sql2.PgDataSourceFactory
+org.postgresql.adba.PgDataSourceFactory

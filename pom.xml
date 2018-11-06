@@ -4,9 +4,9 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.postgresql</groupId>
-  <artifactId>pgsql2</artifactId>
+  <artifactId>pgadba</artifactId>
   <version>0.1.0-ALPHA</version>
-  <name>pgsql2</name>
+  <name>pgAdba</name>
   <description>ADBA implementation for PostgreSQL</description>
   <url>https://github.com/pgjdbc/pgsql2</url>
 

@@ -1,4 +1,4 @@
-# pgsql2
+# pgAdba
 
 An implementation of [ADBA](http://cr.openjdk.java.net/%7Elancea/8188051/apidoc/jdk/incubator/sql2/package-summary.html), a proposed asynchronous SQL specification, for PostgreSQL.
 
@@ -51,7 +51,7 @@ there is also a number of different operations that perform different tasks.
 ### Creating a DataSource
 
 ```java
-    DataSourceFactory.newFactory("org.postgresql.sql2.PgDataSourceFactory")
+    DataSourceFactory.newFactory("org.postgresql.adba.PgDataSourceFactory")
         .builder()
         .url("jdbc:postgresql://" + postgres.getContainerIpAddress() + ":" + postgres.getMappedPort(5432)
             + "/" + postgres.getDatabaseName())
