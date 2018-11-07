@@ -418,7 +418,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
         context.writeRequired();
       }
     }
-    if (bytesRead < 0) {
+    if (tlsChannel == null && bytesRead < 0) {
       throw new ClosedChannelException();
     }
 
