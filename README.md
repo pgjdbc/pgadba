@@ -46,6 +46,24 @@ back
 * Operations represent SQL queries, since there is a large amount of different types of queries,
 there is also a number of different operations that perform different tasks.
 
+## Dependency inclusion
+
+### Maven
+
+```xml
+<dependency>
+  <groupId>org.postgresql</groupId>
+  <artifactId>pgadba</artifactId>
+  <version>0.1.0-ALPHA</version>
+</dependency>
+```
+
+### Gradle
+
+```groovy
+compile 'org.postgresql:pgadba:0.1.0-ALPHA'
+```
+
 ## Examples
 
 ### Creating a DataSource
@@ -92,6 +110,10 @@ default implementation that uses Collector.of().
 5. `submit()` signals that we are done building the `Operation` and want to send it off
 to be executed by the server.
 6. get10 is a helper function that waits for a future to complete, with a timeout of 10s.
+
+### Full application example
+
+[Spring Boot Example](https://github.com/alexanderkjall/pgadba-example-application-spring-boot/)
 
 ## How can I get involved
 
