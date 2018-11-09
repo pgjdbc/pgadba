@@ -19,7 +19,12 @@ public class ParameterHolder {
   }
 
   public void add(String id, QueryParameter queryParameter) {
-    parameterMap.put(Integer.parseInt(id.substring(1)), queryParameter);
+    try {
+      parameterMap.put(Integer.parseInt(id.substring(1)), queryParameter);
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("the names of parameter placeholders must be on the format: "
+          + "$<number> with the numbers starting at 1 and increasing by 1 for each parameter", e);
+    }
   }
 
   /**

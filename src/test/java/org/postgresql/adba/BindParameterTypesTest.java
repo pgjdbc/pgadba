@@ -2,6 +2,7 @@ package org.postgresql.adba;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.postgresql.adba.testutil.CollectorUtils.singleCollector;
 import static org.postgresql.adba.testutil.FutureUtil.get10;
@@ -40,6 +41,14 @@ public class BindParameterTypesTest {
   @AfterAll
   public static void tearDown() {
     ds.close();
+  }
+
+  @Test
+  public void bindInteger4IllegalParameterName() {
+    try (Session session = ds.getSession()) {
+      assertThrows(IllegalArgumentException.class, () -> session.<Integer>rowOperation("select $1::int4 as t")
+          .set("1", null, PgAdbaType.INTEGER));
+    }
   }
 
   @Test
