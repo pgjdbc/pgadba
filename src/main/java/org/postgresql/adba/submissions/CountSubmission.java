@@ -71,9 +71,6 @@ public class CountSubmission<T> implements PgSubmission<T> {
 
   @Override
   public Object finish(Object finishObject) {
-    ((CompletableFuture<PgCount>) getCompletionStage())
-        .complete((PgCount)finishObject);
-
     if (returningRowSubmission != null) {
       Object endResult = returningRowSubmission.finish(null);
       returningRowSubmission.getCompletionStage().toCompletableFuture().complete(endResult);
@@ -81,6 +78,10 @@ public class CountSubmission<T> implements PgSubmission<T> {
     if (groupSubmission != null) {
       groupSubmission.addGroupResult(finishObject);
     }
+
+    ((CompletableFuture<PgCount>) getCompletionStage())
+        .complete((PgCount)finishObject);
+
     return null;
   }
 
