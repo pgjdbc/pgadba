@@ -80,7 +80,7 @@ public abstract class TlsChannelBuilder<T extends TlsChannelBuilder<T>> {
   }
 
   /**
-   * Set the {@link BufferAllocator} to use for encrypted data. By default a {@link DirectBufferAllocator} is used, as this data
+   * Set the {@link BufferAllocator} to use for encrypted data. By default a {@link HeapBufferAllocator} is used, as this data
    * is usually read from or written to native sockets.
    *
    * @param bufferAllocator allocator for ByteBuffers

@@ -24,12 +24,9 @@ SOFTWARE.
 
 package org.postgresql.adba.util.tlschannel.util;
 
-import java.util.logging.Logger;
 import javax.net.ssl.SSLEngineResult;
 
 public class Util {
-  private static final Logger logger = Logger.getLogger(Util.class.getName());
-
   /**
    * throws if false.
    * @param condition to throw or not

@@ -34,7 +34,7 @@ public class PgOperationGroup<S, T> implements OperationGroup<S, T> {
       a -> null);
 
   private PgSession connection;
-  private Logger logger = Logger.getLogger(PgSession.class.getName());
+  private Logger logger = Logger.getLogger(PgOperationGroup.class.getName());
   protected Consumer<Throwable> errorHandler = null;
   private boolean held = true;
 
