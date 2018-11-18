@@ -111,7 +111,12 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
 
           case MD5:
             // Password authentication required
-            context.write(new PasswordRequest(authentication, connectSubmission));
+            context.write(new Md5PasswordRequest(authentication, connectSubmission));
+            return null;
+
+          case SASL:
+            // Password authentication required
+            context.write(new SaslPasswordRequest(authentication, connectSubmission));
             return null;
 
           case SUCCESS:

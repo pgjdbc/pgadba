@@ -2,6 +2,7 @@ package org.postgresql.adba;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.postgresql.adba.testutil.CollectorUtils.singleCollector;
 import static org.postgresql.adba.testutil.FutureUtil.get10;
 
 import java.time.Instant;
@@ -28,12 +29,15 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 public class PgSessionTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
+  public static PostgreSQLContainer postgres11 = DatabaseHolder.getNew11();
 
   private static DataSource ds;
+  private static DataSource ds11;
 
   @BeforeAll
   public static void setUp() {
     ds = ConnectUtil.openDb(postgres);
+    ds11 = ConnectUtil.openDb(postgres11);
 
     ConnectUtil.createTable(ds, "tab",
         "id int", "name varchar(100)", "answer int");
@@ -42,6 +46,18 @@ public class PgSessionTest {
   @AfterAll
   public static void tearDown() {
     ds.close();
+  }
+
+  @Test
+  public void loginScramSha256() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Session session = ds11.getSession()) {
+      CompletionStage<Integer> idF = session.<Integer>rowOperation("select 1918 as t")
+          .collect(singleCollector(Integer.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(Integer.valueOf(1918), get10(idF));
+    }
   }
 
   @Test

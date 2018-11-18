@@ -19,13 +19,13 @@ import org.postgresql.adba.util.BinaryHelper;
  * 
  * @author Daniel Sagenschneider
  */
-public class PasswordRequest implements NetworkRequest {
+public class Md5PasswordRequest implements NetworkRequest {
 
   private final AuthenticationRequest authentication;
 
   private final ConnectSubmission connectSubmission;
 
-  public PasswordRequest(AuthenticationRequest authentication, ConnectSubmission connectSubmission) {
+  public Md5PasswordRequest(AuthenticationRequest authentication, ConnectSubmission connectSubmission) {
     this.authentication = authentication;
     this.connectSubmission = connectSubmission;
   }

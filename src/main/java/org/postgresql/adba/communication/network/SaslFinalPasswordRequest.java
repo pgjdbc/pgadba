@@ -1,0 +1,59 @@
+package org.postgresql.adba.communication.network;
+
+import com.ongres.scram.client.ScramSession;
+import com.ongres.scram.client.ScramSession.ServerFirstProcessor;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import jdk.incubator.sql2.AdbaSessionProperty;
+import jdk.incubator.sql2.SessionProperty;
+import org.postgresql.adba.communication.FeFrame;
+import org.postgresql.adba.communication.NetworkOutputStream;
+import org.postgresql.adba.communication.NetworkRequest;
+import org.postgresql.adba.communication.NetworkResponse;
+import org.postgresql.adba.communication.NetworkWriteContext;
+import org.postgresql.adba.submissions.ConnectSubmission;
+
+public class SaslFinalPasswordRequest implements NetworkRequest {
+
+  private ServerFirstProcessor serverFirstProcessor;
+  private ConnectSubmission connectSubmission;
+  private ScramSession.ClientFinalProcessor clientFinalProcessor;
+
+  public SaslFinalPasswordRequest(ServerFirstProcessor serverFirstProcessor,
+      ConnectSubmission connectSubmission) {
+    this.serverFirstProcessor = serverFirstProcessor;
+    this.connectSubmission = connectSubmission;
+  }
+
+  @Override
+  public NetworkRequest write(NetworkWriteContext context) throws Exception {
+    // Obtain the properties
+    Map<SessionProperty, Object> properties = context.getProperties();
+
+    String password = (String) properties.get(AdbaSessionProperty.PASSWORD);
+
+    clientFinalProcessor = serverFirstProcessor.clientFinalProcessor(password);
+
+    String clientFinalMessage = clientFinalProcessor.clientFinalMessage();
+    byte[] clientFinalMessageBytes = clientFinalMessage.getBytes(StandardCharsets.UTF_8);
+
+    NetworkOutputStream wire = context.getOutputStream();
+    wire.write(FeFrame.FrontendTag.PASSWORD_MESSAGE.getByte());
+    wire.initPacket();
+    wire.write(clientFinalMessageBytes);
+    wire.completePacket();
+
+    // No further immediate requests
+    return null;
+  }
+
+  @Override
+  public boolean isBlocking() {
+    return true;
+  }
+
+  @Override
+  public NetworkResponse getRequiredResponse() {
+    return new SaslCompleteResponse(connectSubmission, clientFinalProcessor);
+  }
+}

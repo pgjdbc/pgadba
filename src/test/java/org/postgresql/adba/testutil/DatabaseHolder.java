@@ -33,4 +33,15 @@ public class DatabaseHolder {
 
     return container;
   }
+
+  /**
+   * returns a new database that that runs postgresql 11.
+   * @return a docker instance running a postgresql 11 database
+   */
+  public static PostgreSQLContainer getNew11() {
+    PostgreSQLContainer container = new PostgreSQLContainer("capitol/debian-buster-postgresql11-tls:latest");
+    container.start();
+
+    return container;
+  }
 }
