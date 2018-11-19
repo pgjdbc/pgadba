@@ -8,7 +8,7 @@
   <version>0.1.1-ALPHA-SNAPSHOT</version>
   <name>pgAdba</name>
   <description>ADBA implementation for PostgreSQL</description>
-  <url>https://github.com/pgjdbc/pgsql2</url>
+  <url>https://github.com/pgjdbc/pgAdba</url>
 
   <organization>
     <name>PostgreSQL jdbc development team</name>
@@ -18,7 +18,7 @@
   <licenses>
     <license>
       <name>BSD 2-Clause "Simplified" License</name>
-      <url>https://github.com/pgjdbc/pgsql2/blob/master/LICENSE</url>
+      <url>https://github.com/pgjdbc/pgAdba/blob/master/LICENSE</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
@@ -32,10 +32,15 @@
   </developers>
 
   <scm>
-    <connection>scm:git:git://github.com/pgjdbc/pgsql2</connection>
-    <developerConnection>scm:git:git://github.com/pgjdbc/pgsql2</developerConnection>
-    <url>https://github.com/pgjdbc/pgsql2</url>
+    <connection>scm:git:git://github.com/pgjdbc/pgAdba</connection>
+    <developerConnection>scm:git:git://github.com/pgjdbc/pgAdba</developerConnection>
+    <url>https://github.com/pgjdbc/pgAdba</url>
   </scm>
+
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/pgjdbc/pgAdba/issues</url>
+  </issueManagement>
 
   <distributionManagement>
     <snapshotRepository>
