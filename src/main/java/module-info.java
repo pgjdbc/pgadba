@@ -10,4 +10,5 @@ module org.postgresql.adba {
   exports org.postgresql.adba.buffer;
   exports org.postgresql.adba.execution;
   provides jdk.incubator.sql2.DataSourceFactory with PgDataSourceFactory;
+  uses jdk.incubator.sql2.DataSourceFactory;
 }
