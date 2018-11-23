@@ -1,7 +1,7 @@
 package org.postgresql.adba.execution;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.postgresql.adba.testutil.FutureUtil.get10;
 
 import java.io.IOException;
@@ -11,7 +11,7 @@ import jdk.incubator.sql2.DataSource.Builder;
 import jdk.incubator.sql2.DataSourceFactory;
 import jdk.incubator.sql2.Session;
 import jdk.incubator.sql2.Submission;
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.postgresql.adba.PgSessionProperty;
 import org.postgresql.adba.testutil.CollectorUtils;
@@ -41,7 +41,7 @@ public class NioLoopTest {
       Submission<Integer> submission = session.<Integer>rowOperation("SELECT 1 as t")
           .collect(CollectorUtils.singleCollector(Integer.class)).submit();
       Integer result = get10(submission.getCompletionStage());
-      assertEquals("Incorrect result", Integer.valueOf(1), result);
+      assertEquals(Integer.valueOf(1), result, "Incorrect result");
     }
   }
 
@@ -55,10 +55,10 @@ public class NioLoopTest {
       Submission<Integer> submission = session.<Integer>rowOperation("SELECT 1 as t")
           .collect(CollectorUtils.singleCollector(Integer.class)).submit();
       Integer result = get10(submission.getCompletionStage());
-      assertEquals("Incorrect result", Integer.valueOf(1), result);
+      assertEquals(Integer.valueOf(1), result, "Incorrect result");
 
       // Ensure provided NioLoop used
-      assertTrue("Should use provided loop", loop.isUsed);
+      assertTrue(loop.isUsed, "Should use provided loop");
     }
   }
 
@@ -78,7 +78,7 @@ public class NioLoopTest {
       // Ensure obtain all results
       for (int i = 0; i < queryCount; i++) {
         Integer result = get10(submissions[i].getCompletionStage());
-        assertEquals("Incorrect result", Integer.valueOf(1), result);
+        assertEquals(Integer.valueOf(1), result, "Incorrect result");
       }
     }
   }
@@ -100,7 +100,7 @@ public class NioLoopTest {
       // Ensure obtain all results
       for (int i = 0; i < connectionCount; i++) {
         Integer result = get10(submissions[i].getCompletionStage());
-        assertEquals("Incorrect result", Integer.valueOf(1), result);
+        assertEquals(Integer.valueOf(1), result, "Incorrect result");
       }
     }
   }
@@ -125,12 +125,12 @@ public class NioLoopTest {
       // Ensure obtain all results
       for (int i = 0; i < dataSources.length; i++) {
         Integer result = get10(submissions[i].getCompletionStage());
-        assertEquals("Incorrect result", Integer.valueOf(1), result);
+        assertEquals(Integer.valueOf(1), result, "Incorrect result");
       }
     }
   }
 
-  @After
+  @AfterEach
   public void closeNioLoop() {
     if (this.mockLoop != null) {
       this.mockLoop.close();
