@@ -43,7 +43,9 @@ public class AuthenticationRequest {
   }
 
   public enum ScramMechanism {
-    SCRAM_SHA_256("SCRAM-SHA-256");
+    SCRAM_SHA_256("SCRAM-SHA-256"),
+    SCRAM_SHA_256_PLUS("SCRAM-SHA-256-PLUS"),
+    UNKNOWN("");
 
     private String value;
 
@@ -67,7 +69,8 @@ public class AuthenticationRequest {
         }
       }
 
-      throw new IllegalArgumentException("unknown authentication packet tag: " + input);
+      //throw new IllegalArgumentException("unknown authentication packet tag: " + input);
+      return UNKNOWN;
     }
   }
 
@@ -92,7 +95,7 @@ public class AuthenticationRequest {
       String mechanisms = new String(BinaryHelper.subBytes(bytes, 4, bytes.length - 2),
           StandardCharsets.UTF_8);
 
-      for (String mechanism : mechanisms.split(",")) {
+      for (String mechanism : mechanisms.split("\0")) {
         scramMechanisms.add(ScramMechanism.lookup(mechanism));
       }
     } else if (type == Types.SASL_CONTINUE) {
