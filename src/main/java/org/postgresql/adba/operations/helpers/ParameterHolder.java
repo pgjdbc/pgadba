@@ -18,6 +18,12 @@ public class ParameterHolder {
     return parameterMap.values();
   }
 
+  /**
+   * When the user adds parameters they gets stored by this method.
+   *
+   * @param id parameter id string, on the format $1
+   * @param queryParameter the parameter, either the value or an future
+   */
   public void add(String id, QueryParameter queryParameter) {
     try {
       parameterMap.put(Integer.parseInt(id.substring(1)), queryParameter);

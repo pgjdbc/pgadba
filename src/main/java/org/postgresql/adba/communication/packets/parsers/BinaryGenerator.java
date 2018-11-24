@@ -18,24 +18,32 @@ import java.time.OffsetTime;
 import java.time.format.DateTimeFormatter;
 
 public class BinaryGenerator {
+
   private static final DateTimeFormatter localDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
   private static final DateTimeFormatter localTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.nnnnnnnnn");
   private static final DateTimeFormatter localDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.nnnnnnnnn");
   private static final DateTimeFormatter offsetTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.nnnnnnnnn X");
   private static final DateTimeFormatter offsetDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.nnnnnnnnn X");
 
-  private static final byte[] bits= new byte[] { 1, 2, 4, 8, 16, 32, 64, (byte) 128 };
+  private static final byte[] bits = new byte[]{1, 2, 4, 8, 16, 32, 64, (byte) 128};
 
+  /**
+   * parses something that should go into an bit or varbit type in postgresql so that it can be sent
+   * over the network.
+   *
+   * @param input the bits to convert
+   * @return a byte array of with an '0' or an '1' for every bit in the input
+   */
   public static byte[] fromBit(Object input) {
     if (input == null) {
       return new byte[]{};
     }
 
     if (input instanceof Boolean) {
-      if (((boolean)input)) {
-        return new byte[] { 49 };
+      if (((boolean) input)) {
+        return new byte[]{49};
       } else {
-        return new byte[] { 48 };
+        return new byte[]{48};
       }
     }
 
@@ -59,6 +67,13 @@ public class BinaryGenerator {
     throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as bit to server");
   }
 
+  /**
+   * parses something that should go into an bit[] or varbit[] type in postgresql so that it can be sent
+   * over the network.
+   *
+   * @param input the bits to convert
+   * @return a byte array of with an '0' or an '1' for every bit in the input
+   */
   public static byte[] fromBitArray(Object input) {
     if (input == null) {
       return new byte[]{};
@@ -73,7 +88,7 @@ public class BinaryGenerator {
           sb.append(",");
         }
 
-        if (((boolean)input)) {
+        if (((boolean) input)) {
           sb.append("1");
         } else {
           sb.append("0");
@@ -115,6 +130,7 @@ public class BinaryGenerator {
 
   /**
    * parses Number to a short represented as a byte array.
+   *
    * @param input the Number to convert
    * @return a byte array of length 0 or 2
    */
@@ -123,11 +139,12 @@ public class BinaryGenerator {
       return new byte[]{};
     }
 
-    return BinaryHelper.writeShort(((Number)input).shortValue());
+    return BinaryHelper.writeShort(((Number) input).shortValue());
   }
 
   /**
    * parses Number to a int represented as a byte array.
+   *
    * @param input the Number to convert
    * @return a byte array of length 0 or 4
    */
@@ -136,11 +153,12 @@ public class BinaryGenerator {
       return new byte[]{};
     }
 
-    return BinaryHelper.writeInt(((Number)input).intValue());
+    return BinaryHelper.writeInt(((Number) input).intValue());
   }
 
   /**
    * parses Number to a long represented as a byte array.
+   *
    * @param input the Number to convert
    * @return a byte array of length 8
    */
@@ -149,11 +167,12 @@ public class BinaryGenerator {
       return new byte[]{};
     }
 
-    return BinaryHelper.writeLong(((Number)input).longValue());
+    return BinaryHelper.writeLong(((Number) input).longValue());
   }
 
   /**
    * parses Float to a byte array.
+   *
    * @param input the Float to convert
    * @return a byte array of length 4 or null
    */
@@ -171,6 +190,7 @@ public class BinaryGenerator {
 
   /**
    * parses an array of Floats to a byte array.
+   *
    * @param input the Float[] to convert
    * @return a byte array
    */
@@ -213,6 +233,7 @@ public class BinaryGenerator {
 
   /**
    * parses Double to a byte array.
+   *
    * @param input the Double to convert
    * @return a byte array of length 8 or null
    */
@@ -230,6 +251,7 @@ public class BinaryGenerator {
 
   /**
    * parses an array of Floats to a byte array.
+   *
    * @param input the Float[] to convert
    * @return a byte array
    */
@@ -272,6 +294,7 @@ public class BinaryGenerator {
 
   /**
    * parses a BigDecimal to a byte array.
+   *
    * @param input the BigDecimal to convert
    * @return a byte array of appropriate length or null
    */
@@ -289,6 +312,7 @@ public class BinaryGenerator {
 
   /**
    * parses an array of BigDecimal objects to a byte array.
+   *
    * @param input the BigDecimal[] to convert
    * @return a byte array of appropriate length or null
    */
@@ -325,6 +349,7 @@ public class BinaryGenerator {
 
   /**
    * parses a Character to a byte array.
+   *
    * @param input the Character to convert
    * @return a byte array
    */
@@ -342,6 +367,7 @@ public class BinaryGenerator {
 
   /**
    * parses an array of Characters to a byte array.
+   *
    * @param input the Character[] to convert
    * @return a byte array
    */
@@ -391,6 +417,7 @@ public class BinaryGenerator {
 
   /**
    * parses a String to a byte array.
+   *
    * @param input the String to convert
    * @return a byte array
    */
@@ -399,11 +426,12 @@ public class BinaryGenerator {
       return new byte[]{};
     }
 
-    return ((String)input).getBytes(StandardCharsets.UTF_8);
+    return ((String) input).getBytes(StandardCharsets.UTF_8);
   }
 
   /**
    * parses a UUID to a byte array.
+   *
    * @param input the UUID to convert
    * @return a byte array
    */
@@ -417,6 +445,7 @@ public class BinaryGenerator {
 
   /**
    * parses a UUID[] to a byte array.
+   *
    * @param input the UUID[] to convert
    * @return a byte array
    */
@@ -425,7 +454,7 @@ public class BinaryGenerator {
       return new byte[]{};
     }
 
-    UUID[] in = (UUID[])input;
+    UUID[] in = (UUID[]) input;
     String str = "{" + String.join(",", Arrays.stream(in).map(u -> u == null ? "NULL" : u.toString())
         .collect(Collectors.toList())) + "}";
     return str.getBytes(StandardCharsets.UTF_8);
@@ -433,6 +462,7 @@ public class BinaryGenerator {
 
   /**
    * parses an array into to a byte array.
+   *
    * @param input the Array to convert
    * @return a byte array
    */
@@ -475,6 +505,7 @@ public class BinaryGenerator {
 
   /**
    * parses an array into to a byte array.
+   *
    * @param input the Array to convert
    * @return a byte array
    */
@@ -512,11 +543,12 @@ public class BinaryGenerator {
       return data;
     }
 
-    return new byte[] {};
+    return new byte[]{};
   }
 
   /**
    * parses an array into to a byte array.
+   *
    * @param input the Array to convert
    * @return a byte array
    */
@@ -554,11 +586,12 @@ public class BinaryGenerator {
       return data;
     }
 
-    return new byte[] {};
+    return new byte[]{};
   }
 
   /**
    * parses an array into to a byte array.
+   *
    * @param input the Array to convert
    * @return a byte array
    */
@@ -596,11 +629,12 @@ public class BinaryGenerator {
       return data;
     }
 
-    return new byte[] {};
+    return new byte[]{};
   }
 
   /**
    * parses an array into to a byte array.
+   *
    * @param input the Array to convert
    * @return a byte array
    */
@@ -638,11 +672,12 @@ public class BinaryGenerator {
       return data;
     }
 
-    return new byte[] {};
+    return new byte[]{};
   }
 
   /**
    * parses an array into to a byte array.
+   *
    * @param input the Array to convert
    * @return a byte array
    */
@@ -688,11 +723,12 @@ public class BinaryGenerator {
       return data;
     }
 
-    return new byte[] {};
+    return new byte[]{};
   }
 
   /**
    * parses a LocalDate to a byte array.
+   *
    * @param input the LocalDate to convert
    * @return a byte array
    */
@@ -729,6 +765,7 @@ public class BinaryGenerator {
 
   /**
    * parses a LocalDate to a byte array.
+   *
    * @param input the LocalDate to convert
    * @return a byte array
    */
@@ -761,7 +798,6 @@ public class BinaryGenerator {
             continue;
           }
 
-
           baos.write(in[i].format(localDateFormatter).getBytes(StandardCharsets.UTF_8));
 
           if (in[i].getYear() < 0) {
@@ -780,6 +816,7 @@ public class BinaryGenerator {
 
   /**
    * parses a LocalTime to a byte array.
+   *
    * @param input the LocalTime to convert
    * @return a byte array
    */
@@ -799,6 +836,7 @@ public class BinaryGenerator {
 
   /**
    * parses a LocalTime to a byte array.
+   *
    * @param input the LocalTime to convert
    * @return a byte array
    */
@@ -836,6 +874,7 @@ public class BinaryGenerator {
 
   /**
    * parses a LocalDateTime to a byte array.
+   *
    * @param input the LocalDateTime to convert
    * @return a byte array
    */
@@ -872,6 +911,7 @@ public class BinaryGenerator {
 
   /**
    * parses a LocalDateTime to a byte array.
+   *
    * @param input the LocalDateTime to convert
    * @return a byte array
    */
@@ -922,8 +962,8 @@ public class BinaryGenerator {
   }
 
   /**
-   * converts what the user sends for a binary blog to what the server wants as a binary blob
-   * (which are the same things).
+   * converts what the user sends for a binary blog to what the server wants as a binary blob (which are the same things).
+   *
    * @param input data from the user
    * @return a byte array containing the information
    */
@@ -933,19 +973,19 @@ public class BinaryGenerator {
     }
 
     if (input instanceof byte[]) {
-      return (byte[])input;
+      return (byte[]) input;
     }
-
 
     throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a byte[] to server");
   }
 
   public static byte[] fromNull(Object input) {
-    return new byte[] {};
+    return new byte[]{};
   }
 
   /**
    * doesn't do anything, as serialization to and from java objects are a security risk.
+   *
    * @param input object
    * @return a byte array
    */
@@ -959,6 +999,7 @@ public class BinaryGenerator {
 
   /**
    * parses a Boolean to a byte array.
+   *
    * @param input the Boolean to convert
    * @return a byte array
    */
@@ -968,7 +1009,7 @@ public class BinaryGenerator {
     }
 
     if (input instanceof Boolean) {
-      if ((Boolean)input) {
+      if ((Boolean) input) {
         return new byte[]{1};
       } else {
         return new byte[]{0};
@@ -984,6 +1025,7 @@ public class BinaryGenerator {
 
   /**
    * parses a OffsetTime to a byte array.
+   *
    * @param input the OffsetTime to convert
    * @return a byte array
    */
@@ -1003,6 +1045,7 @@ public class BinaryGenerator {
 
   /**
    * parses a OffsetTime to a byte array.
+   *
    * @param input the OffsetTime to convert
    * @return a byte array
    */
@@ -1040,6 +1083,7 @@ public class BinaryGenerator {
 
   /**
    * parses a OffsetDateTime to a byte array.
+   *
    * @param input the OffsetDateTime to convert
    * @return a byte array
    */
@@ -1077,6 +1121,7 @@ public class BinaryGenerator {
 
   /**
    * parses an array of OffsetDateTime objects to a byte array.
+   *
    * @param input the OffsetDateTime[] to convert
    * @return a byte array
    */

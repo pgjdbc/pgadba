@@ -528,13 +528,19 @@ public class TextParser {
       return new BigInteger(in, 2).toByteArray();
     }
 
-    if(in.length() == 1) {
+    if (in.length() == 1) {
       return Objects.equals("1", in);
     }
 
     return new BigInteger(in, 2).toByteArray();
   }
 
+  /**
+   * parse function for data that comes from an bit[] or varbit[] column.
+   * @param in String with 0's and 1's
+   * @param requestedClass what the user wanted
+   * @return an byte[][] object.
+   */
   public static Object bitOutArray(String in, Class<?> requestedClass) {
     if ("{}".equals(in)) {
       return new byte[][] {};

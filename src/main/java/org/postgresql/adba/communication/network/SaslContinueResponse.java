@@ -17,7 +17,6 @@ public class SaslContinueResponse implements NetworkResponse {
   private ScramSession.ServerFirstProcessor serverFirstProcessor;
 
   public SaslContinueResponse(ScramSession scramSession, ConnectSubmission connectSubmission) {
-
     this.scramSession = scramSession;
     this.connectSubmission = connectSubmission;
   }
@@ -38,6 +37,7 @@ public class SaslContinueResponse implements NetworkResponse {
         } catch (ScramException e) {
           connectSubmission.getCompletionStage().toCompletableFuture().completeExceptionally(
               new SqlException(e.getMessage(), e, "not logged in", 0, "", 0));
+          return null;
         }
 
       default:
