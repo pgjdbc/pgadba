@@ -2,6 +2,7 @@ package org.postgresql.adba;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -31,6 +32,7 @@ import jdk.incubator.sql2.Submission;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.postgresql.adba.communication.packets.parts.PgAdbaType;
 import org.postgresql.adba.testutil.CollectorUtils;
 import org.postgresql.adba.testutil.ConnectUtil;
 import org.postgresql.adba.testutil.DatabaseHolder;
@@ -987,6 +989,174 @@ public class SelectDataTypesTest {
       assertArrayEquals(new Character[] {'H'}, get10(idF));
     }
   }
+
+  @Test
+  public void selectBitOne() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<Boolean> idF = session.<Boolean>rowOperation("select B'1' as t")
+          .collect(singleCollector(Boolean.class))
+          .submit()
+          .getCompletionStage();
+
+      assertTrue(get10(idF));
+    }
+  }
+
+  @Test
+  public void selectBitZero() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<Boolean> idF = session.<Boolean>rowOperation("select B'0' as t")
+          .collect(singleCollector(Boolean.class))
+          .submit()
+          .getCompletionStage();
+
+      assertFalse(get10(idF));
+    }
+  }
+
+  @Test
+  public void selectBitMultiple() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<byte[]> idF = session.<byte[]>rowOperation("select B'10101' as t")
+          .collect(singleCollector(byte[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new byte[] {21}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectBitMultipleLong() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<byte[]> idF = session.<byte[]>rowOperation("select B'100000000' as t")
+          .collect(singleCollector(byte[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new byte[] {1, 0}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectBitNull() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<Boolean> idF = session.<Boolean>rowOperation("select null::bit as t")
+          .collect(singleCollector(Boolean.class))
+          .submit()
+          .getCompletionStage();
+
+      assertNull(get10(idF));
+    }
+  }
+
+  @Test
+  public void selectBitOneFixedSize() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<Boolean> idF = session.<Boolean>rowOperation("select '1'::bit(1) as t")
+          .collect(singleCollector(Boolean.class))
+          .submit()
+          .getCompletionStage();
+
+      assertTrue(get10(idF));
+    }
+  }
+
+  @Test
+  public void selectBitOneAsBytes() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<byte[]> idF = session.<byte[]>rowOperation("select '1'::bit(1) as t")
+          .collect(singleCollector(byte[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new byte[] {1}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectBitVaryingOneFixedSize() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<Boolean> idF = session.<Boolean>rowOperation("select '1'::bit varying(1) as t")
+          .collect(singleCollector(Boolean.class))
+          .submit()
+          .getCompletionStage();
+
+      assertTrue(get10(idF));
+    }
+  }
+
+  @Test
+  public void insertAndSelectBit() throws Exception {
+    try (Session session = ds.getSession()) {
+      get10(session.rowCountOperation("create table insertAndSelectBit(t bit)")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into insertAndSelectBit(t) values($1)")
+          .set("$1", true, PgAdbaType.BIT).submit().getCompletionStage());
+      CompletionStage<Boolean> idF = session.<Boolean>rowOperation("select t from insertAndSelectBit")
+          .collect(singleCollector(Boolean.class))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table insertAndSelectBit").submit().getCompletionStage());
+
+      assertTrue(get10(idF));
+    }
+  }
+
+  @Test
+  public void insertAndSelectBitByteArray() throws Exception {
+    try (Session session = ds.getSession()) {
+      get10(session.rowCountOperation("create table insertAndSelectBit(t bit(16))")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into insertAndSelectBit(t) values($1)")
+          .set("$1", new byte[] {21, 12}, PgAdbaType.BIT).submit().getCompletionStage());
+      CompletionStage<byte[]> idF = session.<byte[]>rowOperation("select t from insertAndSelectBit")
+          .collect(singleCollector(byte[].class))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table insertAndSelectBit").submit().getCompletionStage());
+
+      byte[] result = get10(idF);
+      assertArrayEquals(new byte[] {21, 12}, result);
+    }
+  }
+
+  @Test
+  public void insertAndSelectBitVaryingByteArray() throws Exception {
+    try (Session session = ds.getSession()) {
+      get10(session.rowCountOperation("create table insertAndSelectBitVarying(t bit varying)")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into insertAndSelectBitVarying(t) values($1)")
+          .set("$1", new byte[] {21, 12}, PgAdbaType.BIT).submit().getCompletionStage());
+      CompletionStage<byte[]> idF = session.<byte[]>rowOperation("select t from insertAndSelectBitVarying")
+          .collect(singleCollector(byte[].class))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table insertAndSelectBitVarying").submit().getCompletionStage());
+
+      byte[] result = get10(idF);
+      assertArrayEquals(new byte[] {21, 12}, result);
+    }
+  }
+
+  @Test
+  public void insertAndSelectBitArrayByteArray() throws Exception {
+    try (Session session = ds.getSession()) {
+      get10(session.rowCountOperation("create table insertAndSelectBit(t bit varying[])")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into insertAndSelectBit(t) values($1)")
+          .set("$1", new byte[][] {new byte[]{21}, new byte[]{12}}, PgAdbaType.BIT_ARRAY).submit().getCompletionStage());
+      CompletionStage<byte[][]> idF = session.<byte[][]>rowOperation("select t from insertAndSelectBit")
+          .collect(singleCollector(byte[][].class))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table insertAndSelectBit").submit().getCompletionStage());
+
+      byte[][] result = get10(idF);
+      assertArrayEquals(new byte[][] {new byte[]{21}, new byte[]{12}}, result);
+    }
+  }
+
 
   @Test
   public void selectCharacterArrayWithNull() throws ExecutionException, InterruptedException, TimeoutException {

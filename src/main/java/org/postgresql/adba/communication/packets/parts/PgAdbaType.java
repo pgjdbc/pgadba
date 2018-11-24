@@ -18,7 +18,11 @@ public enum PgAdbaType implements SqlType {
   /**
    * Identifies the generic SQL type {@code BIT}.
    */
-  BIT("bit", 1560, AdbaType.BIT, BinaryGenerator::fromBit, FormatCodeTypes.BINARY),
+  BIT("bit", 1560, AdbaType.BIT, BinaryGenerator::fromBit, FormatCodeTypes.TEXT),
+  /**
+   * Identifies the generic SQL type {@code BIT}.
+   */
+  BIT_ARRAY("_bit", 1561, AdbaType.ARRAY, BinaryGenerator::fromBitArray, FormatCodeTypes.TEXT),
   /**
    * Identifies the generic SQL type {@code TINYINT}.
    */

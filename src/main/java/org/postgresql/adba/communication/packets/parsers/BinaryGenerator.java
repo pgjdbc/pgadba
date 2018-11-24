@@ -24,8 +24,89 @@ public class BinaryGenerator {
   private static final DateTimeFormatter offsetTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss.nnnnnnnnn X");
   private static final DateTimeFormatter offsetDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.nnnnnnnnn X");
 
+  private static final byte[] bits= new byte[] { 1, 2, 4, 8, 16, 32, 64, (byte) 128 };
+
   public static byte[] fromBit(Object input) {
-    throw new RuntimeException("not implemented yet");
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Boolean) {
+      if (((boolean)input)) {
+        return new byte[] { 49 };
+      } else {
+        return new byte[] { 48 };
+      }
+    }
+
+    if (input instanceof byte[]) {
+      byte[] ret = new byte[((byte[]) input).length * 8];
+
+      byte[] inb = (byte[]) input;
+      for (int i = 0; i < inb.length; i++) {
+        for (int j = 0; j < 8; j++) {
+          if ((inb[i] & bits[j]) != 0) {
+            ret[i * 8 + (7 - j)] = 49;
+          } else {
+            ret[i * 8 + (7 - j)] = 48;
+          }
+        }
+      }
+
+      return ret;
+    }
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as bit to server");
+  }
+
+  public static byte[] fromBitArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    StringBuilder sb = new StringBuilder("{");
+
+    if (input instanceof boolean[]) {
+      boolean[] ba = (boolean[]) input;
+      for (int i = 0; i < ba.length; i++) {
+        if (i != 0) {
+          sb.append(",");
+        }
+
+        if (((boolean)input)) {
+          sb.append("1");
+        } else {
+          sb.append("0");
+        }
+      }
+
+      sb.append("}");
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    if (input instanceof byte[][]) {
+      for (int k = 0; k < ((byte[][]) input).length; k++) {
+        if (k != 0) {
+          sb.append(",");
+        }
+
+        byte[] inb = ((byte[][]) input)[k];
+        for (byte b : inb) {
+          for (int j = 7; j >= 0; j--) {
+            if ((b & bits[j]) != 0) {
+              sb.append("1");
+            } else {
+              sb.append("0");
+            }
+          }
+        }
+      }
+
+      sb.append("}");
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as bit to server");
   }
 
   public static byte[] fromTinyInt(Object input) {

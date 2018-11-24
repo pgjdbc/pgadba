@@ -1,6 +1,7 @@
 package org.postgresql.adba.communication.packets.parsers;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.StringTokenizer;
 import java.util.UUID;
 import jdk.incubator.sql2.SqlException;
@@ -513,12 +515,44 @@ public class TextParser {
     return result;
   }
 
-  public static Object bit_out(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
+  public static Object bitOut(String in, Class<?> requestedClass) {
+    return parseBitString(in, requestedClass);
   }
 
-  public static Object varbit_out(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
+  public static Object varBitOut(String in, Class<?> requestedClass) {
+    return parseBitString(in, requestedClass);
+  }
+
+  private static Object parseBitString(String in, Class<?> requestedClass) {
+    if (requestedClass == byte[].class) {
+      return new BigInteger(in, 2).toByteArray();
+    }
+
+    if(in.length() == 1) {
+      return Objects.equals("1", in);
+    }
+
+    return new BigInteger(in, 2).toByteArray();
+  }
+
+  public static Object bitOutArray(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new byte[][] {};
+    }
+
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    byte[][] result = new byte[parts.length][];
+
+    for (int i = 0; i < parts.length; i++) {
+      if ("NULL".equals(parts[i])) {
+        result[i] = null;
+      } else {
+        result[i] = (byte[]) parseBitString(parts[i], byte[].class);
+      }
+    }
+
+    return result;
   }
 
   public static Object numericOut(String in, Class<?> requestedClass) {
