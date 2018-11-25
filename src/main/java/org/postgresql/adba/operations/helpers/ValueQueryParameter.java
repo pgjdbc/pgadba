@@ -3,8 +3,6 @@ package org.postgresql.adba.operations.helpers;
 import jdk.incubator.sql2.SqlType;
 import org.postgresql.adba.communication.packets.parts.PgAdbaType;
 
-import java.util.concurrent.ExecutionException;
-
 public class ValueQueryParameter implements QueryParameter {
   private PgAdbaType type;
   private Object value;
@@ -52,7 +50,7 @@ public class ValueQueryParameter implements QueryParameter {
   }
 
   @Override
-  public byte[] getParameter(int index) throws ExecutionException, InterruptedException {
+  public byte[] getParameter(int index) {
     return type.getByteGenerator().apply(value);
   }
 

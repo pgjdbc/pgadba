@@ -11,10 +11,12 @@ import java.time.OffsetTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringTokenizer;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import jdk.incubator.sql2.SqlException;
 
 public class TextParser {
@@ -434,7 +436,7 @@ public class TextParser {
           // ISO intervals
           int offset = (token.charAt(0) == '-') ? 1 : 0;
 
-          hours = nullSafeIntGet(token.substring(offset + 0, endHours));
+          hours = nullSafeIntGet(token.substring(offset, endHours));
           minutes = nullSafeIntGet(token.substring(endHours + 1, endHours + 3));
 
           // Pre 7.4 servers do not put second information into the results
@@ -483,6 +485,29 @@ public class TextParser {
       return Duration.of((long)((years * 31556952000000L) + (months * 2592000000000L) + (days * 86400000000L)
           + (hours * 3600000000L) + (minutes * 60000000L) + (seconds * 1000000L)), ChronoUnit.MICROS);
     }
+  }
+
+  /**
+   * Parses an array of interval objects that come from the database.
+   * @param in incoming data
+   * @param requestedClass datatype that the user wanted
+   * @return a Duration[]
+   */
+  public static Object intervalOutArray(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new Duration[] {};
+    }
+
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    return Arrays.stream(parts)
+        .map(s -> {
+          if (s.equals("NULL")) {
+            return null;
+          }
+          return (Duration)intervalOut(s, Duration.class);
+        })
+        .collect(Collectors.toList()).toArray(new Duration[]{});
   }
 
   public static Object timetzOut(String in, Class<?> requestedClass) {

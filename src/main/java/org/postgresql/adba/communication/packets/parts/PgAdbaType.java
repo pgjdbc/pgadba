@@ -1,10 +1,7 @@
 package org.postgresql.adba.communication.packets.parts;
 
-import jdk.incubator.sql2.AdbaType;
-import jdk.incubator.sql2.SqlType;
-import org.postgresql.adba.communication.packets.parsers.BinaryGenerator;
-
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -13,6 +10,9 @@ import java.time.OffsetTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import jdk.incubator.sql2.AdbaType;
+import jdk.incubator.sql2.SqlType;
+import org.postgresql.adba.communication.packets.parsers.BinaryGenerator;
 
 public enum PgAdbaType implements SqlType {
   /**
@@ -254,7 +254,17 @@ public enum PgAdbaType implements SqlType {
    * Identifies the generic SQL type {@code TIMESTAMP WITH TIME ZONE}.
    */
   TIMESTAMP_WITH_TIME_ZONE_ARRAY("timestamp with timezone[]", 1185, AdbaType.ARRAY,
-      BinaryGenerator::fromOffsetDateTimeArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromOffsetDateTimeArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an Interval of time.
+   */
+  INTERVAL("interval", 1186, AdbaType.OTHER,
+      BinaryGenerator::fromInterval, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of Intervals of time.
+   */
+  INTERVAL_ARRAY("interval[]", 1187, AdbaType.OTHER,
+      BinaryGenerator::fromIntervalArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -321,6 +331,8 @@ public enum PgAdbaType implements SqlType {
     //classToDb.put(.class, REF_CURSOR);
     classToDb.put(OffsetTime.class, TIME_WITH_TIME_ZONE);
     classToDb.put(OffsetDateTime.class, TIMESTAMP_WITH_TIME_ZONE);
+    classToDb.put(Duration.class, INTERVAL);
+    classToDb.put(Duration[].class, INTERVAL_ARRAY);
 
   }
 

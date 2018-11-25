@@ -102,7 +102,7 @@ public enum ColumnTypes {
       PgAdbaType.TIMESTAMP_WITH_TIME_ZONE),
   _TIMESTAMPTZ(1185, TextParser::timestampTimeZoneOutArray, BinaryParser::array_send, OffsetDateTime[].class, PgAdbaType.ARRAY),
   INTERVAL(1186, TextParser::intervalOut, BinaryParser::interval_send, null, null),
-  _INTERVAL(1187, TextParser::array_out, BinaryParser::array_send, null, null),
+  _INTERVAL(1187, TextParser::intervalOutArray, BinaryParser::array_send, null, null),
   _NUMERIC(1231, TextParser::numericOutArray, BinaryParser::array_send, BigDecimal[].class, PgAdbaType.ARRAY),
   PG_DATABASE(1248, TextParser::record_out, BinaryParser::record_send, null, null),
   _CSTRING(1263, TextParser::array_out, BinaryParser::array_send, null, null),

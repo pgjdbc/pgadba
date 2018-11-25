@@ -1,6 +1,8 @@
 package org.postgresql.adba;
 
 import static java.time.ZoneOffset.UTC;
+import static java.time.temporal.ChronoUnit.MINUTES;
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -19,6 +21,7 @@ import static org.postgresql.adba.testutil.CollectorUtils.singleCollector;
 import static org.postgresql.adba.testutil.FutureUtil.get10;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -103,6 +106,10 @@ public class InsertSelectDataTypesTest {
             PgAdbaType.NUMERIC, BigDecimal[].class, new BigDecimal[]
             {new BigDecimal("15.22"), new BigDecimal("20.002")}, PgAdbaType.NUMERIC_ARRAY,
             new BigDecimal[] {}, new BigDecimal[] {null}},
+        {"interval", Duration.of(10, SECONDS), Duration.class,
+            PgAdbaType.INTERVAL, BigDecimal[].class, new Duration[]
+            {Duration.of(10, SECONDS), Duration.of(15, MINUTES)}, PgAdbaType.INTERVAL_ARRAY,
+            new Duration[] {}, new Duration[] {null}},
     });
   }
 

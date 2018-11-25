@@ -1,21 +1,21 @@
 package org.postgresql.adba.communication.packets.parsers;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import org.postgresql.adba.util.BinaryHelper;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import org.postgresql.adba.util.BinaryHelper;
 
 public class BinaryGenerator {
 
@@ -1169,5 +1169,66 @@ public class BinaryGenerator {
 
     throw new RuntimeException(input.getClass().getName()
         + " can't be converted to byte[] to send as a OffsetDateTime to server");
+  }
+
+  /**
+   * Converts a Duration object to a string the database understands.
+   * @param input a Duration
+   * @return a string on ISO8601 format
+   */
+  public static byte[] fromInterval(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Duration) {
+      Duration d = (Duration) input;
+
+      if (d.isZero()) {
+        return "0".getBytes(StandardCharsets.UTF_8);
+      }
+
+      return d.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Duration to server");
+  }
+
+  /**
+   * Converts an array of Duration objects to a string the database understands.
+   * @param input a Duration[]
+   * @return a list of strings on ISO8601 format
+   */
+  public static byte[] fromIntervalArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    StringBuilder sb = new StringBuilder("{");
+
+    if (input instanceof Duration[]) {
+      for (int i = 0; i < ((Duration[]) input).length; i++) {
+        if (i != 0) {
+          sb.append(",");
+        }
+
+        Duration d = ((Duration[]) input)[i];
+
+        if (d == null) {
+          sb.append("NULL");
+        } else if (d.isZero()) {
+          sb.append("0");
+        } else {
+          sb.append(d.toString());
+        }
+      }
+
+      sb.append("}");
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Duration[] to server");
   }
 }
