@@ -1231,4 +1231,22 @@ public class BinaryGenerator {
     throw new RuntimeException(input.getClass().getName()
         + " can't be converted to byte[] to send as a Duration[] to server");
   }
+
+  /**
+   * Sends a string of json to bytes that the server hopefully understands.
+   * @param input Should be a String
+   * @return a byte array of json
+   */
+  public static byte[] fromJson(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof String) {
+      return ((String) input).getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Duration[] to server");
+  }
 }

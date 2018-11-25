@@ -264,7 +264,12 @@ public enum PgAdbaType implements SqlType {
    * Identifies an array of Intervals of time.
    */
   INTERVAL_ARRAY("interval[]", 1187, AdbaType.OTHER,
-      BinaryGenerator::fromIntervalArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromIntervalArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of Intervals of time.
+   */
+  JSON("json", 114, AdbaType.OTHER,
+      BinaryGenerator::fromJson, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;

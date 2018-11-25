@@ -143,7 +143,7 @@ public class TextParser {
   }
 
   public static Object json_out(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
+    return in;
   }
 
   public static Object xml_out(String in, Class<?> requestedClass) {
