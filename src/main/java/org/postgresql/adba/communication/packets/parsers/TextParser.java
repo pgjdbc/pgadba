@@ -142,7 +142,7 @@ public class TextParser {
     throw new RuntimeException("not implemented yet");
   }
 
-  public static Object json_out(String in, Class<?> requestedClass) {
+  public static Object jsonOut(String in, Class<?> requestedClass) {
     return in;
   }
 
@@ -1035,7 +1035,7 @@ public class TextParser {
       }
     }
 
-    return result.toArray();
+    return result.toArray(new String[]{});
   }
 
   public static Object record_out(String in, Class<?> requestedClass) {

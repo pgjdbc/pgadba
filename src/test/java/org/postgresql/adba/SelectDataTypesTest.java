@@ -1212,6 +1212,38 @@ public class SelectDataTypesTest {
   }
 
   @Test
+  public void selectJsonArray() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<String[]> idF = session
+          .<String[]>rowOperation("select ARRAY['{\"a\":[1,2,3],\"b\":[4,5,6]}','{\"a\":\"b\",\"c\":null}']::json[] as t")
+          .collect(singleCollector(String[].class))
+          .submit()
+          .getCompletionStage();
+
+      assertArrayEquals(new String[] {"{\"a\":[1,2,3],\"b\":[4,5,6]}", "{\"a\":\"b\",\"c\":null}"}, get10(idF));
+    }
+  }
+
+  @Test
+  public void insertAndSelectJsonArray() throws Exception {
+    try (Session session = ds.getSession()) {
+      get10(session.rowCountOperation("create table insertAndSelectBit(t json[])")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into insertAndSelectBit(t) values($1)")
+          .set("$1", new String[] {"{\"a\":[1,2,3],\"b\":[4,5,6]}", "{\"a\":\"b\",\"c\":null}"},
+              PgAdbaType.JSON_ARRAY).submit().getCompletionStage());
+      CompletionStage<String[]> idF = session.<String[]>rowOperation("select t from insertAndSelectBit")
+          .collect(singleCollector(String[].class))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table insertAndSelectBit").submit().getCompletionStage());
+
+      String[] result = get10(idF);
+      assertArrayEquals(new String[] {"{\"a\":[1,2,3],\"b\":[4,5,6]}", "{\"a\":\"b\",\"c\":null}"}, result);
+    }
+  }
+
+  @Test
   public void selectVeryLargeNumberOfRequests() throws ExecutionException, InterruptedException, TimeoutException {
     try (Session session = ds.getSession()) {
 
