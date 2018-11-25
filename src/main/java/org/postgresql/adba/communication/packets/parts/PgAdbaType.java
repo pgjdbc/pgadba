@@ -1,6 +1,9 @@
 package org.postgresql.adba.communication.packets.parts;
 
 import java.math.BigDecimal;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -274,7 +277,17 @@ public enum PgAdbaType implements SqlType {
    * Identifies an array of Strings of json.
    */
   JSON_ARRAY("json[]", 199, AdbaType.OTHER,
-      BinaryGenerator::fromJsonArray, FormatCodeTypes.BINARY);
+      BinaryGenerator::fromJsonArray, FormatCodeTypes.BINARY),
+  /**
+   * Identifies an internet address.
+   */
+  CIDR("cidr", 650, AdbaType.OTHER,
+      BinaryGenerator::fromCidr, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of internet addresses.
+   */
+  CIDR_ARRAY("cidr", 651, AdbaType.OTHER,
+      BinaryGenerator::fromCidrArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -343,6 +356,12 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(OffsetDateTime.class, TIMESTAMP_WITH_TIME_ZONE);
     classToDb.put(Duration.class, INTERVAL);
     classToDb.put(Duration[].class, INTERVAL_ARRAY);
+    classToDb.put(InetAddress.class, CIDR);
+    classToDb.put(Inet4Address.class, CIDR);
+    classToDb.put(Inet6Address.class, CIDR);
+    classToDb.put(InetAddress[].class, CIDR_ARRAY);
+    classToDb.put(Inet4Address[].class, CIDR_ARRAY);
+    classToDb.put(Inet6Address[].class, CIDR_ARRAY);
 
   }
 

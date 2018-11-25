@@ -3,6 +3,9 @@ package org.postgresql.adba.communication.packets.parsers;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -1301,4 +1304,88 @@ public class BinaryGenerator {
     return new byte[]{};
   }
 
+  /**
+   * Converts an InetAddress object to bytes to send to the database.
+   * @param input an InetAddress object
+   * @return bytes
+   */
+  public static byte[] fromCidr(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Inet4Address) {
+      Inet4Address ia = (Inet4Address) input;
+      byte[] address = ia.getAddress();
+      return String.format("%d.%d.%d.%d", address[0] & 0xFF, address[1] & 0xFF, address[2] & 0xFF, address[3] & 0xFF)
+          .getBytes(StandardCharsets.UTF_8);
+    }
+    if (input instanceof Inet6Address) {
+      Inet6Address ia = (Inet6Address) input;
+      byte[] address = ia.getAddress();
+      return String.format("%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X",
+          address[0] & 0xFF, address[1] & 0xFF, address[2] & 0xFF, address[3] & 0xFF,
+          address[4] & 0xFF, address[5] & 0xFF, address[6] & 0xFF, address[7] & 0xFF,
+          address[8] & 0xFF, address[9] & 0xFF, address[10] & 0xFF, address[11] & 0xFF,
+          address[12] & 0xFF, address[13] & 0xFF, address[14] & 0xFF, address[15] & 0xFF)
+          .getBytes(StandardCharsets.UTF_8);
+    }
+    if (input instanceof InetAddress) {
+      InetAddress ia = (InetAddress) input;
+
+      byte[] address = ia.getAddress();
+      if (address.length == 4) {
+        return String.format("%d.%d.%d.%d", address[0] & 0xFF, address[1] & 0xFF, address[2] & 0xFF, address[3] & 0xFF)
+            .getBytes(StandardCharsets.UTF_8);
+      } else if (address.length == 16) {
+        return String.format("%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X",
+            address[0] & 0xFF, address[1] & 0xFF, address[2] & 0xFF, address[3] & 0xFF,
+            address[4] & 0xFF, address[5] & 0xFF, address[6] & 0xFF, address[7] & 0xFF,
+            address[8] & 0xFF, address[9] & 0xFF, address[10] & 0xFF, address[11] & 0xFF,
+            address[12] & 0xFF, address[13] & 0xFF, address[14] & 0xFF, address[15] & 0xFF)
+            .getBytes(StandardCharsets.UTF_8);
+      }
+      return ((String) input).getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a InetAddress to server");
+  }
+
+  /**
+   * Converts an array of InetAddress objects to bytes to send to the database.
+   * @param input an InetAddress array
+   * @return bytes
+   */
+  public static byte[] fromCidrArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof InetAddress[]) {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      baos.write('{');
+      InetAddress[] in = (InetAddress[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          baos.write(',');
+        }
+
+        try {
+          if (in[i] == null) {
+            baos.write("NULL".getBytes(StandardCharsets.UTF_8));
+          } else {
+            baos.write(fromCidr(in[i]));
+          }
+        } catch (IOException e) {
+          throw new RuntimeException("error converting array to byte array");
+        }
+      }
+      baos.write('}');
+      return baos.toByteArray();
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a InetAddress[] to server");
+  }
 }

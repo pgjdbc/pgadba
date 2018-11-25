@@ -2,6 +2,9 @@ package org.postgresql.adba.communication.packets.parsers;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,6 +30,9 @@ public class TextParser {
   private static final DateTimeFormatter localDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
   private static final DateTimeFormatter localTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss[.SSSSSS]");
   private static final DateTimeFormatter offsetTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss[.SSSSSS]X");
+
+  private static final int IPV4_PART_COUNT = 4;
+  private static final int IPV6_PART_COUNT = 8;
 
   public static Object boolOut(String in, Class<?> requestedClass) {
     return in.equals("t");
@@ -182,8 +188,198 @@ public class TextParser {
     throw new RuntimeException("not implemented yet");
   }
 
-  public static Object cidr_out(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
+  /**
+   * Converts a CIDR from the database into an InetAddress object.
+   *
+   * @param in a string that represent an InetAddress
+   * @param requestedClass what the user wanted
+   * @return an InetAddress object
+   */
+  public static Object cidrOut(String in, Class<?> requestedClass) {
+    in = in.split("/")[0]; // disregard network part
+
+    // Make a first pass to categorize the characters in this string.
+    boolean hasColon = false;
+    boolean hasDot = false;
+    for (int i = 0; i < in.length(); i++) {
+      char c = in.charAt(i);
+      if (c == '.') {
+        hasDot = true;
+      } else if (c == ':') {
+        if (hasDot) {
+          throw new SqlException("Received unparsable ip address from server", null, "", 0, "", 0);
+        }
+        hasColon = true;
+      } else if (Character.digit(c, 16) == -1) {
+        throw new SqlException("Received unparsable ip address from server", null, "", 0, "", 0);
+      }
+    }
+
+    // Now decide which address family to parse.
+    if (hasColon) {
+      if (hasDot) {
+        in = convertDottedQuadToHex(in);
+        if (in == null) {
+          throw new SqlException("Received unparsable ip address from server", null, "", 0, "", 0);
+        }
+      }
+      try {
+        byte[] result = textToNumericFormatV6(in);
+        if (result == null) {
+          throw new SqlException("Received unparsable ip address from server", null, "", 0, "", 0);
+        }
+        return InetAddress.getByAddress(result);
+      } catch (UnknownHostException e) {
+        throw new RuntimeException(e.getMessage(), e);
+      }
+    } else if (hasDot) {
+      try {
+        byte[] result = textToNumericFormatV4(in);
+        if (result == null) {
+          throw new SqlException("Received unparsable ip address from server", null, "", 0, "", 0);
+        }
+        return InetAddress.getByAddress(result);
+      } catch (UnknownHostException e) {
+        throw new RuntimeException(e.getMessage(), e);
+      }
+    }
+    throw new SqlException("Received unparsable ip address from server", null, "", 0, "", 0);
+  }
+
+  /**
+   * Converts an array of CIDR from the database into an array of InetAddress objects
+   * @param in a list of cidr elements in string form
+   * @param requestedClass what the user wanted
+   * @return an array of InetAddress objects
+   */
+  public static Object cidrOutArray(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new InetAddress[] {};
+    }
+
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    InetAddress[] result = new InetAddress[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if ("NULL".equals(parts[i])) {
+        result[i] = null;
+      } else {
+        result[i] = (InetAddress) cidrOut(parts[i], InetAddress.class);
+      }
+    }
+
+    return result;
+  }
+
+  private static byte parseOctet(String ipPart) {
+    // Note: we already verified that this string contains only hex digits.
+    int octet = Integer.parseInt(ipPart);
+    // Disallow leading zeroes, because no clear standard exists on
+    // whether these should be interpreted as decimal or octal.
+    if (octet > 255 || (ipPart.startsWith("0") && ipPart.length() > 1)) {
+      throw new NumberFormatException();
+    }
+    return (byte) octet;
+  }
+
+  private static short parseHextet(String ipPart) {
+    // Note: we already verified that this string contains only hex digits.
+    int hextet = Integer.parseInt(ipPart, 16);
+    if (hextet > 0xffff) {
+      throw new NumberFormatException();
+    }
+    return (short) hextet;
+  }
+
+  private static byte [] textToNumericFormatV4(String ipString) {
+    byte[] bytes = new byte[IPV4_PART_COUNT];
+    int i = 0;
+    try {
+      for (String octet : ipString.split("\\.")) {
+        bytes[i++] = parseOctet(octet);
+      }
+    } catch (NumberFormatException ex) {
+      return null;
+    }
+
+    return i == IPV4_PART_COUNT ? bytes : null;
+  }
+
+  private static byte [] textToNumericFormatV6(String ipString) {
+    // An address can have [2..8] colons, and N colons make N+1 parts.
+    List<String> parts = Arrays.stream(ipString.split(":")).collect(Collectors.toList());
+    if (parts.size() < 3 || parts.size() > IPV6_PART_COUNT + 1) {
+      return null;
+    }
+
+    // Disregarding the endpoints, find "::" with nothing in between.
+    // This indicates that a run of zeroes has been skipped.
+    int skipIndex = -1;
+    for (int i = 1; i < parts.size() - 1; i++) {
+      if (parts.get(i).length() == 0) {
+        if (skipIndex >= 0) {
+          return null; // Can't have more than one ::
+        }
+        skipIndex = i;
+      }
+    }
+
+    int partsHi; // Number of parts to copy from above/before the "::"
+    int partsLo; // Number of parts to copy from below/after the "::"
+    if (skipIndex >= 0) {
+      // If we found a "::", then check if it also covers the endpoints.
+      partsHi = skipIndex;
+      partsLo = parts.size() - skipIndex - 1;
+      if (parts.get(0).length() == 0 && --partsHi != 0) {
+        return null; // ^: requires ^::
+      }
+      if (parts.get(parts.size() - 1).length() == 0 && --partsLo != 0) {
+        return null; // :$ requires ::$
+      }
+    } else {
+      // Otherwise, allocate the entire address to partsHi. The endpoints
+      // could still be empty, but parseHextet() will check for that.
+      partsHi = parts.size();
+      partsLo = 0;
+    }
+
+    // If we found a ::, then we must have skipped at least one part.
+    // Otherwise, we must have exactly the right number of parts.
+    int partsSkipped = IPV6_PART_COUNT - (partsHi + partsLo);
+    if (!(skipIndex >= 0 ? partsSkipped >= 1 : partsSkipped == 0)) {
+      return null;
+    }
+
+    // Now parse the hextets into a byte array.
+    ByteBuffer rawBytes = ByteBuffer.allocate(2 * IPV6_PART_COUNT);
+    try {
+      for (int i = 0; i < partsHi; i++) {
+        rawBytes.putShort(parseHextet(parts.get(i)));
+      }
+      for (int i = 0; i < partsSkipped; i++) {
+        rawBytes.putShort((short) 0);
+      }
+      for (int i = partsLo; i > 0; i--) {
+        rawBytes.putShort(parseHextet(parts.get(parts.size() - i)));
+      }
+    } catch (NumberFormatException ex) {
+      return null;
+    }
+    return rawBytes.array();
+  }
+
+  private static String convertDottedQuadToHex(String ipString) {
+    int lastColon = ipString.lastIndexOf(':');
+    String initialPart = ipString.substring(0, lastColon + 1);
+    String dottedQuad = ipString.substring(lastColon + 1);
+    byte[] quad = textToNumericFormatV4(dottedQuad);
+    if (quad == null) {
+      return null;
+    }
+    String penultimate = Integer.toHexString(((quad[0] & 0xff) << 8) | (quad[1] & 0xff));
+    String ultimate = Integer.toHexString(((quad[2] & 0xff) << 8) | (quad[3] & 0xff));
+    return initialPart + penultimate + ":" + ultimate;
   }
 
   public static Object float4Out(String in, Class<?> requestedClass) {

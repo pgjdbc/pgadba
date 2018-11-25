@@ -21,6 +21,8 @@ import static org.postgresql.adba.testutil.CollectorUtils.singleCollector;
 import static org.postgresql.adba.testutil.FutureUtil.get10;
 
 import java.math.BigDecimal;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -62,7 +64,7 @@ public class InsertSelectDataTypesTest {
    * Data.
    * @return test data
    */
-  public static Collection<Object[]> data() {
+  public static Collection<Object[]> data() throws UnknownHostException {
     return Arrays.asList(new Object[][] {
         {"bool", true, boolean.class, BOOLEAN, boolean[].class, new Boolean[] {true, false, true}, BOOLEAN_ARRAY,
             new Boolean[] {}, new Boolean[] {null}},
@@ -110,6 +112,11 @@ public class InsertSelectDataTypesTest {
             PgAdbaType.INTERVAL, BigDecimal[].class, new Duration[]
             {Duration.of(10, SECONDS), Duration.of(15, MINUTES)}, PgAdbaType.INTERVAL_ARRAY,
             new Duration[] {}, new Duration[] {null}},
+        {"cidr", InetAddress.getByAddress(new byte[] {127, 0, 0, 1}), InetAddress.class,
+            PgAdbaType.CIDR, InetAddress[].class, new InetAddress[]
+            {InetAddress.getByAddress(new byte[] {127, 0, 0, 1}),
+                InetAddress.getByAddress(new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})},
+            PgAdbaType.CIDR_ARRAY, new InetAddress[] {}, new InetAddress[] {null}},
     });
   }
 
