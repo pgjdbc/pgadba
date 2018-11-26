@@ -41,6 +41,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.postgresql.adba.communication.packets.parts.PgAdbaType;
+import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.testutil.ConnectUtil;
 import org.postgresql.adba.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -117,6 +118,9 @@ public class InsertSelectDataTypesTest {
             {InetAddress.getByAddress(new byte[] {127, 0, 0, 1}),
                 InetAddress.getByAddress(new byte[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1})},
             PgAdbaType.CIDR_ARRAY, new InetAddress[] {}, new InetAddress[] {null}},
+        {"point", new Point(1, 2), Point.class, PgAdbaType.POINT, Point[].class, new Point[]
+            {new Point(0, 1), new Point(2, 3)},
+            PgAdbaType.POINT_ARRAY, new Point[] {}, new Point[] {null}},
     });
   }
 

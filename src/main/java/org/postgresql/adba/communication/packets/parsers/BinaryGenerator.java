@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.util.BinaryHelper;
 
 public class BinaryGenerator {
@@ -1383,6 +1384,58 @@ public class BinaryGenerator {
       }
       baos.write('}');
       return baos.toByteArray();
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a InetAddress[] to server");
+  }
+
+  /**
+   * Converts a Point object to something the server understands.
+   *
+   * @param input a Point
+   * @return string representation of said point as bytes
+   */
+  public static byte[] fromPoint(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Point) {
+      return ("(" + ((Point) input).getX() + "," + ((Point) input).getY() + ")").getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Point to server");
+  }
+
+  /**
+   * Converts a array of Point objects to something the server understands.
+   *
+   * @param input a Point array
+   * @return string representation of said points as bytes
+   */
+  public static byte[] fromPointArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Point[]) {
+      StringBuilder sb = new StringBuilder("{");
+      Point[] in = (Point[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        if (in[i] == null) {
+          sb.append("NULL");
+        } else {
+          sb.append('"').append(new String(fromPoint(in[i]))).append('"');
+        }
+      }
+      sb.append('}');
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     throw new RuntimeException(input.getClass().getName()

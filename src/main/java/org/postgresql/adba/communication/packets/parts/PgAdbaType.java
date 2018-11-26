@@ -16,6 +16,7 @@ import java.util.function.Function;
 import jdk.incubator.sql2.AdbaType;
 import jdk.incubator.sql2.SqlType;
 import org.postgresql.adba.communication.packets.parsers.BinaryGenerator;
+import org.postgresql.adba.pgdatatypes.Point;
 
 public enum PgAdbaType implements SqlType {
   /**
@@ -287,7 +288,17 @@ public enum PgAdbaType implements SqlType {
    * Identifies an array of internet addresses.
    */
   CIDR_ARRAY("cidr", 651, AdbaType.OTHER,
-      BinaryGenerator::fromCidrArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromCidrArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies a point in a 2-d plane.
+   */
+  POINT("point", 600, AdbaType.OTHER,
+      BinaryGenerator::fromPoint, FormatCodeTypes.TEXT),
+  /**
+   * Identifies a point in a 2-d plane.
+   */
+  POINT_ARRAY("point", 1017, AdbaType.OTHER,
+      BinaryGenerator::fromPointArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -362,6 +373,8 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(InetAddress[].class, CIDR_ARRAY);
     classToDb.put(Inet4Address[].class, CIDR_ARRAY);
     classToDb.put(Inet6Address[].class, CIDR_ARRAY);
+    classToDb.put(Point.class, POINT);
+    classToDb.put(Point[].class, POINT_ARRAY);
 
   }
 

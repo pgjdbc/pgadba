@@ -21,6 +21,7 @@ import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import jdk.incubator.sql2.SqlException;
+import org.postgresql.adba.pgdatatypes.Point;
 
 public class TextParser {
   private static final DateTimeFormatter timestampWithoutTimeZoneFormatter = DateTimeFormatter
@@ -164,8 +165,39 @@ public class TextParser {
     throw new RuntimeException("not implemented yet");
   }
 
-  public static Object point_out(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
+  /**
+   * Converts a string representation a Point from the database to a Point object.
+   *
+   * @param in a string on the format (1.2,3.4)
+   * @param requestedClass what the user wanted
+   * @return a Point object
+   */
+  public static Object pointOut(String in, Class<?> requestedClass) {
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    return new Point(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]));
+  }
+
+  /**
+   * Converts a string representation an array of Points from the database to a Point array in java.
+   *
+   * @param in a string on the format {"(1.2,3.4)",NULL}
+   * @param requestedClass what the user wanted
+   * @return a Point array
+   */
+  public static Object pointOutArray(String in, Class<?> requestedClass) {
+    String[] parts = (String[]) textArrayOut(in, null);
+
+    Point[] points = new Point[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i] == null) {
+        points[i] = null;
+      } else {
+        points[i] = (Point) pointOut(parts[i], Point.class);
+      }
+    }
+    return points;
   }
 
   public static Object lseg_out(String in, Class<?> requestedClass) {
@@ -247,7 +279,8 @@ public class TextParser {
   }
 
   /**
-   * Converts an array of CIDR from the database into an array of InetAddress objects
+   * Converts an array of CIDR from the database into an array of InetAddress objects.
+   *
    * @param in a list of cidr elements in string form
    * @param requestedClass what the user wanted
    * @return an array of InetAddress objects

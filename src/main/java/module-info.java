@@ -6,6 +6,7 @@ module org.postgresql.adba {
   requires common;
   requires java.security.sasl;
   exports org.postgresql.adba;
+  exports org.postgresql.adba.pgdatatypes;
   exports jdk.incubator.sql2;
   exports org.postgresql.adba.buffer;
   exports org.postgresql.adba.execution;
