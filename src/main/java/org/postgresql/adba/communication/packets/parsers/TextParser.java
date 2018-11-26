@@ -21,6 +21,7 @@ import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import jdk.incubator.sql2.SqlException;
+import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.Point;
 
 public class TextParser {
@@ -216,8 +217,40 @@ public class TextParser {
     throw new RuntimeException("not implemented yet");
   }
 
-  public static Object line_out(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
+  /**
+   * Converts a string representation a Line from the database to a Line object.
+   *
+   * @param in a string on the format {1.2,3.4,3}
+   * @param requestedClass what the user wanted
+   * @return a Line object
+   */
+  public static Object lineOut(String in, Class<?> requestedClass) {
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    return new Line(Double.parseDouble(parts[0]), Double.parseDouble(parts[1]),
+        Double.parseDouble(parts[2]));
+  }
+
+  /**
+   * Converts a string representation an array of Lines from the database to a Line array in java.
+   *
+   * @param in a string on the format {"{1.2,3.4,2}",NULL}
+   * @param requestedClass what the user wanted
+   * @return a Line array
+   */
+  public static Object lineOutArray(String in, Class<?> requestedClass) {
+    String[] parts = (String[]) textArrayOut(in, null);
+
+    Line[] lines = new Line[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i] == null) {
+        lines[i] = null;
+      } else {
+        lines[i] = (Line) lineOut(parts[i], Line.class);
+      }
+    }
+    return lines;
   }
 
   /**

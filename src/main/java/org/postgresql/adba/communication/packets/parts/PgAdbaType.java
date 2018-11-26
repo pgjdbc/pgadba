@@ -16,6 +16,7 @@ import java.util.function.Function;
 import jdk.incubator.sql2.AdbaType;
 import jdk.incubator.sql2.SqlType;
 import org.postgresql.adba.communication.packets.parsers.BinaryGenerator;
+import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.Point;
 
 public enum PgAdbaType implements SqlType {
@@ -295,10 +296,20 @@ public enum PgAdbaType implements SqlType {
   POINT("point", 600, AdbaType.OTHER,
       BinaryGenerator::fromPoint, FormatCodeTypes.TEXT),
   /**
-   * Identifies a point in a 2-d plane.
+   * Identifies an array of points in a 2-d plane.
    */
-  POINT_ARRAY("point", 1017, AdbaType.OTHER,
-      BinaryGenerator::fromPointArray, FormatCodeTypes.TEXT);
+  POINT_ARRAY("point[]", 1017, AdbaType.OTHER,
+      BinaryGenerator::fromPointArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies a line in a 2-d plane.
+   */
+  LINE("line", 628, AdbaType.OTHER,
+      BinaryGenerator::fromLine, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of lines in a 2-d plane.
+   */
+  LINE_ARRAY("line[]", 629, AdbaType.OTHER,
+      BinaryGenerator::fromLineArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -375,6 +386,8 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(Inet6Address[].class, CIDR_ARRAY);
     classToDb.put(Point.class, POINT);
     classToDb.put(Point[].class, POINT_ARRAY);
+    classToDb.put(Line.class, LINE);
+    classToDb.put(Line[].class, LINE_ARRAY);
 
   }
 

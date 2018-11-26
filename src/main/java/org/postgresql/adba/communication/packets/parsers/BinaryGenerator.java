@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.util.BinaryHelper;
 
@@ -1439,6 +1440,59 @@ public class BinaryGenerator {
     }
 
     throw new RuntimeException(input.getClass().getName()
-        + " can't be converted to byte[] to send as a InetAddress[] to server");
+        + " can't be converted to byte[] to send as a Point[] to server");
+  }
+
+  /**
+   * Converts a Line object to something the server understands.
+   *
+   * @param input a Line
+   * @return string representation of said line as bytes
+   */
+  public static byte[] fromLine(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Line) {
+      return ("{" + ((Line) input).getA() + "," + ((Line) input).getB() + ","
+          + ((Line) input).getC() + "}").getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Line to server");
+  }
+
+  /**
+   * Converts a array of Line objects to something the server understands.
+   *
+   * @param input a Line array
+   * @return string representation of said lines as bytes
+   */
+  public static byte[] fromLineArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Line[]) {
+      StringBuilder sb = new StringBuilder("{");
+      Line[] in = (Line[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        if (in[i] == null) {
+          sb.append("NULL");
+        } else {
+          sb.append('"').append(new String(fromLine(in[i]))).append('"');
+        }
+      }
+      sb.append('}');
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Line[] to server");
   }
 }
