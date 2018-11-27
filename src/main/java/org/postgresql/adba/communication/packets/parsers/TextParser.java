@@ -22,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import jdk.incubator.sql2.SqlException;
 import org.postgresql.adba.pgdatatypes.Line;
+import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Point;
 
 public class TextParser {
@@ -201,8 +202,41 @@ public class TextParser {
     return points;
   }
 
-  public static Object lseg_out(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
+  /**
+   * Converts a string representation a LineSegment from the database to a LineSegment object.
+   *
+   * @param in a string on the format (1.2,3.4),(1,2)
+   * @param requestedClass what the user wanted
+   * @return a LineSegment object
+   */
+  public static Object lineSegmentOut(String in, Class<?> requestedClass) {
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    return new LineSegment(Double.parseDouble(parts[0].substring(1)), Double.parseDouble(parts[1]
+        .substring(0, parts[1].length() - 1)), Double.parseDouble(parts[2].substring(1)), Double.parseDouble(parts[3]
+        .substring(0, parts[1].length() - 1)));
+  }
+
+  /**
+   * Converts a string representation an array of LineSegments from the database to a LineSegment array.
+   *
+   * @param in a string on the format ["(1.2,3.4),(1,2)",NULL]
+   * @param requestedClass what the user wanted
+   * @return a LineSegment array
+   */
+  public static Object lineSegmentOutArray(String in, Class<?> requestedClass) {
+    String[] parts = (String[]) textArrayOut(in, null);
+
+    LineSegment[] points = new LineSegment[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i] == null) {
+        points[i] = null;
+      } else {
+        points[i] = (LineSegment) lineSegmentOut(parts[i], LineSegment.class);
+      }
+    }
+    return points;
   }
 
   public static Object path_out(String in, Class<?> requestedClass) {

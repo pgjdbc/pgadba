@@ -42,6 +42,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.postgresql.adba.communication.packets.parts.PgAdbaType;
 import org.postgresql.adba.pgdatatypes.Line;
+import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.testutil.ConnectUtil;
 import org.postgresql.adba.testutil.DatabaseHolder;
@@ -125,6 +126,9 @@ public class InsertSelectDataTypesTest {
         {"line", new Line(1, 2, 3), Line.class, PgAdbaType.LINE, Line[].class, new Line[]
             {new Line(0, 1, 3), new Line(2, 3, 5)},
             PgAdbaType.LINE_ARRAY, new Line[] {}, new Line[] {null}},
+        {"lseg", new LineSegment(1, 2, 3, 4), LineSegment.class, PgAdbaType.LINE_SEGMENT, LineSegment[].class,
+            new LineSegment[] {new LineSegment(0, 1, 3, 4), new LineSegment(2, 3, 5, 6)},
+            PgAdbaType.LINE_SEGMENT_ARRAY, new LineSegment[] {}, new LineSegment[] {null}},
     });
   }
 

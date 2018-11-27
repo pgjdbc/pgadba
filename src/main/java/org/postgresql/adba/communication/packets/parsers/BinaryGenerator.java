@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.postgresql.adba.pgdatatypes.Line;
+import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.util.BinaryHelper;
 
@@ -1494,5 +1495,59 @@ public class BinaryGenerator {
 
     throw new RuntimeException(input.getClass().getName()
         + " can't be converted to byte[] to send as a Line[] to server");
+  }
+
+  /**
+   * Converts a LineSegment object to something the server understands.
+   *
+   * @param input a LineSegment
+   * @return a byte array
+   */
+  public static byte[] fromLineSegment(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof LineSegment) {
+      LineSegment ls = (LineSegment) input;
+      return ("(" + ls.getX1() + "," + ls.getY1() + ","
+          + ls.getX2() + "," + ls.getY2() + ")").getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a LineSegment to server");
+  }
+
+  /**
+   * Converts a array of LineSegment objects to something the server understands.
+   *
+   * @param input a LineSegment array
+   * @return a byte array
+   */
+  public static byte[] fromLineSegmentArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof LineSegment[]) {
+      StringBuilder sb = new StringBuilder("{");
+      LineSegment[] in = (LineSegment[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        if (in[i] == null) {
+          sb.append("NULL");
+        } else {
+          sb.append('"').append(new String(fromLineSegment(in[i]))).append('"');
+        }
+      }
+      sb.append('}');
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a LineSegment[] to server");
   }
 }
