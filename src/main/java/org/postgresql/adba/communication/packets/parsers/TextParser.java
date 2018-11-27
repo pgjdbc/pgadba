@@ -21,6 +21,7 @@ import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import jdk.incubator.sql2.SqlException;
+import org.postgresql.adba.pgdatatypes.Box;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Point;
@@ -205,7 +206,7 @@ public class TextParser {
   /**
    * Converts a string representation a LineSegment from the database to a LineSegment object.
    *
-   * @param in a string on the format (1.2,3.4),(1,2)
+   * @param in a string on the format [(1.2,3.4),(1,2)]
    * @param requestedClass what the user wanted
    * @return a LineSegment object
    */
@@ -214,7 +215,7 @@ public class TextParser {
 
     return new LineSegment(Double.parseDouble(parts[0].substring(1)), Double.parseDouble(parts[1]
         .substring(0, parts[1].length() - 1)), Double.parseDouble(parts[2].substring(1)), Double.parseDouble(parts[3]
-        .substring(0, parts[1].length() - 1)));
+        .substring(0, parts[3].length() - 1)));
   }
 
   /**
@@ -243,8 +244,45 @@ public class TextParser {
     throw new RuntimeException("not implemented yet");
   }
 
-  public static Object box_out(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
+  /**
+   * Converts a string representation a Box from the database to a Box object.
+   *
+   * @param in a string on the format (1.2,3.4),(1,2)
+   * @param requestedClass what the user wanted
+   * @return a Box object
+   */
+  public static Object boxOut(String in, Class<?> requestedClass) {
+    String[] parts = in.split(",");
+
+    return new Box(Double.parseDouble(parts[2].substring(1)), Double.parseDouble(parts[3]
+        .substring(0, parts[3].length() - 1)), Double.parseDouble(parts[0].substring(1)), Double.parseDouble(parts[1]
+        .substring(0, parts[1].length() - 1)));
+  }
+
+  /**
+   * Converts a string representation an array of Boxes from the database to a Box array.
+   *
+   * @param in a string on the format ["(1.2,3.4),(1,2)";NULL]
+   * @param requestedClass what the user wanted
+   * @return a Box array
+   */
+  public static Object boxOutArray(String in, Class<?> requestedClass) {
+    if (in.equals("{}")) {
+      return new Box[] {};
+    }
+
+    String[] parts = in.substring(1, in.length() - 1).split(";");
+
+    Box[] points = new Box[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i].equals("NULL")) {
+        points[i] = null;
+      } else {
+        points[i] = (Box) boxOut(parts[i], Box.class);
+      }
+    }
+    return points;
   }
 
   public static Object poly_out(String in, Class<?> requestedClass) {

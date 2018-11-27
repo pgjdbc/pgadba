@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.postgresql.adba.pgdatatypes.Box;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Point;
@@ -1549,5 +1550,59 @@ public class BinaryGenerator {
 
     throw new RuntimeException(input.getClass().getName()
         + " can't be converted to byte[] to send as a LineSegment[] to server");
+  }
+
+  /**
+   * Converts a Box object to something the server understands.
+   *
+   * @param input a Box
+   * @return a byte array
+   */
+  public static byte[] fromBox(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Box) {
+      Box box = (Box) input;
+      return ("(" + box.getX1() + "," + box.getY1() + ","
+          + box.getX2() + "," + box.getY2() + ")").getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Box to server");
+  }
+
+  /**
+   * Converts a array of Box objects to something the server understands.
+   *
+   * @param input a Box array
+   * @return a byte array
+   */
+  public static byte[] fromBoxArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Box[]) {
+      StringBuilder sb = new StringBuilder("{");
+      Box[] in = (Box[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          sb.append(';');
+        }
+
+        if (in[i] == null) {
+          sb.append("NULL");
+        } else {
+          sb.append('"').append(new String(fromBox(in[i]))).append('"');
+        }
+      }
+      sb.append('}');
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Box[] to server");
   }
 }

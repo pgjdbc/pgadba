@@ -16,6 +16,7 @@ import java.util.function.Function;
 import jdk.incubator.sql2.AdbaType;
 import jdk.incubator.sql2.SqlType;
 import org.postgresql.adba.communication.packets.parsers.BinaryGenerator;
+import org.postgresql.adba.pgdatatypes.Box;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Point;
@@ -320,7 +321,17 @@ public enum PgAdbaType implements SqlType {
    * Identifies an array of lines in a 2-d plane.
    */
   LINE_SEGMENT_ARRAY("lseg[]", 1018, AdbaType.OTHER,
-      BinaryGenerator::fromLineSegmentArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromLineSegmentArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies a box in a 2-d plane.
+   */
+  BOX("box", 603, AdbaType.OTHER,
+      BinaryGenerator::fromBox, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of boxes in a 2-d plane.
+   */
+  BOX_ARRAY("box[]", 1020, AdbaType.OTHER,
+      BinaryGenerator::fromBoxArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -401,6 +412,8 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(Line[].class, LINE_ARRAY);
     classToDb.put(LineSegment.class, LINE_SEGMENT);
     classToDb.put(LineSegment[].class, LINE_SEGMENT_ARRAY);
+    classToDb.put(Box.class, BOX);
+    classToDb.put(Box[].class, BOX_ARRAY);
 
   }
 
