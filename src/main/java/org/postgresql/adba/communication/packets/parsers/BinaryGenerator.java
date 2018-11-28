@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.postgresql.adba.pgdatatypes.Box;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
+import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.util.BinaryHelper;
 
@@ -1596,6 +1597,71 @@ public class BinaryGenerator {
           sb.append("NULL");
         } else {
           sb.append('"').append(new String(fromBox(in[i]))).append('"');
+        }
+      }
+      sb.append('}');
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Box[] to server");
+  }
+
+  /**
+   * Converts a Path object to something the server understands.
+   *
+   * @param input a Path
+   * @return a byte array
+   */
+  public static byte[] fromPath(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Path) {
+      Path path = (Path) input;
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < path.getPoints().size(); i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        sb.append("(").append(path.getPoints().get(i).getX()).append(",").append(path.getPoints().get(i).getY()).append(")");
+      }
+      if (path.isClosed()) {
+        return ("(" + sb.toString() + ")").getBytes(StandardCharsets.UTF_8);
+      } else {
+        return ("[" + sb.toString() + "]").getBytes(StandardCharsets.UTF_8);
+      }
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Box to server");
+  }
+
+  /**
+   * Converts a array of Path objects to something the server understands.
+   *
+   * @param input a Path array
+   * @return a byte array
+   */
+  public static byte[] fromPathArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Path[]) {
+      StringBuilder sb = new StringBuilder("{");
+      Path[] in = (Path[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        if (in[i] == null) {
+          sb.append("NULL");
+        } else {
+          sb.append('"').append(new String(fromPath(in[i]))).append('"');
         }
       }
       sb.append('}');

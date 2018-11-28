@@ -19,6 +19,7 @@ import org.postgresql.adba.communication.packets.parsers.BinaryGenerator;
 import org.postgresql.adba.pgdatatypes.Box;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
+import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
 
 public enum PgAdbaType implements SqlType {
@@ -331,7 +332,17 @@ public enum PgAdbaType implements SqlType {
    * Identifies an array of boxes in a 2-d plane.
    */
   BOX_ARRAY("box[]", 1020, AdbaType.OTHER,
-      BinaryGenerator::fromBoxArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromBoxArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies a path of points in a 2-d plane.
+   */
+  PATH("path", 602, AdbaType.OTHER,
+      BinaryGenerator::fromPath, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of paths in a 2-d plane.
+   */
+  PATH_ARRAY("path[]", 1019, AdbaType.OTHER,
+      BinaryGenerator::fromPathArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -414,6 +425,8 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(LineSegment[].class, LINE_SEGMENT_ARRAY);
     classToDb.put(Box.class, BOX);
     classToDb.put(Box[].class, BOX_ARRAY);
+    classToDb.put(Path.class, PATH);
+    classToDb.put(Path[].class, PATH_ARRAY);
 
   }
 

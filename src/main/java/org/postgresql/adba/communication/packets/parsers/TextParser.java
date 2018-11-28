@@ -24,6 +24,7 @@ import jdk.incubator.sql2.SqlException;
 import org.postgresql.adba.pgdatatypes.Box;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
+import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
 
 public class TextParser {
@@ -240,8 +241,46 @@ public class TextParser {
     return points;
   }
 
-  public static Object path_out(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
+  /**
+   * Converts a string representation a Path from the database to a Path object.
+   *
+   * @param in a string on the format ((x1,y1),...,(xn,yn))
+   * @param requestedClass what the user wanted
+   * @return a LineSegment object
+   */
+  public static Object pathOut(String in, Class<?> requestedClass) {
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    List<Point> points = new ArrayList<>();
+
+    for (int i = 0; i < parts.length; i += 2) {
+      points.add(new Point(Integer.parseInt(parts[i].substring(1)),
+          Integer.parseInt(parts[i + 1].substring(0, parts[i + 1].length() - 1))));
+    }
+
+    return new Path(in.charAt(0) == ')', points);
+  }
+
+  /**
+   * Converts a string representation an array of Paths from the database to a Path array.
+   *
+   * @param in a string on the format {"((1,2),(3,4))","((1,2),(3,4))"}
+   * @param requestedClass what the user wanted
+   * @return a Path array
+   */
+  public static Object pathOutArray(String in, Class<?> requestedClass) {
+    String[] parts = (String[]) textArrayOut(in, null);
+
+    Path[] paths = new Path[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i] == null) {
+        paths[i] = null;
+      } else {
+        paths[i] = (Path) pathOut(parts[i], Path.class);
+      }
+    }
+    return paths;
   }
 
   /**
