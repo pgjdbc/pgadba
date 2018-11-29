@@ -26,6 +26,7 @@ import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
+import org.postgresql.adba.pgdatatypes.Polygon;
 
 public class TextParser {
   private static final DateTimeFormatter timestampWithoutTimeZoneFormatter = DateTimeFormatter
@@ -258,7 +259,7 @@ public class TextParser {
           Integer.parseInt(parts[i + 1].substring(0, parts[i + 1].length() - 1))));
     }
 
-    return new Path(in.charAt(0) == ')', points);
+    return new Path(in.charAt(0) == '(', points);
   }
 
   /**
@@ -324,8 +325,46 @@ public class TextParser {
     return points;
   }
 
-  public static Object poly_out(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
+  /**
+   * Converts a string representation a Polygon from the database to a Polygon object.
+   *
+   * @param in a string on the format (1.2,3.4),(1,2)
+   * @param requestedClass what the user wanted
+   * @return a Polygon object
+   */
+  public static Object polyOut(String in, Class<?> requestedClass) {
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    List<Point> points = new ArrayList<>();
+
+    for (int i = 0; i < parts.length; i += 2) {
+      points.add(new Point(Integer.parseInt(parts[i].substring(1)),
+          Integer.parseInt(parts[i + 1].substring(0, parts[i + 1].length() - 1))));
+    }
+
+    return new Polygon(points);
+  }
+
+  /**
+   * Converts a string representation an array of Polygons from the database to a Polygon array.
+   *
+   * @param in a string on the format {"((1,2),(3,4))","((1,2),(3,4))"}
+   * @param requestedClass what the user wanted
+   * @return a Polygon array
+   */
+  public static Object polyOutArray(String in, Class<?> requestedClass) {
+    String[] parts = (String[]) textArrayOut(in, null);
+
+    Polygon[] polygons = new Polygon[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i] == null) {
+        polygons[i] = null;
+      } else {
+        polygons[i] = (Polygon) polyOut(parts[i], Path.class);
+      }
+    }
+    return polygons;
   }
 
   /**

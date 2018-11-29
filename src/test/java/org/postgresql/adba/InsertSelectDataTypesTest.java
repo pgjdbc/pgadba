@@ -46,6 +46,7 @@ import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
+import org.postgresql.adba.pgdatatypes.Polygon;
 import org.postgresql.adba.testutil.ConnectUtil;
 import org.postgresql.adba.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -138,6 +139,10 @@ public class InsertSelectDataTypesTest {
             new Path[] {new Path(false, new Point(0, 1), new Point(3, 4)),
                 new Path(true, new Point(2, 3), new Point(5, 6))},
             PgAdbaType.PATH_ARRAY, new Path[] {}, new Path[] {null}},
+        {"polygon", new Polygon(new Point(1, 2), new Point(3, 4)), Polygon.class, PgAdbaType.POLYGON,
+            Polygon[].class, new Polygon[] {new Polygon(new Point(0, 1), new Point(3, 4)),
+                new Polygon(new Point(2, 3), new Point(5, 6))},
+            PgAdbaType.POLYGON_ARRAY, new Polygon[] {}, new Polygon[] {null}},
     });
   }
 

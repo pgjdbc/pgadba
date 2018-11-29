@@ -21,6 +21,7 @@ import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
+import org.postgresql.adba.pgdatatypes.Polygon;
 
 public enum PgAdbaType implements SqlType {
   /**
@@ -342,7 +343,17 @@ public enum PgAdbaType implements SqlType {
    * Identifies an array of paths in a 2-d plane.
    */
   PATH_ARRAY("path[]", 1019, AdbaType.OTHER,
-      BinaryGenerator::fromPathArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromPathArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies a path of points in a 2-d plane.
+   */
+  POLYGON("polygon", 604, AdbaType.OTHER,
+      BinaryGenerator::fromPolygon, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of paths in a 2-d plane.
+   */
+  POLYGON_ARRAY("path[]", 1027, AdbaType.OTHER,
+      BinaryGenerator::fromPolygonArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -427,6 +438,8 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(Box[].class, BOX_ARRAY);
     classToDb.put(Path.class, PATH);
     classToDb.put(Path[].class, PATH_ARRAY);
+    classToDb.put(Polygon.class, POLYGON);
+    classToDb.put(Polygon[].class, POLYGON_ARRAY);
 
   }
 

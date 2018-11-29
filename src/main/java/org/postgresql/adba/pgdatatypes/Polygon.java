@@ -5,35 +5,30 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class Path implements Comparable<Path> {
+public class Polygon implements Comparable<Polygon> {
   private List<Point> points;
-  private boolean closed;
 
   /**
-   * Initializes the Path from a list of points.
+   * Initializes the Polygon from a list of points.
    *
-   * @param closed if the Path is closed in a circle or open
    * @param points not allowed to be null
    */
-  public Path(boolean closed, List<Point> points) {
+  public Polygon(List<Point> points) {
     if (points == null) {
       throw new RuntimeException("point list not allowed to be null");
     }
-    this.closed = closed;
     this.points = points;
   }
 
   /**
-   * Initializes the Path from a list of points.
+   * Initializes the Polygon from a list of points.
    *
-   * @param closed if the Path is closed in a circle or open
    * @param points not allowed to be null
    */
-  public Path(boolean closed, Point... points) {
+  public Polygon(Point... points) {
     if (points == null) {
       throw new RuntimeException("point list not allowed to be null");
     }
-    this.closed = closed;
     this.points = new ArrayList<>();
     this.points.addAll(Arrays.asList(points));
   }
@@ -54,14 +49,6 @@ public class Path implements Comparable<Path> {
     this.points = points;
   }
 
-  public boolean isClosed() {
-    return closed;
-  }
-
-  public void setClosed(boolean closed) {
-    this.closed = closed;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -70,25 +57,18 @@ public class Path implements Comparable<Path> {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Path path = (Path) o;
-    return closed == path.closed
-        && Objects.equals(points, path.points);
+    Polygon polygon = (Polygon) o;
+    return Objects.equals(points, polygon.points);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(points, closed);
+    return Objects.hash(points);
   }
 
   @Override
-  public int compareTo(Path p) {
+  public int compareTo(Polygon p) {
     int c = Integer.compare(p.points.size(), points.size());
-
-    if (c != 0) {
-      return c;
-    }
-
-    c = Boolean.compare(p.closed, closed);
 
     if (c != 0) {
       return c;

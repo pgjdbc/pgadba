@@ -23,6 +23,7 @@ import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
+import org.postgresql.adba.pgdatatypes.Polygon;
 import org.postgresql.adba.util.BinaryHelper;
 
 public class BinaryGenerator {
@@ -1636,7 +1637,7 @@ public class BinaryGenerator {
     }
 
     throw new RuntimeException(input.getClass().getName()
-        + " can't be converted to byte[] to send as a Box to server");
+        + " can't be converted to byte[] to send as a Path to server");
   }
 
   /**
@@ -1669,6 +1670,67 @@ public class BinaryGenerator {
     }
 
     throw new RuntimeException(input.getClass().getName()
-        + " can't be converted to byte[] to send as a Box[] to server");
+        + " can't be converted to byte[] to send as a Path[] to server");
+  }
+
+  /**
+   * Converts a Polygon object to something the server understands.
+   *
+   * @param input a Polygon
+   * @return a byte array
+   */
+  public static byte[] fromPolygon(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Polygon) {
+      Polygon path = (Polygon) input;
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < path.getPoints().size(); i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        sb.append("(").append(path.getPoints().get(i).getX()).append(",").append(path.getPoints().get(i).getY()).append(")");
+      }
+      return ("(" + sb.toString() + ")").getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Polygon to server");
+  }
+
+  /**
+   * Converts an array of Polygon objects to something the server understands.
+   *
+   * @param input a Polygon array
+   * @return a byte array
+   */
+  public static byte[] fromPolygonArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Polygon[]) {
+      StringBuilder sb = new StringBuilder("{");
+      Polygon[] in = (Polygon[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        if (in[i] == null) {
+          sb.append("NULL");
+        } else {
+          sb.append('"').append(new String(fromPolygon(in[i]))).append('"');
+        }
+      }
+      sb.append('}');
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Polygon[] to server");
   }
 }
