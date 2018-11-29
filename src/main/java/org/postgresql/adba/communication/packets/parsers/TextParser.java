@@ -22,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import jdk.incubator.sql2.SqlException;
 import org.postgresql.adba.pgdatatypes.Box;
+import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Path;
@@ -622,8 +623,40 @@ public class TextParser {
     throw new RuntimeException("not implemented yet");
   }
 
-  public static Object circle_out(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
+  /**
+   * Converts a string representation a Circle from the database to a Circle object.
+   *
+   * @param in a string on the format &lt;(1,2),3&gt;
+   * @param requestedClass what the user wanted
+   * @return a Circle object
+   */
+  public static Object circleOut(String in, Class<?> requestedClass) {
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    return new Circle(Double.parseDouble(parts[0].substring(1)),
+        Double.parseDouble(parts[1].substring(0, parts[1].length() - 1)), Double.parseDouble(parts[2]));
+  }
+
+  /**
+   * Converts a string representation an array of Circles from the database to a Circle array in java.
+   *
+   * @param in a string on the format {"&lt;(1,2),3&gt;","&lt;(1,2),3&gt;"}
+   * @param requestedClass what the user wanted
+   * @return a Circle array
+   */
+  public static Object circleOutArray(String in, Class<?> requestedClass) {
+    String[] parts = (String[]) textArrayOut(in, null);
+
+    Circle[] circles = new Circle[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i] == null) {
+        circles[i] = null;
+      } else {
+        circles[i] = (Circle) circleOut(parts[i], Circle.class);
+      }
+    }
+    return circles;
   }
 
   public static Object cash_out(String in, Class<?> requestedClass) {

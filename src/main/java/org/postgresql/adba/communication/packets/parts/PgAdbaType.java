@@ -17,6 +17,7 @@ import jdk.incubator.sql2.AdbaType;
 import jdk.incubator.sql2.SqlType;
 import org.postgresql.adba.communication.packets.parsers.BinaryGenerator;
 import org.postgresql.adba.pgdatatypes.Box;
+import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Path;
@@ -345,15 +346,25 @@ public enum PgAdbaType implements SqlType {
   PATH_ARRAY("path[]", 1019, AdbaType.OTHER,
       BinaryGenerator::fromPathArray, FormatCodeTypes.TEXT),
   /**
-   * Identifies a path of points in a 2-d plane.
+   * Identifies a polygon in a 2-d plane.
    */
   POLYGON("polygon", 604, AdbaType.OTHER,
       BinaryGenerator::fromPolygon, FormatCodeTypes.TEXT),
   /**
-   * Identifies an array of paths in a 2-d plane.
+   * Identifies an array of polygons in a 2-d plane.
    */
   POLYGON_ARRAY("path[]", 1027, AdbaType.OTHER,
-      BinaryGenerator::fromPolygonArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromPolygonArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies a circle in a 2-d plane.
+   */
+  CIRCLE("circle", 718, AdbaType.OTHER,
+      BinaryGenerator::fromCircle, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of circles in a 2-d plane.
+   */
+  CIRCLE_ARRAY("circle[]", 719, AdbaType.OTHER,
+      BinaryGenerator::fromCircleArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -440,6 +451,8 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(Path[].class, PATH_ARRAY);
     classToDb.put(Polygon.class, POLYGON);
     classToDb.put(Polygon[].class, POLYGON_ARRAY);
+    classToDb.put(Circle.class, CIRCLE);
+    classToDb.put(Circle[].class, CIRCLE_ARRAY);
 
   }
 

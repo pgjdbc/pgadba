@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.postgresql.adba.pgdatatypes.Box;
+import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Path;
@@ -1732,5 +1733,59 @@ public class BinaryGenerator {
 
     throw new RuntimeException(input.getClass().getName()
         + " can't be converted to byte[] to send as a Polygon[] to server");
+  }
+
+  /**
+   * Converts a Circle object to something the server understands.
+   *
+   * @param input a Circle
+   * @return a byte array
+   */
+  public static byte[] fromCircle(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Circle) {
+      Circle circle = (Circle) input;
+      return ("<(" + circle.getX() + "," + circle.getY() + "),"
+          + circle.getRadius() + ">").getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Circle to server");
+  }
+
+  /**
+   * Converts an array of Circle objects to something the server understands.
+   *
+   * @param input a Circle array
+   * @return a byte array
+   */
+  public static byte[] fromCircleArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Circle[]) {
+      StringBuilder sb = new StringBuilder("{");
+      Circle[] in = (Circle[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        if (in[i] == null) {
+          sb.append("NULL");
+        } else {
+          sb.append('"').append(new String(fromCircle(in[i]))).append('"');
+        }
+      }
+      sb.append('}');
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a Circle[] to server");
   }
 }

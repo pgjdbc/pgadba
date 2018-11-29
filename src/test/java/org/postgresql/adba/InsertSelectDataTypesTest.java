@@ -42,6 +42,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.postgresql.adba.communication.packets.parts.PgAdbaType;
 import org.postgresql.adba.pgdatatypes.Box;
+import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.Path;
@@ -143,6 +144,9 @@ public class InsertSelectDataTypesTest {
             Polygon[].class, new Polygon[] {new Polygon(new Point(0, 1), new Point(3, 4)),
                 new Polygon(new Point(2, 3), new Point(5, 6))},
             PgAdbaType.POLYGON_ARRAY, new Polygon[] {}, new Polygon[] {null}},
+        {"circle", new Circle(1, 2, 3), Circle.class, PgAdbaType.CIRCLE,
+            Circle[].class, new Circle[] {new Circle(0, 1, 3), new Circle(2, 3, 5)},
+            PgAdbaType.CIRCLE_ARRAY, new Circle[] {}, new Circle[] {null}},
     });
   }
 
