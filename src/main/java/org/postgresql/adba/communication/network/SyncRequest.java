@@ -1,6 +1,6 @@
 package org.postgresql.adba.communication.network;
 
-import org.postgresql.adba.communication.FeFrame;
+import org.postgresql.adba.communication.FrontendTag;
 import org.postgresql.adba.communication.NetworkOutputStream;
 import org.postgresql.adba.communication.NetworkRequest;
 import org.postgresql.adba.communication.NetworkWriteContext;
@@ -25,7 +25,7 @@ public class SyncRequest implements NetworkRequest {
   public NetworkRequest write(NetworkWriteContext context) throws Exception {
 
     NetworkOutputStream wire = context.getOutputStream();
-    wire.write(FeFrame.FrontendTag.SYNC.getByte());
+    wire.write(FrontendTag.SYNC.getByte());
     wire.initPacket();
     wire.completePacket();
 

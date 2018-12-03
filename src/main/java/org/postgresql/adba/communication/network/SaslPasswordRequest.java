@@ -5,7 +5,7 @@ import com.ongres.scram.client.ScramSession;
 import com.ongres.scram.common.stringprep.StringPreparations;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import org.postgresql.adba.communication.FeFrame;
+import org.postgresql.adba.communication.FrontendTag;
 import org.postgresql.adba.communication.NetworkOutputStream;
 import org.postgresql.adba.communication.NetworkRequest;
 import org.postgresql.adba.communication.NetworkResponse;
@@ -48,7 +48,7 @@ public class SaslPasswordRequest implements NetworkRequest {
 
     // Write the request
     NetworkOutputStream wire = context.getOutputStream();
-    wire.write(FeFrame.FrontendTag.PASSWORD_MESSAGE.getByte());
+    wire.write(FrontendTag.PASSWORD_MESSAGE.getByte());
     wire.initPacket();
     wire.write(scramClient.getScramMechanism().getName());
     wire.write(BinaryHelper.writeInt(firstMessage.length));

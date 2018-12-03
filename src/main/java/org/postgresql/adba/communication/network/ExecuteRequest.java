@@ -1,6 +1,6 @@
 package org.postgresql.adba.communication.network;
 
-import org.postgresql.adba.communication.FeFrame;
+import org.postgresql.adba.communication.FrontendTag;
 import org.postgresql.adba.communication.NetworkOutputStream;
 import org.postgresql.adba.communication.NetworkRequest;
 import org.postgresql.adba.communication.NetworkResponse;
@@ -29,7 +29,7 @@ public class ExecuteRequest<T> implements NetworkRequest {
 
     // Obtain the query details
     NetworkOutputStream wire = context.getOutputStream();
-    wire.write(FeFrame.FrontendTag.EXECUTE.getByte());
+    wire.write(FrontendTag.EXECUTE.getByte());
     wire.initPacket();
     wire.write(portal.getPortalName());
     wire.write(BinaryHelper.writeInt(0)); // number of rows to return, 0 == all

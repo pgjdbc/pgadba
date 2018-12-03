@@ -1,6 +1,6 @@
 package org.postgresql.adba.communication.network;
 
-import org.postgresql.adba.communication.FeFrame;
+import org.postgresql.adba.communication.FrontendTag;
 import org.postgresql.adba.communication.NetworkOutputStream;
 import org.postgresql.adba.communication.NetworkRequest;
 import org.postgresql.adba.communication.NetworkResponse;
@@ -30,14 +30,11 @@ public class BindRequest<T> implements NetworkRequest {
   public NetworkRequest write(NetworkWriteContext context) throws Exception {
 
     // Obtain the query details
-    String portalName = portal.getPortalName();
-    String queryName = portal.getQuery().getQueryName();
-    String sql = portal.getSql();
     ParameterHolder holder = portal.getParameterHolder();
 
     // Write the packet
     NetworkOutputStream wire = context.getOutputStream();
-    wire.write(FeFrame.FrontendTag.BIND.getByte());
+    wire.write(FrontendTag.BIND.getByte());
     wire.initPacket();
     wire.write(portal.getPortalName());
     wire.write(portal.getQuery().getQueryName());

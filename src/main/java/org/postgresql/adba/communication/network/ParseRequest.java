@@ -1,6 +1,6 @@
 package org.postgresql.adba.communication.network;
 
-import org.postgresql.adba.communication.FeFrame;
+import org.postgresql.adba.communication.FrontendTag;
 import org.postgresql.adba.communication.NetworkOutputStream;
 import org.postgresql.adba.communication.NetworkRequest;
 import org.postgresql.adba.communication.NetworkResponse;
@@ -55,7 +55,7 @@ public class ParseRequest<T> implements NetworkRequest {
 
       // Send the prepare packet
       NetworkOutputStream wire = context.getOutputStream();
-      wire.write(FeFrame.FrontendTag.PARSE.getByte());
+      wire.write(FrontendTag.PARSE.getByte());
       wire.initPacket();
       wire.write(query.getQueryName());
       wire.write(sql);

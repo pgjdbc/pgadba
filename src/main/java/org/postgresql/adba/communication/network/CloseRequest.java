@@ -1,6 +1,6 @@
 package org.postgresql.adba.communication.network;
 
-import org.postgresql.adba.communication.FeFrame;
+import org.postgresql.adba.communication.FrontendTag;
 import org.postgresql.adba.communication.NetworkOutputStream;
 import org.postgresql.adba.communication.NetworkRequest;
 import org.postgresql.adba.communication.NetworkResponse;
@@ -30,7 +30,7 @@ public class CloseRequest implements NetworkRequest {
 
     // Send the close
     NetworkOutputStream wire = context.getOutputStream();
-    wire.write(FeFrame.FrontendTag.TERMINATE.getByte());
+    wire.write(FrontendTag.TERMINATE.getByte());
     wire.initPacket();
     wire.completePacket();
     wire.close();

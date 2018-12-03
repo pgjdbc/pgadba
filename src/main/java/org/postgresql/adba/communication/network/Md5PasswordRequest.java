@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import jdk.incubator.sql2.AdbaSessionProperty;
 import jdk.incubator.sql2.SessionProperty;
-import org.postgresql.adba.communication.FeFrame;
+import org.postgresql.adba.communication.FrontendTag;
 import org.postgresql.adba.communication.NetworkOutputStream;
 import org.postgresql.adba.communication.NetworkRequest;
 import org.postgresql.adba.communication.NetworkResponse;
@@ -48,7 +48,7 @@ public class Md5PasswordRequest implements NetworkRequest {
 
     // Write the request
     NetworkOutputStream wire = context.getOutputStream();
-    wire.write(FeFrame.FrontendTag.PASSWORD_MESSAGE.getByte());
+    wire.write(FrontendTag.PASSWORD_MESSAGE.getByte());
     wire.initPacket();
     wire.write(content);
     wire.writeTerminator();
