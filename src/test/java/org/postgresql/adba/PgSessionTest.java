@@ -61,6 +61,19 @@ public class PgSessionTest {
   }
 
   @Test
+  public void setApplicationName() throws InterruptedException, ExecutionException, TimeoutException {
+    String name = "my custom application name";
+    try (Session session = ds.builder().property(PgSessionProperty.APPLICATION_NAME, name).build().attach()) {
+      CompletionStage<String> idF = session.<String>rowOperation("select current_setting('application_name') t")
+          .collect(singleCollector(String.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(name, get10(idF));
+    }
+  }
+
+  @Test
   @Disabled
   public void largeNumberOfConnections() throws InterruptedException, ExecutionException, TimeoutException {
     Instant lastTime = Instant.now();

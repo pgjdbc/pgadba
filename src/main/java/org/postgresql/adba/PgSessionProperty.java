@@ -231,7 +231,7 @@ public enum PgSessionProperty implements SessionProperty {
    * Specifies the name of the application that is using the connection. This allows a database administrator to see what
    * applications are connected to the server and what resources they are using through views like pgstatactivity.
    */
-  APPLICATION_NAME(String.class, "java", false),
+  APPLICATION_NAME(String.class, "java_pgadba", false),
 
   /**
    * Force either SSPI (Windows transparent single-sign-on) or GSSAPI (Kerberos, via JSSE) to be used when the server

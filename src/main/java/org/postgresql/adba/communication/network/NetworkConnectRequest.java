@@ -78,7 +78,8 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
     wire.write("database");
     wire.write(((String) properties.get(PgSessionProperty.DATABASE)));
     wire.write("application_name");
-    wire.write("java_sql2_client");
+    wire.write(
+        (String) properties.getOrDefault(PgSessionProperty.APPLICATION_NAME, PgSessionProperty.APPLICATION_NAME.defaultValue()));
     wire.write("client_encoding");
     wire.write("UTF8");
     wire.writeTerminator();
