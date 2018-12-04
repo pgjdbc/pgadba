@@ -1,20 +1,21 @@
 package org.postgresql.adba.submissions;
 
-import org.postgresql.adba.PgSubmission;
-import org.postgresql.adba.communication.packets.DataRow;
-import org.postgresql.adba.operations.helpers.ParameterHolder;
-import org.postgresql.adba.util.PgCount;
-
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import jdk.incubator.sql2.Result.RowCount;
+import org.postgresql.adba.PgSubmission;
+import org.postgresql.adba.communication.packets.DataRow;
+import org.postgresql.adba.operations.helpers.ParameterHolder;
 
 public class CountSubmission<T> implements PgSubmission<T> {
+
   private final Supplier<Boolean> cancel;
   private CompletableFuture<T> publicStage;
   private String sql;
@@ -23,6 +24,7 @@ public class CountSubmission<T> implements PgSubmission<T> {
   private ParameterHolder holder;
   private PgSubmission returningRowSubmission;
   private GroupSubmission groupSubmission;
+  private Function<RowCount, ?> processor;
 
   /**
    * Creates the count submission.
@@ -33,15 +35,18 @@ public class CountSubmission<T> implements PgSubmission<T> {
    * @param returningRowSubmission submission to get the primary key
    * @param sql the query
    * @param groupSubmission group submission this submission is a part of
+   * @param processor a function reference that transforms the produced RowCount object to something else, allowed to be null
    */
   public CountSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, ParameterHolder holder,
-                         PgSubmission returningRowSubmission, String sql, GroupSubmission groupSubmission) {
+      PgSubmission returningRowSubmission, String sql, GroupSubmission groupSubmission,
+      Function<RowCount, ?> processor) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.holder = holder;
     this.returningRowSubmission = returningRowSubmission;
     this.sql = sql;
     this.groupSubmission = groupSubmission;
+    this.processor = processor;
   }
 
   @Override
@@ -73,14 +78,17 @@ public class CountSubmission<T> implements PgSubmission<T> {
   public Object finish(Object finishObject) {
     if (returningRowSubmission != null) {
       Object endResult = returningRowSubmission.finish(null);
-      returningRowSubmission.getCompletionStage().toCompletableFuture().complete(endResult);
+      ((CompletableFuture) returningRowSubmission.getCompletionStage()).complete(endResult);
     }
     if (groupSubmission != null) {
       groupSubmission.addGroupResult(finishObject);
     }
 
-    ((CompletableFuture<PgCount>) getCompletionStage())
-        .complete((PgCount)finishObject);
+    if (processor != null) {
+      finishObject = processor.apply((RowCount) finishObject);
+    }
+    ((CompletableFuture) getCompletionStage())
+        .complete(finishObject);
 
     return null;
   }

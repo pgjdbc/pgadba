@@ -25,6 +25,7 @@ public class PgRowCountOperation<R> implements ParameterizedRowCountOperation<R>
   private Consumer<Throwable> errorHandler;
   private PgSubmission returningRowSubmission;
   private GroupSubmission groupSubmission;
+  private Function<Result.RowCount, ? extends R> processor;
 
   /**
    * A RowCountOperation, this operation returns a count of the number of rows that the query affected.
@@ -56,6 +57,7 @@ public class PgRowCountOperation<R> implements ParameterizedRowCountOperation<R>
 
   @Override
   public ParameterizedRowCountOperation<R> apply(Function<Result.RowCount, ? extends R> processor) {
+    this.processor = processor;
     return this;
   }
 
@@ -91,7 +93,7 @@ public class PgRowCountOperation<R> implements ParameterizedRowCountOperation<R>
   @Override
   public Submission<R> submit() {
     PgSubmission<R> submission = new CountSubmission<>(this::cancel, errorHandler, holder, returningRowSubmission, sql,
-        groupSubmission);
+        groupSubmission, processor);
     connection.submit(submission);
     return submission;
   }
