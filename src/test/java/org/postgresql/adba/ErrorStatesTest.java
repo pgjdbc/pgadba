@@ -7,18 +7,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.postgresql.adba.testutil.FutureUtil.get10;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collector;
 import jdk.incubator.sql2.DataSource;
+import jdk.incubator.sql2.Result.RowCount;
 import jdk.incubator.sql2.Session;
 import jdk.incubator.sql2.SqlException;
+import jdk.incubator.sql2.Submission;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.postgresql.adba.testutil.ConnectUtil;
 import org.postgresql.adba.testutil.DatabaseHolder;
+import org.postgresql.adba.util.PgCount;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 public class ErrorStatesTest {
@@ -183,5 +187,22 @@ public class ErrorStatesTest {
 
       assertEquals(Integer.valueOf(100), get10(idF));
     }
+  }
+
+
+  @Test
+  public void shouldCount() throws InterruptedException, ExecutionException, TimeoutException {
+
+    CompletableFuture<Long> t;
+    try (Session session = ds.getSession()) {
+
+      Submission<Long> count = session
+          .<Long>rowCountOperation("SELECT * FROM pg_tables limit 5")
+          .apply(RowCount::getCount).submit();
+
+      t = count.getCompletionStage().toCompletableFuture();
+    }
+
+    assertEquals(new PgCount(5), get10(t));
   }
 }

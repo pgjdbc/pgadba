@@ -34,4 +34,9 @@ public class PgCount implements Result.RowCount {
   public int hashCode() {
     return Objects.hash(count);
   }
+
+  @Override
+  public String toString() {
+    return "" + count;
+  }
 }

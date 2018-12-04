@@ -35,7 +35,9 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
       pos += 4;
       columnNames.put(description[i].getName().toLowerCase(), columnPos);
       columns.put(columnPos, new TableCell(bytes, pos, pos + length, description[i]));
-      pos += length;
+      if (length >= 0) {
+        pos += length;
+      }
       columnPos++;
     }
   }
