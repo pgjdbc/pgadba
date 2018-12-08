@@ -52,7 +52,7 @@ public enum ColumnTypes {
   ABSTIME(702, TextParser::abstimeout, BinaryParser::abstimesend, null, null),
   RELTIME(703, TextParser::reltimeout, BinaryParser::reltimesend, null, null),
   TINTERVAL(704, TextParser::tintervalout, BinaryParser::tintervalsend, null, null),
-  UNKNOWN(705, TextParser::unknownout, BinaryParser::unknownsend, null, null),
+  UNKNOWN(705, TextParser::unknownOut, BinaryParser::unknownsend, null, null),
   CIRCLE(718, TextParser::circleOut, BinaryParser::circle_send, null, null),
   _CIRCLE(719, TextParser::circleOutArray, BinaryParser::array_send, null, null),
   MONEY(790, TextParser::cash_out, BinaryParser::cash_send, null, null),

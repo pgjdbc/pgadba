@@ -619,7 +619,18 @@ public class TextParser {
     throw new RuntimeException("not implemented yet");
   }
 
-  public static Object unknownout(String in, Class<?> requestedClass) {
+  /**
+   * If data is selected without a type beeing specified it ends up here.
+   *
+   * @param in data string
+   * @param requestedClass what the user requested we parse the data as
+   * @return our best effort or a RuntimeException is thrown
+   */
+  public static Object unknownOut(String in, Class<?> requestedClass) {
+    if (String.class.equals(requestedClass)) {
+      return in;
+    }
+
     throw new RuntimeException("not implemented yet");
   }
 

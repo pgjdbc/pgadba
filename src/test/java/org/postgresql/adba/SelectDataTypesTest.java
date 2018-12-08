@@ -1272,4 +1272,16 @@ public class SelectDataTypesTest {
           .submit().getCompletionStage()));
     }
   }
+
+  @Test
+  public void selectUnknownDataType() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<String> idF = session.<String>rowOperation("select '1' as t")
+          .collect(singleCollector(String.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals("1", get10(idF));
+    }
+  }
 }

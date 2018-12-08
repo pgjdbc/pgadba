@@ -111,7 +111,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
       // Register the connection
       socketChannel = SocketChannel.open();
       socketChannel.configureBlocking(false);
-      if((boolean) properties.getOrDefault(PgSessionProperty.TCP_KEEP_ALIVE, false)) {
+      if ((boolean) properties.getOrDefault(PgSessionProperty.TCP_KEEP_ALIVE, false)) {
         socketChannel.setOption(SO_KEEPALIVE, true);
       }
       loop.registerNioService(socketChannel, (context) -> {
