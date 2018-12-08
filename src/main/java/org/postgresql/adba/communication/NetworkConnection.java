@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.net.ssl.SSLContext;
 import jdk.incubator.sql2.SessionProperty;
 import org.postgresql.adba.PgSession;
+import org.postgresql.adba.PgSessionProperty;
 import org.postgresql.adba.buffer.ByteBufferPool;
 import org.postgresql.adba.buffer.ByteBufferPoolOutputStream;
 import org.postgresql.adba.buffer.PooledByteBuffer;
@@ -108,6 +109,9 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
       // Register the connection
       socketChannel = SocketChannel.open();
       socketChannel.configureBlocking(false);
+      if((boolean) properties.getOrDefault(PgSessionProperty.TCP_KEEP_ALIVE, false)) {
+        socketChannel.socket().setKeepAlive(true);
+      }
       loop.registerNioService(socketChannel, (context) -> {
         this.context = context;
         return this;

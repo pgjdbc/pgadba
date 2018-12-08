@@ -49,6 +49,18 @@ public class PgSessionTest {
   }
 
   @Test
+  public void sessionWithTcpKeepAlive() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Session session = ds.builder().property(PgSessionProperty.TCP_KEEP_ALIVE, true).build().attach()) {
+      CompletionStage<String> idF = session.<String>rowOperation("select '1'::text as t")
+          .collect(singleCollector(String.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals("1", get10(idF));
+    }
+  }
+
+  @Test
   public void loginScramSha256() throws InterruptedException, ExecutionException, TimeoutException {
     try (Session session = ds11.getSession()) {
       CompletionStage<Integer> idF = session.<Integer>rowOperation("select 1918 as t")

@@ -90,7 +90,7 @@ public class ProcessorSubmission<T> implements PgSubmission<T> {
   }
 
   @Override
-  public int numberOfQueryRepetitions() throws ExecutionException, InterruptedException {
+  public int numberOfQueryRepetitions() {
     return 1;
   }
 
