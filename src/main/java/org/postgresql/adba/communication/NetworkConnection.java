@@ -1,5 +1,7 @@
 package org.postgresql.adba.communication;
 
+import static java.net.StandardSocketOptions.SO_KEEPALIVE;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
@@ -110,7 +112,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
       socketChannel = SocketChannel.open();
       socketChannel.configureBlocking(false);
       if((boolean) properties.getOrDefault(PgSessionProperty.TCP_KEEP_ALIVE, false)) {
-        socketChannel.socket().setKeepAlive(true);
+        socketChannel.setOption(SO_KEEPALIVE, true);
       }
       loop.registerNioService(socketChannel, (context) -> {
         this.context = context;
