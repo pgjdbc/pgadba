@@ -620,7 +620,7 @@ public class TextParser {
   }
 
   /**
-   * If data is selected without a type beeing specified it ends up here.
+   * If data is selected without a type being specified it ends up here.
    *
    * @param in data string
    * @param requestedClass what the user requested we parse the data as
@@ -630,8 +630,29 @@ public class TextParser {
     if (String.class.equals(requestedClass)) {
       return in;
     }
+    if (Boolean.class.equals(requestedClass) || boolean.class.equals(requestedClass)) {
+      return Boolean.parseBoolean(in);
+    }
+    if (Integer.class.equals(requestedClass) || int.class.equals(requestedClass)) {
+      return Integer.parseInt(in);
+    }
+    if (Short.class.equals(requestedClass) || short.class.equals(requestedClass)) {
+      return Short.parseShort(in);
+    }
+    if (Byte.class.equals(requestedClass) || byte.class.equals(requestedClass)) {
+      return Byte.parseByte(in);
+    }
+    if (Long.class.equals(requestedClass) || long.class.equals(requestedClass)) {
+      return Long.parseLong(in);
+    }
+    if (Float.class.equals(requestedClass) || float.class.equals(requestedClass)) {
+      return Float.parseFloat(in);
+    }
+    if (Double.class.equals(requestedClass) || double.class.equals(requestedClass)) {
+      return Double.parseDouble(in);
+    }
 
-    throw new RuntimeException("not implemented yet");
+    throw new RuntimeException("value '" + in + "' can't be converted to " + requestedClass.getName());
   }
 
   /**
