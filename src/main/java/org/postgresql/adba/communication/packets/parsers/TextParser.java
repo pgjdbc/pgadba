@@ -131,8 +131,41 @@ public class TextParser {
     throw new RuntimeException("not implemented yet");
   }
 
-  public static Object oidout(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
+  /**
+   * Converts the string representing an oid from the database to the requested class.
+   *
+   * @param in the number as a string
+   * @param requestedClass the class that the user wanted
+   * @return a Long
+   */
+  public static Object oidOut(String in, Class<?> requestedClass) {
+    return Long.parseLong(in);
+  }
+
+  /**
+   * Converts the string representing and array of oid from the database to the requested class.
+   *
+   * @param in the oid array as a string, on the format {123,456}
+   * @param requestedClass the class that the user wanted
+   * @return a Long[]
+   */
+  public static Object oidOutArray(String in, Class<?> requestedClass) {
+    if (in.equals("{}")) {
+      return new Long[] {};
+    }
+
+    String[] parts = in.substring(1, in.length() - 1).split(",");
+
+    Long[] oids = new Long[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i].equals("NULL")) {
+        oids[i] = null;
+      } else {
+        oids[i] = Long.parseLong(parts[i]);
+      }
+    }
+    return oids;
   }
 
   public static Object tidout(String in, Class<?> requestedClass) {

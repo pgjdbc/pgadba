@@ -3,6 +3,7 @@ package org.postgresql.adba;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -1282,6 +1283,52 @@ public class SelectDataTypesTest {
           .getCompletionStage();
 
       assertEquals("1", get10(idF));
+    }
+  }
+
+  @Test
+  public void selectOid() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<Long> idF = session.<Long>rowOperation("SELECT oid as t FROM pg_class limit 1")
+          .collect(singleCollector(Long.class))
+          .submit()
+          .getCompletionStage();
+
+      assertNotNull(get10(idF));
+    }
+  }
+
+  @Test
+  public <T> void insertAndSelectOid() throws Exception {
+    try (Session session = ds.getSession()) {
+      get10(session.rowCountOperation("create table insertAndSelectOid(t oid)")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into insertAndSelectOid(t) values($1)")
+          .set("$1", 242L, PgAdbaType.OID).submit().getCompletionStage());
+      CompletionStage<Long> idF = session.<Long>rowOperation("select t from insertAndSelectOid")
+          .collect(singleCollector(Long.class))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table insertAndSelectOid").submit().getCompletionStage());
+
+      assertEquals(Long.valueOf(242), get10(idF));
+    }
+  }
+
+  @Test
+  public <T> void insertAndSelectOidArray() throws Exception {
+    try (Session session = ds.getSession()) {
+      get10(session.rowCountOperation("create table insertAndSelectOidArray(t oid[])")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into insertAndSelectOidArray(t) values($1)")
+          .set("$1", new Long[] {242L, 424L}, PgAdbaType.OID_ARRAY).submit().getCompletionStage());
+      CompletionStage<Long[]> idF = session.<Long[]>rowOperation("select t from insertAndSelectOidArray")
+          .collect(singleCollector(Long[].class))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table insertAndSelectOidArray").submit().getCompletionStage());
+
+      assertArrayEquals(new Long[] {242L, 424L}, get10(idF));
     }
   }
 }

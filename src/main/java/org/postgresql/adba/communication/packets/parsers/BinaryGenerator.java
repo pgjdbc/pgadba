@@ -1788,4 +1788,64 @@ public class BinaryGenerator {
     throw new RuntimeException(input.getClass().getName()
         + " can't be converted to byte[] to send as a Circle[] to server");
   }
+
+
+  /**
+   * Converts a Long to something the server understands.
+   *
+   * @param input a Long
+   * @return a byte array
+   */
+  public static byte[] fromOid(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Long) {
+      Long oid = (Long) input;
+      if (oid < 0 || oid > 4294967295L) {
+        throw new RuntimeException("value " + oid + " is outside of range of unsigned int");
+      }
+      return Long.toString(oid).getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a oid to server");
+  }
+
+  /**
+   * Converts an array of Longs to something the server understands.
+   *
+   * @param input a Long array
+   * @return a byte array
+   */
+  public static byte[] fromOidArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof Long[]) {
+      Long[] oids = (Long[]) input;
+
+      for (Long oid : oids) {
+        if (oid < 0 || oid > 4294967295L) {
+          throw new RuntimeException("value " + oid + " is outside of range of unsigned int");
+        }
+      }
+
+      StringBuilder sb = new StringBuilder("{");
+      for (int i = 0; i < oids.length; i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+        sb.append(oids[i]);
+      }
+      sb.append('}');
+
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a oid[] to server");
+  }
 }

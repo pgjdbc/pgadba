@@ -364,7 +364,17 @@ public enum PgAdbaType implements SqlType {
    * Identifies an array of circles in a 2-d plane.
    */
   CIRCLE_ARRAY("circle[]", 719, AdbaType.OTHER,
-      BinaryGenerator::fromCircleArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromCircleArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an oid, what the database uses internally for id columns.
+   */
+  OID("oid", 26, AdbaType.OTHER,
+      BinaryGenerator::fromOid, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of oid, what the database uses internally for id columns.
+   */
+  OID_ARRAY("oid[]", 1028, AdbaType.OTHER,
+      BinaryGenerator::fromOidArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
