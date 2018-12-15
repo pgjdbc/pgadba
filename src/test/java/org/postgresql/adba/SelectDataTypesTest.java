@@ -1377,4 +1377,50 @@ public class SelectDataTypesTest {
       assertArrayEquals(new String[] {"<x/>", "<x/>"}, get10(idF));
     }
   }
+
+  @Test
+  public void selectJsonb() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<String> idF = session.<String>rowOperation("SELECT '{}'::jsonb as t")
+          .collect(singleCollector(String.class))
+          .submit()
+          .getCompletionStage();
+
+      assertNotNull(get10(idF));
+    }
+  }
+
+  @Test
+  public <T> void insertAndSelectJsonb() throws Exception {
+    try (Session session = ds.getSession()) {
+      get10(session.rowCountOperation("create table insertAndSelectJsonb(t jsonb)")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into insertAndSelectJsonb(t) values($1)")
+          .set("$1", "{}", PgAdbaType.JSONB).submit().getCompletionStage());
+      CompletionStage<String> idF = session.<String>rowOperation("select t from insertAndSelectJsonb")
+          .collect(singleCollector(String.class))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table insertAndSelectJsonb").submit().getCompletionStage());
+
+      assertEquals("{}", get10(idF));
+    }
+  }
+
+  @Test
+  public <T> void insertAndSelectJsonbArray() throws Exception {
+    try (Session session = ds.getSession()) {
+      get10(session.rowCountOperation("create table insertAndSelectJsonbArray(t jsonb[])")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into insertAndSelectJsonbArray(t) values($1)")
+          .set("$1", new String[] {"{}", "{}"}, PgAdbaType.JSONB_ARRAY).submit().getCompletionStage());
+      CompletionStage<String[]> idF = session.<String[]>rowOperation("select t from insertAndSelectJsonbArray")
+          .collect(singleCollector(String[].class))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table insertAndSelectJsonbArray").submit().getCompletionStage());
+
+      assertArrayEquals(new String[] {"{}", "{}"}, get10(idF));
+    }
+  }
 }

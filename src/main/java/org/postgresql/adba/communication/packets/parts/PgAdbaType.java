@@ -290,6 +290,16 @@ public enum PgAdbaType implements SqlType {
   JSON_ARRAY("json[]", 199, AdbaType.OTHER,
       BinaryGenerator::fromJsonArray, FormatCodeTypes.BINARY),
   /**
+   * Identifies a String of json.
+   */
+  JSONB("jsonb", 3802, AdbaType.OTHER,
+      BinaryGenerator::fromJson, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of Strings of json.
+   */
+  JSONB_ARRAY("jsonb[]", 3807, AdbaType.OTHER,
+      BinaryGenerator::fromJsonbArray, FormatCodeTypes.BINARY),
+  /**
    * Identifies an internet address.
    */
   CIDR("cidr", 650, AdbaType.OTHER,
