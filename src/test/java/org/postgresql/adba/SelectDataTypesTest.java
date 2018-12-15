@@ -1331,4 +1331,50 @@ public class SelectDataTypesTest {
       assertArrayEquals(new Long[] {242L, 424L}, get10(idF));
     }
   }
+
+  @Test
+  public void selectXml() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<String> idF = session.<String>rowOperation("SELECT '<x/>'::xml as t")
+          .collect(singleCollector(String.class))
+          .submit()
+          .getCompletionStage();
+
+      assertNotNull(get10(idF));
+    }
+  }
+
+  @Test
+  public <T> void insertAndSelectXml() throws Exception {
+    try (Session session = ds.getSession()) {
+      get10(session.rowCountOperation("create table insertAndSelectOid(t xml)")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into insertAndSelectOid(t) values($1)")
+          .set("$1", "<x/>", PgAdbaType.SQLXML).submit().getCompletionStage());
+      CompletionStage<String> idF = session.<String>rowOperation("select t from insertAndSelectOid")
+          .collect(singleCollector(String.class))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table insertAndSelectOid").submit().getCompletionStage());
+
+      assertEquals("<x/>", get10(idF));
+    }
+  }
+
+  @Test
+  public <T> void insertAndSelectXmlArray() throws Exception {
+    try (Session session = ds.getSession()) {
+      get10(session.rowCountOperation("create table insertAndSelectXmlArray(t xml[])")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into insertAndSelectXmlArray(t) values($1)")
+          .set("$1", new String[] {"<x/>", "<x/>"}, PgAdbaType.SQLXML_ARRAY).submit().getCompletionStage());
+      CompletionStage<String[]> idF = session.<String[]>rowOperation("select t from insertAndSelectXmlArray")
+          .collect(singleCollector(String[].class))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table insertAndSelectXmlArray").submit().getCompletionStage());
+
+      assertArrayEquals(new String[] {"<x/>", "<x/>"}, get10(idF));
+    }
+  }
 }

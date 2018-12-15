@@ -237,7 +237,11 @@ public enum PgAdbaType implements SqlType {
   /**
    * Identifies the generic SQL type {@code SQLXML}.
    */
-  SQLXML("xml", 142, AdbaType.SQLXML, BinaryGenerator::fromXml, FormatCodeTypes.TEXT),
+  SQLXML("xml", 142, AdbaType.SQLXML, BinaryGenerator::fromString, FormatCodeTypes.TEXT),
+  /**
+   * Identifies the generic SQL type {@code SQLXML}.
+   */
+  SQLXML_ARRAY("xml[]", 143, AdbaType.ARRAY, BinaryGenerator::fromXmlArray, FormatCodeTypes.BINARY),
 
   /**
    * Identifies the generic SQL type {@code REF CURSOR}.

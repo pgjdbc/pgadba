@@ -192,10 +192,6 @@ public class TextParser {
     return in;
   }
 
-  public static Object xml_out(String in, Class<?> requestedClass) {
-    throw new RuntimeException("not implemented yet");
-  }
-
   public static Object pg_node_tree_out(String in, Class<?> requestedClass) {
     throw new RuntimeException("not implemented yet");
   }

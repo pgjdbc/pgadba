@@ -737,6 +737,57 @@ public class BinaryGenerator {
   }
 
   /**
+   * parses an array into to a byte array.
+   *
+   * @param input the Array to convert
+   * @return a byte array
+   */
+  public static byte[] fromXmlArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof String[]) {
+      String[] in = (String[]) input;
+      byte[][] parts = new byte[in.length][];
+      for (int i = 0; i < in.length; i++) {
+        if (in[i] == null) {
+          parts[i] = null;
+        } else {
+          parts[i] = in[i].getBytes(StandardCharsets.UTF_8);
+        }
+      }
+      int size = 20 + in.length * 4 + Arrays.stream(parts).mapToInt(a -> a == null ? 0 : a.length).sum();
+      byte[] data = new byte[size];
+      int pos = 0;
+      BinaryHelper.writeIntAtPos(1, pos, data); // number of dimensions
+      pos += 4;
+      BinaryHelper.writeIntAtPos(0, pos, data); // flags
+      pos += 4;
+      BinaryHelper.writeIntAtPos(142, pos, data); // oid of xml
+      pos += 4;
+      BinaryHelper.writeIntAtPos(in.length, pos, data); // length of first dimension
+      pos += 4;
+      BinaryHelper.writeIntAtPos(1, pos, data); // lower b
+      pos += 4;
+      for (int i = 0; i < in.length; i++) {
+        if (parts[i] == null) {
+          BinaryHelper.writeIntAtPos(-1, pos, data);
+          pos += 4;
+        } else {
+          BinaryHelper.writeIntAtPos(parts[i].length, pos, data);
+          pos += 4;
+          System.arraycopy(parts[i], 0, data, pos, parts[i].length);
+          pos += parts[i].length;
+        }
+      }
+      return data;
+    }
+
+    return new byte[]{};
+  }
+
+  /**
    * parses a LocalDate to a byte array.
    *
    * @param input the LocalDate to convert
@@ -1027,10 +1078,6 @@ public class BinaryGenerator {
     }
 
     throw new RuntimeException(input.getClass().getName() + " can't be converted to byte[] to send as a boolean to server");
-  }
-
-  public static byte[] fromXml(Object input) {
-    throw new RuntimeException("not implemented yet");
   }
 
   /**
