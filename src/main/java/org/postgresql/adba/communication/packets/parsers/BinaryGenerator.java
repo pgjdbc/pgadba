@@ -22,6 +22,7 @@ import org.postgresql.adba.pgdatatypes.Box;
 import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
+import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.pgdatatypes.Polygon;
@@ -1947,5 +1948,67 @@ public class BinaryGenerator {
 
     throw new RuntimeException(input.getClass().getName()
         + " can't be converted to byte[] to send as a oid[] to server");
+  }
+
+  /**
+   * Converts a LongRange object to something the server understands.
+   *
+   * @param input a LongRange
+   * @return a byte array
+   */
+  public static byte[] fromLongRange(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof LongRange) {
+      LongRange range = (LongRange) input;
+
+      if (range.isEmpty()) {
+        return "empty".getBytes(StandardCharsets.UTF_8);
+      }
+
+      return ((range.isLowerInclusive() ? "[" : "(")
+          + (range.getLower() == null ? "" : Long.toString(range.getLower())) + ","
+          + (range.getUpper() == null ? "" : Long.toString(range.getUpper()))
+          + (range.isUpperInclusive() ? "]" : ")"))
+          .getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a int8range to server");
+  }
+
+  /**
+   * Converts an array of LongRange objects to something the server understands.
+   *
+   * @param input a LongRange array
+   * @return a byte array
+   */
+  public static byte[] fromLongRangeArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof LongRange[]) {
+      StringBuilder sb = new StringBuilder("{");
+      LongRange[] in = (LongRange[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        if (in[i] == null) {
+          sb.append("NULL");
+        } else {
+          sb.append('"').append(new String(fromLongRange(in[i]))).append('"');
+        }
+      }
+      sb.append('}');
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a int8range[] to server");
   }
 }

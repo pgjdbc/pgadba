@@ -20,6 +20,7 @@ import org.postgresql.adba.pgdatatypes.Box;
 import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
+import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.pgdatatypes.Polygon;
@@ -388,7 +389,17 @@ public enum PgAdbaType implements SqlType {
    * Identifies an array of oid, what the database uses internally for id columns.
    */
   OID_ARRAY("oid[]", 1028, AdbaType.OTHER,
-      BinaryGenerator::fromOidArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromOidArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an int8range.
+   */
+  LONG_RANGE("int8range", 3926, AdbaType.OTHER,
+      BinaryGenerator::fromLongRange, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of oid, what the database uses internally for id columns.
+   */
+  LONG_RANGE_ARRAY("int8range[]", 3927, AdbaType.OTHER,
+      BinaryGenerator::fromLongRangeArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -477,6 +488,8 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(Polygon[].class, POLYGON_ARRAY);
     classToDb.put(Circle.class, CIRCLE);
     classToDb.put(Circle[].class, CIRCLE_ARRAY);
+    classToDb.put(LongRange.class, LONG_RANGE);
+    classToDb.put(LongRange[].class, LONG_RANGE_ARRAY);
 
   }
 

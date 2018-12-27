@@ -1,4 +1,4 @@
-package org.postgresql.adba;
+  package org.postgresql.adba;
 
 import static java.time.ZoneOffset.UTC;
 import static java.time.temporal.ChronoUnit.MINUTES;
@@ -45,6 +45,7 @@ import org.postgresql.adba.pgdatatypes.Box;
 import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
+import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.pgdatatypes.Polygon;
@@ -147,6 +148,10 @@ public class InsertSelectDataTypesTest {
         {"circle", new Circle(1, 2, 3), Circle.class, PgAdbaType.CIRCLE,
             Circle[].class, new Circle[] {new Circle(0, 1, 3), new Circle(2, 3, 5)},
             PgAdbaType.CIRCLE_ARRAY, new Circle[] {}, new Circle[] {null}},
+        {"int8range", new LongRange(1L, 2L, true, false), LongRange.class, PgAdbaType.LONG_RANGE,
+            LongRange[].class, new LongRange[] {new LongRange(null, null, false, true),
+            new LongRange(0L, 0L, true, true), new LongRange()}, PgAdbaType.LONG_RANGE_ARRAY,
+            new LongRange[] {}, new LongRange[] {null}},
     });
   }
 
@@ -170,7 +175,8 @@ public class InsertSelectDataTypesTest {
       if (type.isArray()) {
         assertArrayEquals((byte[])insertData, (byte[])get10(idF));
       } else {
-        assertEquals(insertData, get10(idF));
+        T t = get10(idF);
+        assertEquals(insertData, t);
       }
     }
   }

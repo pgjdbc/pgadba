@@ -34,6 +34,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.postgresql.adba.communication.packets.parts.PgAdbaType;
+import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.testutil.CollectorUtils;
 import org.postgresql.adba.testutil.ConnectUtil;
 import org.postgresql.adba.testutil.DatabaseHolder;
@@ -1421,6 +1422,19 @@ public class SelectDataTypesTest {
       get10(session.rowCountOperation("drop table insertAndSelectJsonbArray").submit().getCompletionStage());
 
       assertArrayEquals(new String[] {"{}", "{}"}, get10(idF));
+    }
+  }
+
+  @Test
+  public void selectEmptyInt8Range() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      CompletionStage<LongRange> idF = session
+          .<LongRange>rowOperation("select 'empty'::int8range as t")
+          .collect(singleCollector(LongRange.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(new LongRange(0L, 0L, true, true), get10(idF));
     }
   }
 }
