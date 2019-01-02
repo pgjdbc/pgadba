@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.postgresql.adba.pgdatatypes.Box;
 import org.postgresql.adba.pgdatatypes.Circle;
+import org.postgresql.adba.pgdatatypes.IntegerRange;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.LongRange;
@@ -2010,5 +2011,67 @@ public class BinaryGenerator {
 
     throw new RuntimeException(input.getClass().getName()
         + " can't be converted to byte[] to send as a int8range[] to server");
+  }
+
+  /**
+   * Converts a LongRange object to something the server understands.
+   *
+   * @param input a LongRange
+   * @return a byte array
+   */
+  public static byte[] fromIntegerRange(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof IntegerRange) {
+      IntegerRange range = (IntegerRange) input;
+
+      if (range.isEmpty()) {
+        return "empty".getBytes(StandardCharsets.UTF_8);
+      }
+
+      return ((range.isLowerInclusive() ? "[" : "(")
+          + (range.getLower() == null ? "" : Integer.toString(range.getLower())) + ","
+          + (range.getUpper() == null ? "" : Integer.toString(range.getUpper()))
+          + (range.isUpperInclusive() ? "]" : ")"))
+          .getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a int4range to server");
+  }
+
+  /**
+   * Converts an array of LongRange objects to something the server understands.
+   *
+   * @param input a LongRange array
+   * @return a byte array
+   */
+  public static byte[] fromIntegerRangeArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof IntegerRange[]) {
+      StringBuilder sb = new StringBuilder("{");
+      IntegerRange[] in = (IntegerRange[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        if (in[i] == null) {
+          sb.append("NULL");
+        } else {
+          sb.append('"').append(new String(fromIntegerRange(in[i]))).append('"');
+        }
+      }
+      sb.append('}');
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a int4range[] to server");
   }
 }

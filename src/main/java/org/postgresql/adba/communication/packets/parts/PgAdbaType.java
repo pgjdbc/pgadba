@@ -18,6 +18,7 @@ import jdk.incubator.sql2.SqlType;
 import org.postgresql.adba.communication.packets.parsers.BinaryGenerator;
 import org.postgresql.adba.pgdatatypes.Box;
 import org.postgresql.adba.pgdatatypes.Circle;
+import org.postgresql.adba.pgdatatypes.IntegerRange;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.LongRange;
@@ -396,10 +397,20 @@ public enum PgAdbaType implements SqlType {
   LONG_RANGE("int8range", 3926, AdbaType.OTHER,
       BinaryGenerator::fromLongRange, FormatCodeTypes.TEXT),
   /**
-   * Identifies an array of oid, what the database uses internally for id columns.
+   * Identifies an array of int8range.
    */
   LONG_RANGE_ARRAY("int8range[]", 3927, AdbaType.OTHER,
-      BinaryGenerator::fromLongRangeArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromLongRangeArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an int4range.
+   */
+  INTEGER_RANGE("int4range", 3904, AdbaType.OTHER,
+      BinaryGenerator::fromIntegerRange, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of int4range.
+   */
+  INTEGER_RANGE_ARRAY("int4range[]", 3905, AdbaType.OTHER,
+      BinaryGenerator::fromIntegerRangeArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -490,6 +501,8 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(Circle[].class, CIRCLE_ARRAY);
     classToDb.put(LongRange.class, LONG_RANGE);
     classToDb.put(LongRange[].class, LONG_RANGE_ARRAY);
+    classToDb.put(IntegerRange.class, INTEGER_RANGE);
+    classToDb.put(IntegerRange[].class, INTEGER_RANGE_ARRAY);
 
   }
 

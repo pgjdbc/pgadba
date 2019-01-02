@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import jdk.incubator.sql2.SqlException;
 import org.postgresql.adba.pgdatatypes.Box;
 import org.postgresql.adba.pgdatatypes.Circle;
+import org.postgresql.adba.pgdatatypes.IntegerRange;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.LongRange;
@@ -1276,6 +1277,55 @@ public class TextParser {
    * @param requestedClass the class that the user wanted
    * @return a LongRange object
    */
+  public static Object integerRangeOut(String in, Class<?> requestedClass) {
+    if ("empty".equals(in)) {
+      return new IntegerRange();
+    }
+
+    boolean lowerInclusive = in.startsWith("[");
+    boolean upperInclusive = in.endsWith("]");
+
+    String[] parts = in.split(",");
+    parts[0] = parts[0].substring(1);
+    parts[1] = parts[1].substring(0, parts[1].length() - 1);
+
+    return new IntegerRange(parts[0].length() == 0 ? null : Integer.parseInt(parts[0]),
+        parts[1].length() == 0 ? null : Integer.parseInt(parts[1]), lowerInclusive, upperInclusive);
+  }
+
+  /**
+   * Converts the string from the database to an array of LongRange objects.
+   *
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of LongRange objects
+   */
+  public static Object integerRangeOutArray(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new LongRange[] {};
+    }
+
+    String[] parts = (String[]) textArrayOut(in, null);
+
+    IntegerRange[] ranges = new IntegerRange[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i] == null) {
+        ranges[i] = null;
+      } else {
+        ranges[i] = (IntegerRange) integerRangeOut(parts[i], LongRange.class);
+      }
+    }
+    return ranges;
+  }
+
+  /**
+   * Converts the string from the database to a LongRange object.
+   *
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return a LongRange object
+   */
   public static Object longRangeOut(String in, Class<?> requestedClass) {
     if ("empty".equals(in)) {
       return new LongRange();
@@ -1306,16 +1356,16 @@ public class TextParser {
 
     String[] parts = (String[]) textArrayOut(in, null);
 
-    LongRange[] circles = new LongRange[parts.length];
+    LongRange[] ranges = new LongRange[parts.length];
 
     for (int i = 0; i < parts.length; i++) {
       if (parts[i] == null) {
-        circles[i] = null;
+        ranges[i] = null;
       } else {
-        circles[i] = (LongRange) longRangeOut(parts[i], LongRange.class);
+        ranges[i] = (LongRange) longRangeOut(parts[i], LongRange.class);
       }
     }
-    return circles;
+    return ranges;
   }
 
   public static Object range_out(String in, Class<?> requestedClass) {

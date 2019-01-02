@@ -1,57 +1,58 @@
   package org.postgresql.adba;
 
-import static java.time.ZoneOffset.UTC;
-import static java.time.temporal.ChronoUnit.MINUTES;
-import static java.time.temporal.ChronoUnit.SECONDS;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.postgresql.adba.communication.packets.parts.PgAdbaType.BLOB;
-import static org.postgresql.adba.communication.packets.parts.PgAdbaType.BOOLEAN;
-import static org.postgresql.adba.communication.packets.parts.PgAdbaType.BOOLEAN_ARRAY;
-import static org.postgresql.adba.communication.packets.parts.PgAdbaType.BYTEA_ARRAY;
-import static org.postgresql.adba.communication.packets.parts.PgAdbaType.DATE_ARRAY;
-import static org.postgresql.adba.communication.packets.parts.PgAdbaType.INTEGER;
-import static org.postgresql.adba.communication.packets.parts.PgAdbaType.INTEGER_ARRAY;
-import static org.postgresql.adba.communication.packets.parts.PgAdbaType.SHORT_ARRAY;
-import static org.postgresql.adba.communication.packets.parts.PgAdbaType.SMALLINT;
-import static org.postgresql.adba.communication.packets.parts.PgAdbaType.STRING_ARRAY;
-import static org.postgresql.adba.communication.packets.parts.PgAdbaType.UUID_ARRAY;
-import static org.postgresql.adba.testutil.CollectorUtils.singleCollector;
-import static org.postgresql.adba.testutil.FutureUtil.get10;
+  import static java.time.ZoneOffset.UTC;
+  import static java.time.temporal.ChronoUnit.MINUTES;
+  import static java.time.temporal.ChronoUnit.SECONDS;
+  import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+  import static org.junit.jupiter.api.Assertions.assertEquals;
+  import static org.junit.jupiter.api.Assertions.assertNull;
+  import static org.postgresql.adba.communication.packets.parts.PgAdbaType.BLOB;
+  import static org.postgresql.adba.communication.packets.parts.PgAdbaType.BOOLEAN;
+  import static org.postgresql.adba.communication.packets.parts.PgAdbaType.BOOLEAN_ARRAY;
+  import static org.postgresql.adba.communication.packets.parts.PgAdbaType.BYTEA_ARRAY;
+  import static org.postgresql.adba.communication.packets.parts.PgAdbaType.DATE_ARRAY;
+  import static org.postgresql.adba.communication.packets.parts.PgAdbaType.INTEGER;
+  import static org.postgresql.adba.communication.packets.parts.PgAdbaType.INTEGER_ARRAY;
+  import static org.postgresql.adba.communication.packets.parts.PgAdbaType.SHORT_ARRAY;
+  import static org.postgresql.adba.communication.packets.parts.PgAdbaType.SMALLINT;
+  import static org.postgresql.adba.communication.packets.parts.PgAdbaType.STRING_ARRAY;
+  import static org.postgresql.adba.communication.packets.parts.PgAdbaType.UUID_ARRAY;
+  import static org.postgresql.adba.testutil.CollectorUtils.singleCollector;
+  import static org.postgresql.adba.testutil.FutureUtil.get10;
 
-import java.math.BigDecimal;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.UUID;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.atomic.AtomicInteger;
-import jdk.incubator.sql2.DataSource;
-import jdk.incubator.sql2.Session;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.postgresql.adba.communication.packets.parts.PgAdbaType;
-import org.postgresql.adba.pgdatatypes.Box;
-import org.postgresql.adba.pgdatatypes.Circle;
-import org.postgresql.adba.pgdatatypes.Line;
-import org.postgresql.adba.pgdatatypes.LineSegment;
-import org.postgresql.adba.pgdatatypes.LongRange;
-import org.postgresql.adba.pgdatatypes.Path;
-import org.postgresql.adba.pgdatatypes.Point;
-import org.postgresql.adba.pgdatatypes.Polygon;
-import org.postgresql.adba.testutil.ConnectUtil;
-import org.postgresql.adba.testutil.DatabaseHolder;
-import org.testcontainers.containers.PostgreSQLContainer;
+  import java.math.BigDecimal;
+  import java.net.InetAddress;
+  import java.net.UnknownHostException;
+  import java.time.Duration;
+  import java.time.LocalDate;
+  import java.time.LocalDateTime;
+  import java.time.LocalTime;
+  import java.time.OffsetDateTime;
+  import java.time.OffsetTime;
+  import java.util.Arrays;
+  import java.util.Collection;
+  import java.util.UUID;
+  import java.util.concurrent.CompletionStage;
+  import java.util.concurrent.atomic.AtomicInteger;
+  import jdk.incubator.sql2.DataSource;
+  import jdk.incubator.sql2.Session;
+  import org.junit.jupiter.api.AfterAll;
+  import org.junit.jupiter.api.BeforeAll;
+  import org.junit.jupiter.params.ParameterizedTest;
+  import org.junit.jupiter.params.provider.MethodSource;
+  import org.postgresql.adba.communication.packets.parts.PgAdbaType;
+  import org.postgresql.adba.pgdatatypes.Box;
+  import org.postgresql.adba.pgdatatypes.Circle;
+  import org.postgresql.adba.pgdatatypes.IntegerRange;
+  import org.postgresql.adba.pgdatatypes.Line;
+  import org.postgresql.adba.pgdatatypes.LineSegment;
+  import org.postgresql.adba.pgdatatypes.LongRange;
+  import org.postgresql.adba.pgdatatypes.Path;
+  import org.postgresql.adba.pgdatatypes.Point;
+  import org.postgresql.adba.pgdatatypes.Polygon;
+  import org.postgresql.adba.testutil.ConnectUtil;
+  import org.postgresql.adba.testutil.DatabaseHolder;
+  import org.testcontainers.containers.PostgreSQLContainer;
 
 public class InsertSelectDataTypesTest {
   public static PostgreSQLContainer postgres = DatabaseHolder.getCached();
@@ -152,6 +153,10 @@ public class InsertSelectDataTypesTest {
             LongRange[].class, new LongRange[] {new LongRange(null, null, false, true),
             new LongRange(0L, 0L, true, true), new LongRange()}, PgAdbaType.LONG_RANGE_ARRAY,
             new LongRange[] {}, new LongRange[] {null}},
+        {"int4range", new IntegerRange(1, 2, true, false), IntegerRange.class, PgAdbaType.INTEGER_RANGE,
+            IntegerRange[].class, new IntegerRange[] {new IntegerRange(null, null, false, true),
+            new IntegerRange(0, 0, true, true), new IntegerRange()}, PgAdbaType.INTEGER_RANGE_ARRAY,
+            new IntegerRange[] {}, new IntegerRange[] {null}},
     });
   }
 

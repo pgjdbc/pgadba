@@ -1,5 +1,6 @@
 package org.postgresql.adba;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.postgresql.adba.testutil.CollectorUtils.singleCollector;
@@ -7,6 +8,8 @@ import static org.postgresql.adba.testutil.FutureUtil.get10;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -218,30 +221,28 @@ public class PgSessionTest {
   public void deactivationListener() throws InterruptedException, ExecutionException, TimeoutException {
 
     try (Session session = ds.getSession()) {
+      final List<Lifecycle> events = new ArrayList<>();
+      final List<Lifecycle> previousEvents = new ArrayList<>();
       final Session[] eventSession = new Session[1];
-      final Session.Lifecycle[] eventPrevious = new Session.Lifecycle[1];
-      final Session.Lifecycle[] eventCurrent = new Session.Lifecycle[1];
 
       session.registerLifecycleListener(new Session.SessionLifecycleListener() {
         @Override
         public void lifecycleEvent(Session session, Session.Lifecycle previous, Session.Lifecycle current) {
           eventSession[0] = session;
-          eventPrevious[0] = previous;
-          eventCurrent[0] = current;
+          events.add(current);
+          previousEvents.add(previous);
         }
       });
       Submission<Void> close = session.closeOperation().submit();
-
-      assertEquals(session, eventSession[0]);
-      assertEquals(Lifecycle.NEW, eventPrevious[0]);
-      assertEquals(Lifecycle.CLOSING, eventCurrent[0]);
 
       CompletionStage<Void> stage = close.getCompletionStage();
       get10(stage);
 
       assertEquals(session, eventSession[0]);
-      assertEquals(Lifecycle.CLOSING, eventPrevious[0]);
-      assertEquals(Lifecycle.CLOSED, eventCurrent[0]);
+      assertArrayEquals(new Session.Lifecycle[]{Lifecycle.CLOSING, Lifecycle.CLOSING, Lifecycle.CLOSED},
+          events.toArray(new Session.Lifecycle[]{}));
+      assertArrayEquals(new Session.Lifecycle[]{Lifecycle.NEW, Lifecycle.CLOSING, Lifecycle.CLOSING},
+          previousEvents.toArray(new Session.Lifecycle[]{}));
     }
   }
 
