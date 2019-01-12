@@ -21,6 +21,7 @@ import org.postgresql.adba.buffer.ByteBufferPool;
 import org.postgresql.adba.buffer.ByteBufferPoolOutputStream;
 import org.postgresql.adba.buffer.PooledByteBuffer;
 import org.postgresql.adba.communication.network.CloseResponse;
+import org.postgresql.adba.communication.network.ExecuteResponse;
 import org.postgresql.adba.communication.packets.ErrorPacket;
 import org.postgresql.adba.execution.NioLoop;
 import org.postgresql.adba.execution.NioService;
@@ -391,7 +392,15 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
           switch (frame.getTag()) {
             case ERROR_RESPONSE:
               // Handle error
-              immediateResponse = awaitingResponse.handleException(new ErrorPacket(frame.getPayload()));
+              ErrorPacket errorPacket = new ErrorPacket(frame.getPayload());
+              immediateResponse = awaitingResponse.handleException(errorPacket);
+              boolean haveConsumedExecuteResponse = false;
+              while (awaitingResponses.peek() != null && !haveConsumedExecuteResponse) {
+                if (awaitingResponses.peek() instanceof ExecuteResponse) {
+                  haveConsumedExecuteResponse = true;
+                }
+                awaitingResponses.poll().handleException(errorPacket);
+              }
               break;
 
             default:

@@ -69,6 +69,37 @@ public class TransactionTest {
   }
 
   @Test
+  public void rollbackOnError() throws ExecutionException, InterruptedException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      TransactionCompletion transaction = session.transactionCompletion();
+      session.operation("start transaction")
+          .submit();
+      session.operation("create table tab(i int)")
+          .submit();
+      session.rowCountOperation("insert into tab(i) values('a')")
+          .onError(t -> transaction.setRollbackOnly())
+          .submit();
+      CompletionStage<TransactionOutcome> roll = session.commitMaybeRollback(transaction);
+
+      assertEquals(TransactionOutcome.ROLLBACK, get10(roll));
+
+      CompletionStage<Boolean> idF = session.<Boolean>rowOperation("SELECT EXISTS (\n"
+          + "   SELECT 1 \n"
+          + "   FROM   pg_catalog.pg_class c\n"
+          + "   JOIN   pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n"
+          + "   WHERE  n.nspname = 'public'\n"
+          + "   AND    c.relname = 'tab'\n"
+          + "   AND    c.relkind = 'r'    -- only tables\n"
+          + "   ) as t")
+          .collect(singleCollector(Boolean.class))
+          .submit()
+          .getCompletionStage();
+
+      assertFalse(get10(idF));
+    }
+  }
+
+  @Test
   public void insertAndCommit() throws ExecutionException, InterruptedException, TimeoutException {
     try (Session session = ds.getSession()) {
       TransactionCompletion transaction = session.transactionCompletion();
