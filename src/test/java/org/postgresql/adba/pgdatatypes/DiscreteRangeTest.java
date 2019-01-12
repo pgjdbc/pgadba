@@ -4,23 +4,26 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class DiscreteRangeTest {
 
-  private static Object[][] equalsData() {
+  private static Object[][] equalsIdenticalObjectsData() {
     return new Object[][]{
         {new LongRange(1L, 2L, true, false),
             new LongRange(1L, 2L, true, false)},
         {new IntegerRange(1, 2, true, false),
-            new IntegerRange(1, 2, true, false)}};
+            new IntegerRange(1, 2, true, false)},
+        {new NumericRange(BigDecimal.ZERO, BigDecimal.ONE, true, false),
+            new NumericRange(BigDecimal.ZERO, BigDecimal.ONE, true, false)}};
   }
 
   @ParameterizedTest
-  @MethodSource("equalsData")
-  public void equals(Object l1, Object l2) {
+  @MethodSource("equalsIdenticalObjectsData")
+  public void equalsIdenticalObjects(Object l1, Object l2) {
     assertEquals(l1, l2);
   }
 
@@ -57,7 +60,9 @@ public class DiscreteRangeTest {
         {new LongRange(null, 1L, true, true),
             new LongRange(null, 1L, false, true)},
         {new IntegerRange(null, 1, true, true),
-            new IntegerRange(null, 1, false, true)}};
+            new IntegerRange(null, 1, false, true)},
+        {new NumericRange(null, BigDecimal.ONE, true, true),
+            new NumericRange(null, BigDecimal.ONE, false, true)}};
   }
 
   @ParameterizedTest
@@ -85,7 +90,9 @@ public class DiscreteRangeTest {
         {new LongRange(1L, null, true, true),
             new LongRange(1L, null, true, false)},
         {new IntegerRange(1, null, true, true),
-            new IntegerRange(1, null, true, false)}};
+            new IntegerRange(1, null, true, false)},
+        {new NumericRange(BigDecimal.ONE, null, true, true),
+            new NumericRange(BigDecimal.ONE, null, true, false)}};
   }
 
   @ParameterizedTest
@@ -99,7 +106,9 @@ public class DiscreteRangeTest {
         {new LongRange(null, null, true, true),
             new LongRange(null, null, false, false)},
         {new IntegerRange(null, null, true, true),
-            new IntegerRange(null, null, false, false)}};
+            new IntegerRange(null, null, false, false)},
+        {new NumericRange(null, null, true, true),
+            new NumericRange(null, null, false, false)}};
   }
 
   @ParameterizedTest
@@ -113,7 +122,9 @@ public class DiscreteRangeTest {
         {new LongRange(1L, 2L, true, false),
             new LongRange(2L, 3L, true, false)},
         {new IntegerRange(1, 2, true, false),
-            new IntegerRange(2, 3, true, false)}};
+            new IntegerRange(2, 3, true, false)},
+        {new NumericRange(BigDecimal.ONE, BigDecimal.ONE, false, true),
+            new NumericRange(new BigDecimal(2), new BigDecimal(2), false, true)}};
   }
 
   @ParameterizedTest
@@ -127,7 +138,9 @@ public class DiscreteRangeTest {
         {new LongRange(1L, 2L, true, false),
             new LongRange()},
         {new IntegerRange(1, 2, true, false),
-            new IntegerRange()}};
+            new IntegerRange()},
+        {new NumericRange(BigDecimal.ONE, BigDecimal.ONE, false, true),
+            new NumericRange()}};
   }
 
   @ParameterizedTest
@@ -137,8 +150,18 @@ public class DiscreteRangeTest {
   }
 
   @Test
-  public void throwsWhenRangeOutOfOrder() {
+  public void throwsWhenLongRangeOutOfOrder() {
     assertThrows(RuntimeException.class, () -> new LongRange(2L, 1L, true, false));
+  }
+
+  @Test
+  public void throwsWhenIntegerRangeOutOfOrder() {
+    assertThrows(RuntimeException.class, () -> new IntegerRange(2, 1, true, false));
+  }
+
+  @Test
+  public void throwsWhenNumericRangeOutOfOrder() {
+    assertThrows(RuntimeException.class, () -> new NumericRange(new BigDecimal(2), BigDecimal.ONE, true, false));
   }
 
   @Test
@@ -151,6 +174,13 @@ public class DiscreteRangeTest {
   @Test
   public void emptyIntegerRange() {
     IntegerRange l1 = new IntegerRange(1, 2, true, false);
+
+    assertTrue(l1.isEmpty());
+  }
+
+  @Test
+  public void emptyNumericRange() {
+    NumericRange l1 = new NumericRange(BigDecimal.ONE, BigDecimal.ONE, false, true);
 
     assertTrue(l1.isEmpty());
   }

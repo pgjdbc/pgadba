@@ -27,6 +27,7 @@ import org.postgresql.adba.pgdatatypes.IntegerRange;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.LongRange;
+import org.postgresql.adba.pgdatatypes.NumericRange;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.pgdatatypes.Polygon;
@@ -1314,6 +1315,55 @@ public class TextParser {
         ranges[i] = null;
       } else {
         ranges[i] = (IntegerRange) integerRangeOut(parts[i], LongRange.class);
+      }
+    }
+    return ranges;
+  }
+
+  /**
+   * Converts the string from the database to a NumericRange object.
+   *
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return a NumericRange object
+   */
+  public static Object numericRangeOut(String in, Class<?> requestedClass) {
+    if ("empty".equals(in)) {
+      return new NumericRange();
+    }
+
+    boolean lowerInclusive = in.startsWith("[");
+    boolean upperInclusive = in.endsWith("]");
+
+    String[] parts = in.split(",");
+    parts[0] = parts[0].substring(1);
+    parts[1] = parts[1].substring(0, parts[1].length() - 1);
+
+    return new NumericRange(parts[0].length() == 0 ? null : new BigDecimal(parts[0]),
+        parts[1].length() == 0 ? null : new BigDecimal(parts[1]), lowerInclusive, upperInclusive);
+  }
+
+  /**
+   * Converts the string from the database to an array of NumericRange objects.
+   *
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of NumericRange objects
+   */
+  public static Object numericRangeOutArray(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new LongRange[] {};
+    }
+
+    String[] parts = (String[]) textArrayOut(in, null);
+
+    NumericRange[] ranges = new NumericRange[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i] == null) {
+        ranges[i] = null;
+      } else {
+        ranges[i] = (NumericRange) numericRangeOut(parts[i], LongRange.class);
       }
     }
     return ranges;

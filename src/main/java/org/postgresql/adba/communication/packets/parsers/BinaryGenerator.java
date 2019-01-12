@@ -24,6 +24,7 @@ import org.postgresql.adba.pgdatatypes.IntegerRange;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.LongRange;
+import org.postgresql.adba.pgdatatypes.NumericRange;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.pgdatatypes.Polygon;
@@ -2014,9 +2015,71 @@ public class BinaryGenerator {
   }
 
   /**
-   * Converts a LongRange object to something the server understands.
+   * Converts a NumericRange object to something the server understands.
    *
-   * @param input a LongRange
+   * @param input a NumericRange
+   * @return a byte array
+   */
+  public static byte[] fromNumericRange(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof NumericRange) {
+      NumericRange range = (NumericRange) input;
+
+      if (range.isEmpty()) {
+        return "empty".getBytes(StandardCharsets.UTF_8);
+      }
+
+      return ((range.isLowerInclusive() ? "[" : "(")
+          + (range.getLower() == null ? "" : range.getLower().toString()) + ","
+          + (range.getUpper() == null ? "" : range.getUpper().toString())
+          + (range.isUpperInclusive() ? "]" : ")"))
+          .getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a int8range to server");
+  }
+
+  /**
+   * Converts an array of NumericRange objects to something the server understands.
+   *
+   * @param input a NumericRange array
+   * @return a byte array
+   */
+  public static byte[] fromNumericRangeArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof NumericRange[]) {
+      StringBuilder sb = new StringBuilder("{");
+      NumericRange[] in = (NumericRange[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        if (in[i] == null) {
+          sb.append("NULL");
+        } else {
+          sb.append('"').append(new String(fromNumericRange(in[i]))).append('"');
+        }
+      }
+      sb.append('}');
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a int8range[] to server");
+  }
+
+  /**
+   * Converts a IntegerRange object to something the server understands.
+   *
+   * @param input a IntegerRange
    * @return a byte array
    */
   public static byte[] fromIntegerRange(Object input) {
@@ -2043,9 +2106,9 @@ public class BinaryGenerator {
   }
 
   /**
-   * Converts an array of LongRange objects to something the server understands.
+   * Converts an array of IntegerRange objects to something the server understands.
    *
-   * @param input a LongRange array
+   * @param input a IntegerRange array
    * @return a byte array
    */
   public static byte[] fromIntegerRangeArray(Object input) {

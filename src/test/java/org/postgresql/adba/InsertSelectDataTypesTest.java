@@ -47,6 +47,7 @@
   import org.postgresql.adba.pgdatatypes.Line;
   import org.postgresql.adba.pgdatatypes.LineSegment;
   import org.postgresql.adba.pgdatatypes.LongRange;
+  import org.postgresql.adba.pgdatatypes.NumericRange;
   import org.postgresql.adba.pgdatatypes.Path;
   import org.postgresql.adba.pgdatatypes.Point;
   import org.postgresql.adba.pgdatatypes.Polygon;
@@ -157,6 +158,11 @@ public class InsertSelectDataTypesTest {
             IntegerRange[].class, new IntegerRange[] {new IntegerRange(null, null, false, true),
             new IntegerRange(0, 0, true, true), new IntegerRange()}, PgAdbaType.INTEGER_RANGE_ARRAY,
             new IntegerRange[] {}, new IntegerRange[] {null}},
+        {"numrange", new NumericRange(new BigDecimal(2.6), new BigDecimal(3.3), true, false),
+            NumericRange.class, PgAdbaType.NUMERIC_RANGE, NumericRange[].class, new NumericRange[]
+            {new NumericRange(null, null, false, true),
+            new NumericRange(BigDecimal.ZERO, BigDecimal.ZERO, true, true), new NumericRange()},
+            PgAdbaType.NUMERIC_RANGE_ARRAY, new NumericRange[] {}, new NumericRange[] {null}},
     });
   }
 

@@ -22,6 +22,7 @@ import org.postgresql.adba.pgdatatypes.IntegerRange;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.LongRange;
+import org.postgresql.adba.pgdatatypes.NumericRange;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.pgdatatypes.Polygon;
@@ -410,7 +411,17 @@ public enum PgAdbaType implements SqlType {
    * Identifies an array of int4range.
    */
   INTEGER_RANGE_ARRAY("int4range[]", 3905, AdbaType.OTHER,
-      BinaryGenerator::fromIntegerRangeArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromIntegerRangeArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an numrange.
+   */
+  NUMERIC_RANGE("numrange", 3906, AdbaType.OTHER,
+      BinaryGenerator::fromNumericRange, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of numrange.
+   */
+  NUMERIC_RANGE_ARRAY("numrange[]", 3907, AdbaType.OTHER,
+      BinaryGenerator::fromNumericRangeArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -503,6 +514,8 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(LongRange[].class, LONG_RANGE_ARRAY);
     classToDb.put(IntegerRange.class, INTEGER_RANGE);
     classToDb.put(IntegerRange[].class, INTEGER_RANGE_ARRAY);
+    classToDb.put(NumericRange.class, NUMERIC_RANGE);
+    classToDb.put(NumericRange[].class, NUMERIC_RANGE_ARRAY);
 
   }
 
