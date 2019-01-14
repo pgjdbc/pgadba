@@ -46,6 +46,7 @@ import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.IntegerRange;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
+import org.postgresql.adba.pgdatatypes.LocalDateTimeRange;
 import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.pgdatatypes.NumericRange;
 import org.postgresql.adba.pgdatatypes.OffsetDateTimeRange;
@@ -164,6 +165,13 @@ public class InsertSelectDataTypesTest {
             {new NumericRange(null, null, false, true),
             new NumericRange(BigDecimal.ZERO, BigDecimal.ZERO, true, true), new NumericRange()},
             PgAdbaType.NUMERIC_RANGE_ARRAY, new NumericRange[] {}, new NumericRange[] {null}},
+        {"tsrange", new LocalDateTimeRange(LocalDateTime.of(2019, 1, 2, 3, 4, 5, 0),
+            LocalDateTime.of(2020, 1, 2, 3, 4, 5, 0), true, false),
+            LocalDateTimeRange.class, PgAdbaType.LOCAL_DATE_TIME_RANGE, LocalDateTimeRange[].class, new LocalDateTimeRange[]
+            {new LocalDateTimeRange(null, null, false, true),
+            new LocalDateTimeRange(LocalDateTime.of(2021, 1, 2, 3, 4, 5, 0),
+                LocalDateTime.of(2021, 1, 2, 3, 4, 5, 0), true, true), new LocalDateTimeRange()},
+            PgAdbaType.LOCAL_DATE_TIME_RANGE_ARRAY, new LocalDateTimeRange[] {}, new LocalDateTimeRange[] {null}},
         {"tstzrange", new OffsetDateTimeRange(OffsetDateTime.of(2019, 1, 2, 3, 4, 5, 0, UTC),
             OffsetDateTime.of(2020, 1, 2, 3, 4, 5, 0, UTC), true, false),
             OffsetDateTimeRange.class, PgAdbaType.OFFSET_DATE_TIME_RANGE, OffsetDateTimeRange[].class, new OffsetDateTimeRange[]

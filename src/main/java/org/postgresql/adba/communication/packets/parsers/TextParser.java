@@ -26,6 +26,7 @@ import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.IntegerRange;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
+import org.postgresql.adba.pgdatatypes.LocalDateTimeRange;
 import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.pgdatatypes.NumericRange;
 import org.postgresql.adba.pgdatatypes.OffsetDateTimeRange;
@@ -1371,11 +1372,63 @@ public class TextParser {
   }
 
   /**
-   * Converts the string from the database to a NumericRange object.
+   * Converts the string from the database to a LocalDateTimeRange object.
    *
    * @param in the array as a string
    * @param requestedClass the class that the user wanted
-   * @return a NumericRange object
+   * @return a LocalDateTimeRange object
+   */
+  public static Object localDateTimeRangeOut(String in, Class<?> requestedClass) {
+    if ("empty".equals(in)) {
+      return new LocalDateTimeRange();
+    }
+
+    boolean lowerInclusive = in.startsWith("[");
+    boolean upperInclusive = in.endsWith("]");
+
+    String[] parts = in.split(",");
+    parts[0] = parts[0].substring(1);
+    parts[1] = parts[1].substring(0, parts[1].length() - 1);
+
+    return new LocalDateTimeRange(parts[0].length() == 0 ? null :
+        LocalDateTime.parse(parts[0].substring(1, parts[0].length() - 1),
+        timestampWithoutTimeZoneFormatter), parts[1].length() == 0 ? null :
+        LocalDateTime.parse(parts[1].substring(1, parts[1].length() - 1),
+        timestampWithoutTimeZoneFormatter), lowerInclusive, upperInclusive);
+  }
+
+  /**
+   * Converts the string from the database to an array of LocalDateTimeRange objects.
+   *
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of LocalDateTimeRange objects
+   */
+  public static Object localDateTimeRangeArrayOut(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new LocalDateTimeRange[] {};
+    }
+
+    String[] parts = (String[]) textArrayOut(in, null);
+
+    LocalDateTimeRange[] ranges = new LocalDateTimeRange[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i] == null) {
+        ranges[i] = null;
+      } else {
+        ranges[i] = (LocalDateTimeRange) localDateTimeRangeOut(parts[i], LongRange.class);
+      }
+    }
+    return ranges;
+  }
+
+  /**
+   * Converts the string from the database to a OffsetDateTimeRange object.
+   *
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return a OffsetDateTimeRange object
    */
   public static Object offsetDateTimeRangeOut(String in, Class<?> requestedClass) {
     if ("empty".equals(in)) {
@@ -1397,11 +1450,11 @@ public class TextParser {
   }
 
   /**
-   * Converts the string from the database to an array of NumericRange objects.
+   * Converts the string from the database to an array of OffsetDateTimeRange objects.
    *
    * @param in the array as a string
    * @param requestedClass the class that the user wanted
-   * @return an array of NumericRange objects
+   * @return an array of OffsetDateTimeRange objects
    */
   public static Object offsetDateTimeRangeArrayOut(String in, Class<?> requestedClass) {
     if ("{}".equals(in)) {

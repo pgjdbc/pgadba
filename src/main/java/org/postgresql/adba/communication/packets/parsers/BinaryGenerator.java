@@ -23,6 +23,7 @@ import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.IntegerRange;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
+import org.postgresql.adba.pgdatatypes.LocalDateTimeRange;
 import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.pgdatatypes.NumericRange;
 import org.postgresql.adba.pgdatatypes.OffsetDateTimeRange;
@@ -2075,6 +2076,68 @@ public class BinaryGenerator {
 
     throw new RuntimeException(input.getClass().getName()
         + " can't be converted to byte[] to send as a numrange[] to server");
+  }
+
+  /**
+   * Converts a LocalDateTimeRange object to something the server understands.
+   *
+   * @param input a LocalDateTimeRange
+   * @return a byte array
+   */
+  public static byte[] fromLocalDateTimeRange(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof LocalDateTimeRange) {
+      LocalDateTimeRange range = (LocalDateTimeRange) input;
+
+      if (range.isEmpty()) {
+        return "empty".getBytes(StandardCharsets.UTF_8);
+      }
+
+      return ((range.isLowerInclusive() ? "[" : "(")
+          + (range.getLower() == null ? "" : range.getLower().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)) + ","
+          + (range.getUpper() == null ? "" : range.getUpper().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+          + (range.isUpperInclusive() ? "]" : ")"))
+          .getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a tsrange to server");
+  }
+
+  /**
+   * Converts an array of LocalDateTimeRange objects to something the server understands.
+   *
+   * @param input a LocalDateTimeRange array
+   * @return a byte array
+   */
+  public static byte[] fromLocalDateTimeRangeArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof LocalDateTimeRange[]) {
+      StringBuilder sb = new StringBuilder("{");
+      LocalDateTimeRange[] in = (LocalDateTimeRange[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        if (in[i] == null) {
+          sb.append("NULL");
+        } else {
+          sb.append('"').append(new String(fromLocalDateTimeRange(in[i]))).append('"');
+        }
+      }
+      sb.append('}');
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a tsrange[] to server");
   }
 
   /**
