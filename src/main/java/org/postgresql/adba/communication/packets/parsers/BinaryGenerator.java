@@ -25,6 +25,7 @@ import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.pgdatatypes.NumericRange;
+import org.postgresql.adba.pgdatatypes.OffsetDateTimeRange;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.pgdatatypes.Polygon;
@@ -2040,7 +2041,7 @@ public class BinaryGenerator {
     }
 
     throw new RuntimeException(input.getClass().getName()
-        + " can't be converted to byte[] to send as a int8range to server");
+        + " can't be converted to byte[] to send as a numrange to server");
   }
 
   /**
@@ -2073,7 +2074,69 @@ public class BinaryGenerator {
     }
 
     throw new RuntimeException(input.getClass().getName()
-        + " can't be converted to byte[] to send as a int8range[] to server");
+        + " can't be converted to byte[] to send as a numrange[] to server");
+  }
+
+  /**
+   * Converts a OffsetDateTimeRange object to something the server understands.
+   *
+   * @param input a OffsetDateTimeRange
+   * @return a byte array
+   */
+  public static byte[] fromOffsetDateTimeRange(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof OffsetDateTimeRange) {
+      OffsetDateTimeRange range = (OffsetDateTimeRange) input;
+
+      if (range.isEmpty()) {
+        return "empty".getBytes(StandardCharsets.UTF_8);
+      }
+
+      return ((range.isLowerInclusive() ? "[" : "(")
+          + (range.getLower() == null ? "" : range.getLower().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)) + ","
+          + (range.getUpper() == null ? "" : range.getUpper().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+          + (range.isUpperInclusive() ? "]" : ")"))
+          .getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a tstzrange to server");
+  }
+
+  /**
+   * Converts an array of NumericRange objects to something the server understands.
+   *
+   * @param input a NumericRange array
+   * @return a byte array
+   */
+  public static byte[] fromOffsetDateTimeRangeArray(Object input) {
+    if (input == null) {
+      return new byte[]{};
+    }
+
+    if (input instanceof OffsetDateTimeRange[]) {
+      StringBuilder sb = new StringBuilder("{");
+      OffsetDateTimeRange[] in = (OffsetDateTimeRange[]) input;
+      for (int i = 0; i < in.length; i++) {
+        if (i != 0) {
+          sb.append(',');
+        }
+
+        if (in[i] == null) {
+          sb.append("NULL");
+        } else {
+          sb.append('"').append(new String(fromOffsetDateTimeRange(in[i]))).append('"');
+        }
+      }
+      sb.append('}');
+      return sb.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    throw new RuntimeException(input.getClass().getName()
+        + " can't be converted to byte[] to send as a tstzrange[] to server");
   }
 
   /**

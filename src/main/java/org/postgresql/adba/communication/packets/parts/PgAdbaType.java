@@ -23,6 +23,7 @@ import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.pgdatatypes.NumericRange;
+import org.postgresql.adba.pgdatatypes.OffsetDateTimeRange;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.pgdatatypes.Polygon;
@@ -421,7 +422,17 @@ public enum PgAdbaType implements SqlType {
    * Identifies an array of numrange.
    */
   NUMERIC_RANGE_ARRAY("numrange[]", 3907, AdbaType.OTHER,
-      BinaryGenerator::fromNumericRangeArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromNumericRangeArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an tstzrange.
+   */
+  OFFSET_DATE_TIME_RANGE("tstzrange", 3910, AdbaType.OTHER,
+      BinaryGenerator::fromOffsetDateTimeRange, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of tstzrange.
+   */
+  OFFSET_DATE_TIME_RANGE_ARRAY("tstzrange[]", 3911, AdbaType.OTHER,
+      BinaryGenerator::fromOffsetDateTimeRangeArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -516,6 +527,8 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(IntegerRange[].class, INTEGER_RANGE_ARRAY);
     classToDb.put(NumericRange.class, NUMERIC_RANGE);
     classToDb.put(NumericRange[].class, NUMERIC_RANGE_ARRAY);
+    classToDb.put(OffsetDateTimeRange.class, OFFSET_DATE_TIME_RANGE);
+    classToDb.put(OffsetDateTimeRange[].class, OFFSET_DATE_TIME_RANGE_ARRAY);
 
   }
 

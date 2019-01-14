@@ -20,6 +20,7 @@ import org.postgresql.adba.PgSessionProperty;
 import org.postgresql.adba.buffer.ByteBufferPool;
 import org.postgresql.adba.buffer.ByteBufferPoolOutputStream;
 import org.postgresql.adba.buffer.PooledByteBuffer;
+import org.postgresql.adba.communication.BeFrame.BackendTag;
 import org.postgresql.adba.communication.network.CloseResponse;
 import org.postgresql.adba.communication.network.ExecuteResponse;
 import org.postgresql.adba.communication.packets.ErrorPacket;
@@ -64,7 +65,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    */
   private NetworkResponse blockingResponse = new NetworkResponse() {
     @Override
-    public NetworkResponse read(NetworkReadContext context) throws IOException {
+    public NetworkResponse read(NetworkReadContext context) {
       throw new IllegalStateException("Should not read until connected");
     }
 
@@ -389,24 +390,19 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
           }
 
           // Handle frame
-          switch (frame.getTag()) {
-            case ERROR_RESPONSE:
-              // Handle error
-              ErrorPacket errorPacket = new ErrorPacket(frame.getPayload());
-              immediateResponse = awaitingResponse.handleException(errorPacket);
-              boolean haveConsumedExecuteResponse = false;
-              while (awaitingResponses.peek() != null && !haveConsumedExecuteResponse) {
-                if (awaitingResponses.peek() instanceof ExecuteResponse) {
-                  haveConsumedExecuteResponse = true;
-                }
-                awaitingResponses.poll().handleException(errorPacket);
+          if (frame.getTag() == BackendTag.ERROR_RESPONSE) { // Handle error
+            ErrorPacket errorPacket = new ErrorPacket(frame.getPayload());
+            immediateResponse = awaitingResponse.handleException(errorPacket);
+            boolean haveConsumedExecuteResponse = false;
+            while (awaitingResponses.peek() != null && !haveConsumedExecuteResponse) {
+              if (awaitingResponses.peek() instanceof ExecuteResponse) {
+                haveConsumedExecuteResponse = true;
               }
-              break;
-
-            default:
-              // Provide frame to awaiting response
-              beFrame = frame;
-              immediateResponse = awaitingResponse.read(this);
+              awaitingResponses.poll().handleException(errorPacket);
+            }
+          } else { // Provide frame to awaiting response
+            beFrame = frame;
+            immediateResponse = awaitingResponse.read(this);
           }
 
           // Remove if blocking writing
@@ -425,9 +421,9 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
       context.setInterestedOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
     } catch (NeedsWriteException e) {
       isWriteRequired = true;
-    } catch (NotYetConnectedException | ClosedChannelException ignore) {
-      ignore.printStackTrace();
-      throw ignore;
+    } catch (NotYetConnectedException | ClosedChannelException e) {
+      e.printStackTrace();
+      throw e;
     } finally {
       if (isWriteRequired) {
         context.writeRequired();

@@ -28,6 +28,7 @@ import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
 import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.pgdatatypes.NumericRange;
+import org.postgresql.adba.pgdatatypes.OffsetDateTimeRange;
 import org.postgresql.adba.pgdatatypes.Path;
 import org.postgresql.adba.pgdatatypes.Point;
 import org.postgresql.adba.pgdatatypes.Polygon;
@@ -1352,7 +1353,7 @@ public class TextParser {
    */
   public static Object numericRangeOutArray(String in, Class<?> requestedClass) {
     if ("{}".equals(in)) {
-      return new LongRange[] {};
+      return new NumericRange[] {};
     }
 
     String[] parts = (String[]) textArrayOut(in, null);
@@ -1364,6 +1365,58 @@ public class TextParser {
         ranges[i] = null;
       } else {
         ranges[i] = (NumericRange) numericRangeOut(parts[i], LongRange.class);
+      }
+    }
+    return ranges;
+  }
+
+  /**
+   * Converts the string from the database to a NumericRange object.
+   *
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return a NumericRange object
+   */
+  public static Object offsetDateTimeRangeOut(String in, Class<?> requestedClass) {
+    if ("empty".equals(in)) {
+      return new OffsetDateTimeRange();
+    }
+
+    boolean lowerInclusive = in.startsWith("[");
+    boolean upperInclusive = in.endsWith("]");
+
+    String[] parts = in.split(",");
+    parts[0] = parts[0].substring(1);
+    parts[1] = parts[1].substring(0, parts[1].length() - 1);
+
+    return new OffsetDateTimeRange(parts[0].length() == 0 ? null :
+        OffsetDateTime.parse(parts[0].substring(1, parts[0].length() - 1),
+        timestampWithTimeZoneFormatter), parts[1].length() == 0 ? null :
+        OffsetDateTime.parse(parts[1].substring(1, parts[1].length() - 1),
+        timestampWithTimeZoneFormatter), lowerInclusive, upperInclusive);
+  }
+
+  /**
+   * Converts the string from the database to an array of NumericRange objects.
+   *
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of NumericRange objects
+   */
+  public static Object offsetDateTimeRangeArrayOut(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new OffsetDateTimeRange[] {};
+    }
+
+    String[] parts = (String[]) textArrayOut(in, null);
+
+    OffsetDateTimeRange[] ranges = new OffsetDateTimeRange[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i] == null) {
+        ranges[i] = null;
+      } else {
+        ranges[i] = (OffsetDateTimeRange) offsetDateTimeRangeOut(parts[i], LongRange.class);
       }
     }
     return ranges;
