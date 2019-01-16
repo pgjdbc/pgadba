@@ -21,6 +21,7 @@ import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.IntegerRange;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
+import org.postgresql.adba.pgdatatypes.LocalDateRange;
 import org.postgresql.adba.pgdatatypes.LocalDateTimeRange;
 import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.pgdatatypes.NumericRange;
@@ -443,7 +444,17 @@ public enum PgAdbaType implements SqlType {
    * Identifies an array of tstzrange.
    */
   OFFSET_DATE_TIME_RANGE_ARRAY("tstzrange[]", 3911, AdbaType.OTHER,
-      BinaryGenerator::fromOffsetDateTimeRangeArray, FormatCodeTypes.TEXT);
+      BinaryGenerator::fromOffsetDateTimeRangeArray, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an daterange.
+   */
+  LOCAL_DATE_RANGE("daterange", 3912, AdbaType.OTHER,
+      BinaryGenerator::fromLocalDateRange, FormatCodeTypes.TEXT),
+  /**
+   * Identifies an array of tstzrange.
+   */
+  LOCAL_DATE_RANGE_ARRAY("daterange[]", 3913, AdbaType.OTHER,
+      BinaryGenerator::fromLocalDateRangeArray, FormatCodeTypes.TEXT);
 
   private String name;
   private Integer oid;
@@ -542,6 +553,8 @@ public enum PgAdbaType implements SqlType {
     classToDb.put(LocalDateTimeRange[].class, LOCAL_DATE_TIME_RANGE_ARRAY);
     classToDb.put(OffsetDateTimeRange.class, OFFSET_DATE_TIME_RANGE);
     classToDb.put(OffsetDateTimeRange[].class, OFFSET_DATE_TIME_RANGE_ARRAY);
+    classToDb.put(LocalDateRange.class, LOCAL_DATE_RANGE);
+    classToDb.put(LocalDateRange[].class, LOCAL_DATE_RANGE_ARRAY);
 
   }
 

@@ -26,6 +26,7 @@ import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.IntegerRange;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
+import org.postgresql.adba.pgdatatypes.LocalDateRange;
 import org.postgresql.adba.pgdatatypes.LocalDateTimeRange;
 import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.pgdatatypes.NumericRange;
@@ -1417,7 +1418,7 @@ public class TextParser {
       if (parts[i] == null) {
         ranges[i] = null;
       } else {
-        ranges[i] = (LocalDateTimeRange) localDateTimeRangeOut(parts[i], LongRange.class);
+        ranges[i] = (LocalDateTimeRange) localDateTimeRangeOut(parts[i], LocalDateTimeRange.class);
       }
     }
     return ranges;
@@ -1469,7 +1470,59 @@ public class TextParser {
       if (parts[i] == null) {
         ranges[i] = null;
       } else {
-        ranges[i] = (OffsetDateTimeRange) offsetDateTimeRangeOut(parts[i], LongRange.class);
+        ranges[i] = (OffsetDateTimeRange) offsetDateTimeRangeOut(parts[i], OffsetDateTimeRange.class);
+      }
+    }
+    return ranges;
+  }
+
+  /**
+   * Converts the string from the database to a LocalDateRange object.
+   *
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return a LocalDateRange object
+   */
+  public static Object localDateRangeOut(String in, Class<?> requestedClass) {
+    if ("empty".equals(in)) {
+      return new LocalDateRange();
+    }
+
+    boolean lowerInclusive = in.startsWith("[");
+    boolean upperInclusive = in.endsWith("]");
+
+    String[] parts = in.split(",");
+    parts[0] = parts[0].substring(1);
+    parts[1] = parts[1].substring(0, parts[1].length() - 1);
+
+    return new LocalDateRange(parts[0].length() == 0 ? null :
+        LocalDate.parse(parts[0],
+            localDateFormatter), parts[1].length() == 0 ? null :
+        LocalDate.parse(parts[1],
+            localDateFormatter), lowerInclusive, upperInclusive);
+  }
+
+  /**
+   * Converts the string from the database to an array of LocalDateRange objects.
+   *
+   * @param in the array as a string
+   * @param requestedClass the class that the user wanted
+   * @return an array of LocalDateRange objects
+   */
+  public static Object localDateRangeArrayOut(String in, Class<?> requestedClass) {
+    if ("{}".equals(in)) {
+      return new LocalDateRange[] {};
+    }
+
+    String[] parts = (String[]) textArrayOut(in, null);
+
+    LocalDateRange[] ranges = new LocalDateRange[parts.length];
+
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i] == null) {
+        ranges[i] = null;
+      } else {
+        ranges[i] = (LocalDateRange) localDateRangeOut(parts[i], LocalDateRange.class);
       }
     }
     return ranges;

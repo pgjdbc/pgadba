@@ -46,6 +46,7 @@ import org.postgresql.adba.pgdatatypes.Circle;
 import org.postgresql.adba.pgdatatypes.IntegerRange;
 import org.postgresql.adba.pgdatatypes.Line;
 import org.postgresql.adba.pgdatatypes.LineSegment;
+import org.postgresql.adba.pgdatatypes.LocalDateRange;
 import org.postgresql.adba.pgdatatypes.LocalDateTimeRange;
 import org.postgresql.adba.pgdatatypes.LongRange;
 import org.postgresql.adba.pgdatatypes.NumericRange;
@@ -179,6 +180,11 @@ public class InsertSelectDataTypesTest {
             new OffsetDateTimeRange(OffsetDateTime.of(2021, 1, 2, 3, 4, 5, 0, UTC),
                 OffsetDateTime.of(2021, 1, 2, 3, 4, 5, 0, UTC), true, true), new OffsetDateTimeRange()},
             PgAdbaType.OFFSET_DATE_TIME_RANGE_ARRAY, new OffsetDateTimeRange[] {}, new OffsetDateTimeRange[] {null}},
+        {"daterange", new LocalDateRange(LocalDate.of(2019, 1, 2), LocalDate.of(2020, 1, 2), true, false),
+            LocalDateRange.class, PgAdbaType.LOCAL_DATE_RANGE, LocalDateRange[].class, new LocalDateRange[]
+            {new LocalDateRange(null, null, false, true), new LocalDateRange(LocalDate.of(2021, 1, 2),
+                LocalDate.of(2021, 1, 2), true, true), new LocalDateRange()},
+            PgAdbaType.LOCAL_DATE_RANGE_ARRAY, new LocalDateRange[] {}, new LocalDateRange[] {null}},
     });
   }
 
