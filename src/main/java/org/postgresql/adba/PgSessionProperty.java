@@ -185,7 +185,7 @@ public enum PgSessionProperty implements SessionProperty {
   /**
    * Allows specifying the {@link NioLoop}.
    */
-  NIO_LOOP(String.class, null, false),
+  NIO_LOOP(NioLoop.class, null, false),
   
   /**
    * Allows specifying the {@link ByteBufferPool}.
