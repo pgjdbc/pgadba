@@ -128,15 +128,15 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
    *
    * <p>An attempt is made to read up to <i>r</i> bytesProduced from the channel, where
    * <i>r</i> is the number of bytesProduced remaining in the buffer, that is,
-   * <tt>dst.remaining()</tt>, at the moment this method is invoked.</p>
+   * {@code dst.remaining()}, at the moment this method is invoked.</p>
    *
    * <p>Suppose that a byte sequence of length <i>n</i> is read, where
-   * <tt>0</tt> &nbsp;<tt>&lt;=</tt>&nbsp;<i>n</i>&nbsp;<tt>&lt;=</tt>&nbsp;<i>r</i>.
+   * {@code 0} &nbsp;{@code &lt;=}&nbsp;<i>n</i>&nbsp;{@code &lt;=}&nbsp;<i>r</i>.
    * This byte sequence will be transferred into the buffer so that the first byte in the sequence is at index <i>p</i> and the
    * last byte is at index
-   * <i>p</i>&nbsp;<tt>+</tt>&nbsp;<i>n</i>&nbsp;<tt>-</tt>&nbsp;<tt>1</tt>,
+   * <i>p</i>&nbsp;{@code +}&nbsp;<i>n</i>&nbsp;{@code -}&nbsp;{@code 1},
    * where <i>p</i> is the buffer's position at the moment this method is invoked. Upon return the buffer's position will be equal
-   * to <i>p</i> &nbsp;<tt>+</tt>&nbsp;<i>n</i>; its limit will not have changed.</p>
+   * to <i>p</i> &nbsp;{@code +}&nbsp;<i>n</i>; its limit will not have changed.</p>
    *
    * <p>A read operation might not fill the buffer, and in fact it might not read any bytesProduced at all. Whether or not it does
    * so depends upon the nature and state of the underlying channel. It is guaranteed, however, that if a channel is in blocking
@@ -153,7 +153,7 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
    * channel, however, then an invocation of this method will block until the first operation is complete.</p>
    *
    * @param dst The buffer into which bytesProduced are to be transferred
-   * @return The number of bytesProduced read, or <tt>-1</tt> if the channel has reached end-of-stream; contrary to the behavior
+   * @return The number of bytesProduced read, or {@code -1} if the channel has reached end-of-stream; contrary to the behavior
    *     specified in {@link ByteChannel}, this method never returns 0, but throws {@link WouldBlockException}
    * @throws WouldBlockException if the channel is in non-blocking mode and the IO operation cannot be completed immediately
    * @throws NeedsTaskException if the channel is not configured to run tasks automatically and a task needs to be executed to
@@ -168,16 +168,16 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
    *
    * <p>An attempt is made to write up to <i>r</i> bytesProduced to the channel, where
    * <i>r</i> is the number of bytesProduced remaining in the buffer, that is,
-   * <tt>src.remaining()</tt>, at the moment this method is invoked.</p>
+   * {@code src.remaining()}, at the moment this method is invoked.</p>
    *
    * <p>Suppose that a byte sequence of length <i>n</i> is written, where
-   * <tt>0</tt>&nbsp;<tt>&lt;=</tt>&nbsp;<i>n</i>&nbsp;<tt>&lt;=</tt>&nbsp;
+   * {@code 0}&nbsp;{@code &lt;=}&nbsp;<i>n</i>&nbsp;{@code &lt;=}&nbsp;
    * <i>r</i>. This byte sequence will be transferred from the buffer starting
    * at index <i>p</i>, where <i>p</i> is the buffer's position at the moment this method is invoked; the index of the last byte
    * written will be
-   * <i>p</i>&nbsp;<tt>+</tt>&nbsp;<i>n</i>&nbsp;<tt>-</tt>&nbsp;<tt>1</tt>.
+   * <i>p</i>&nbsp;{@code +}&nbsp;<i>n</i>&nbsp;{@code -}&nbsp;{@code 1}.
    * Upon return the buffer's position will be equal to <i>p</i>&nbsp;
-   * <tt>+</tt>&nbsp;<i>n</i>; its limit will not have changed.</p>
+   * {@code +}&nbsp;<i>n</i>; its limit will not have changed.</p>
    *
    * <p>If the underlying channel is in blocking mode, a write operation will return only after writing all of the <i>r</i>
    * requested bytesProduced. On the other hand, if it is in non-blocking mode, this operation may write only some of the
@@ -266,13 +266,13 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
    *
    * @param srcs The buffers from which bytesProduced are to be retrieved
    * @param offset The offset within the buffer array of the first buffer from which bytesProduced are to be retrieved; must be
-   *     non-negative and no larger than <tt>srcs.length</tt>
-   * @param length The maximum number of buffers to be accessed; must be non-negative and no larger than <tt>srcs.length</tt>
-   *     &nbsp;-&nbsp;<tt>offset</tt>
+   *     non-negative and no larger than {@code srcs.length}
+   * @param length The maximum number of buffers to be accessed; must be non-negative and no larger than {@code srcs.length}
+   *     &nbsp;-&nbsp;{@code offset}
    * @return The number of bytesProduced written, contrary to the behavior specified in {@link ByteChannel}, this method never
    *     returns 0, but throws {@link WouldBlockException}
-   * @throws IndexOutOfBoundsException If the preconditions on the <tt>offset</tt> and
-   *     <tt>length</tt> parameters do not hold
+   * @throws IndexOutOfBoundsException If the preconditions on the {@code offset} and
+   *     {@code length} parameters do not hold
    * @throws WouldBlockException if the channel is in non-blocking mode and the IO operation cannot be completed immediately
    * @throws NeedsTaskException if the channel is not configured to run tasks automatically and a task needs to be executed to
    *     complete the operation
@@ -284,7 +284,7 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
   /**
    * Writes a sequence of bytesProduced to this channel from the given buffers.
    *
-   * <p>An invocation of this method of the form <tt>c.write(srcs)</tt> behaves in exactly the same manner as the invocation</p>
+   * <p>An invocation of this method of the form {@code c.write(srcs)} behaves in exactly the same manner as the invocation</p>
    *
    * <blockquote>
    *
@@ -300,8 +300,8 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
    * @param srcs The buffers from which bytesProduced are to be retrieved
    * @return The number of bytesProduced written, contrary to the behavior specified in {@link ByteChannel}, this method never
    *     returns 0, but throws {@link WouldBlockException}
-   * @throws IndexOutOfBoundsException If the preconditions on the <tt>offset</tt> and
-   *     <tt>length</tt> parameters do not hold
+   * @throws IndexOutOfBoundsException If the preconditions on the {@code offset} and
+   *     {@code length} parameters do not hold
    * @throws WouldBlockException if the channel is in non-blocking mode and the IO operation cannot be completed immediately
    * @throws NeedsTaskException if the channel is not configured to run tasks automatically and a task needs to be executed to
    *     complete the operation
@@ -320,13 +320,13 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
    *
    * @param dsts The buffers into which bytesProduced are to be transferred
    * @param offset The offset within the buffer array of the first buffer into which bytesProduced are to be transferred; must be
-   *     non-negative and no larger than <tt>dsts.length</tt>
-   * @param length The maximum number of buffers to be accessed; must be non-negative and no larger than <tt>dsts.length</tt>
-   *     &nbsp;-&nbsp;<tt>offset</tt>
-   * @return The number of bytesProduced read, or <tt>-1</tt> if the channel has reached end-of-stream; contrary to the behavior
+   *     non-negative and no larger than {@code dsts.length}
+   * @param length The maximum number of buffers to be accessed; must be non-negative and no larger than {@code dsts.length}
+   *     &nbsp;-&nbsp;{@code offset}
+   * @return The number of bytesProduced read, or {@code -1} if the channel has reached end-of-stream; contrary to the behavior
    *     specified in {@link ByteChannel}, this method never returns 0, but throws {@link WouldBlockException}
-   * @throws IndexOutOfBoundsException If the preconditions on the <tt>offset</tt> and
-   *     <tt>length</tt> parameters do not hold
+   * @throws IndexOutOfBoundsException If the preconditions on the {@code offset} and
+   *     {@code length} parameters do not hold
    * @throws WouldBlockException if the channel is in non-blocking mode and the IO operation cannot be completed immediately
    * @throws NeedsTaskException if the channel is not configured to run tasks automatically and a task needs to be executed to
    *     complete the operation
@@ -338,7 +338,7 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
   /**
    * Reads a sequence of bytesProduced from this channel into the given buffers.
    *
-   * <p>An invocation of this method of the form <tt>c.read(dsts)</tt> behaves in exactly the same manner as the invocation</p>
+   * <p>An invocation of this method of the form {@code c.read(dsts)} behaves in exactly the same manner as the invocation</p>
    *
    * <blockquote>
    *
@@ -352,10 +352,10 @@ public interface TlsChannel extends ByteChannel, GatheringByteChannel, Scatterin
    * {@link #read(ByteBuffer)} for more details.</p>
    *
    * @param dsts The buffers into which bytesProduced are to be transferred
-   * @return The number of bytesProduced read, or <tt>-1</tt> if the channel has reached end-of-stream; contrary to the behavior
+   * @return The number of bytesProduced read, or {@code -1} if the channel has reached end-of-stream; contrary to the behavior
    *     specified in {@link ByteChannel}, this method never returns 0, but throws {@link WouldBlockException}
-   * @throws IndexOutOfBoundsException If the preconditions on the <tt>offset</tt> and
-   *     <tt>length</tt> parameters do not hold
+   * @throws IndexOutOfBoundsException If the preconditions on the {@code offset} and
+   *     {@code length} parameters do not hold
    * @throws WouldBlockException if the channel is in non-blocking mode and the IO operation cannot be completed immediately
    * @throws NeedsTaskException if the channel is not configured to run tasks automatically and a task needs to be executed to
    *     complete the operation

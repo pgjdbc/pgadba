@@ -132,6 +132,7 @@
         <version>3.0.1</version>
         <configuration>
           <excludePackageNames>jdk</excludePackageNames>
+          <additionalOptions>-html5</additionalOptions>
         </configuration>
         <executions>
           <execution>
