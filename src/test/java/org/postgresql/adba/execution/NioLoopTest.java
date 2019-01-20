@@ -13,7 +13,7 @@ import jdk.incubator.sql2.Session;
 import jdk.incubator.sql2.Submission;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.postgresql.adba.PgSessionProperty;
+import org.postgresql.adba.PgDataSourceProperty;
 import org.postgresql.adba.testutil.CollectorUtils;
 import org.postgresql.adba.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -48,7 +48,7 @@ public class NioLoopTest {
   @Test
   public void provideNioLoop() throws Exception {
     MockNioLoop loop = new MockNioLoop();
-    try (DataSource dataSource = createDataSource().sessionProperty(PgSessionProperty.NIO_LOOP, loop).build()) {
+    try (DataSource dataSource = createDataSource().property(PgDataSourceProperty.NIO_LOOP, loop).build()) {
       Session session = dataSource.getSession();
 
       // Undertake single request
@@ -86,7 +86,7 @@ public class NioLoopTest {
   @Test
   public void reuseNioLoopBetweenConnections() throws Exception {
     MockNioLoop loop = new MockNioLoop();
-    try (DataSource dataSource = createDataSource().sessionProperty(PgSessionProperty.NIO_LOOP, loop).build()) {
+    try (DataSource dataSource = createDataSource().property(PgDataSourceProperty.NIO_LOOP, loop).build()) {
 
       // Run queries on multiple connections
       final int connectionCount = 10;
@@ -109,8 +109,8 @@ public class NioLoopTest {
   public void reuseNioLoopBetweenDataSources() throws Exception {
     MockNioLoop loop = new MockNioLoop();
     try (
-        DataSource dataSourceOne = createDataSource().sessionProperty(PgSessionProperty.NIO_LOOP, loop).build();
-        DataSource dataSourceTwo = createDataSource().sessionProperty(PgSessionProperty.NIO_LOOP, loop)
+        DataSource dataSourceOne = createDataSource().property(PgDataSourceProperty.NIO_LOOP, loop).build();
+        DataSource dataSourceTwo = createDataSource().property(PgDataSourceProperty.NIO_LOOP, loop)
             .build()) {
 
       // Run query via each data source

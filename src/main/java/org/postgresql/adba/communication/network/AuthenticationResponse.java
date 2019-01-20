@@ -1,16 +1,15 @@
 package org.postgresql.adba.communication.network;
 
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
-import org.postgresql.adba.PgSessionProperty;
+import java.util.function.Consumer;
+import org.postgresql.adba.PgSessionDbProperty;
 import org.postgresql.adba.communication.BeFrame;
 import org.postgresql.adba.communication.NetworkReadContext;
 import org.postgresql.adba.communication.NetworkResponse;
 import org.postgresql.adba.communication.packets.AuthenticationRequest;
 import org.postgresql.adba.communication.packets.ParameterStatus;
 import org.postgresql.adba.submissions.ConnectSubmission;
-
-import java.io.IOException;
-import java.util.function.Consumer;
 
 /**
  * Authentication success {@link NetworkResponse}.
@@ -47,7 +46,11 @@ public class AuthenticationResponse implements NetworkResponse {
       case PARAM_STATUS:
         // Load parameters for connection
         ParameterStatus paramStatus = new ParameterStatus(frame.getPayload());
-        context.setProperty(PgSessionProperty.lookup(paramStatus.getName()), paramStatus.getValue());
+        try {
+          context.setProperty(PgSessionDbProperty.lookup(paramStatus.getName()), paramStatus.getValue());
+        } catch (IllegalArgumentException e) {
+          //e.printStackTrace();
+        }
         return this;
 
       case CANCELLATION_KEY_DATA:

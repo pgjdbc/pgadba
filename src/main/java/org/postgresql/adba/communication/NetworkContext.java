@@ -1,8 +1,8 @@
 package org.postgresql.adba.communication;
 
 import java.nio.channels.SocketChannel;
-import java.util.Map;
 import jdk.incubator.sql2.SessionProperty;
+import org.postgresql.adba.util.PropertyHolder;
 
 /**
  * Context available to all {@link NetworkRequest} events.
@@ -23,7 +23,7 @@ public interface NetworkContext {
    * 
    * @return {@link SessionProperty} values.
    */
-  Map<SessionProperty, Object> getProperties();
+  PropertyHolder getProperties();
 
   void startTls();
 }

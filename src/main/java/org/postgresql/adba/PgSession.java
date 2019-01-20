@@ -32,12 +32,13 @@ import org.postgresql.adba.operations.PgConnectOperation;
 import org.postgresql.adba.operations.PgOperationGroup;
 import org.postgresql.adba.operations.PgValidationOperation;
 import org.postgresql.adba.operations.helpers.PgTransaction;
+import org.postgresql.adba.util.PropertyHolder;
 
 public class PgSession extends PgOperationGroup<Object, Object> implements Session {
 
   private Logger logger = Logger.getLogger(PgSession.class.getName());
 
-  private final Map<SessionProperty, Object> properties;
+  private final PropertyHolder properties;
 
   private final PgDataSource dataSource;
 
@@ -62,7 +63,7 @@ public class PgSession extends PgOperationGroup<Object, Object> implements Sessi
    * @param bufferPool Pool of {@link PooledByteBuffer} instances.
    * @throws IOException if there is problems with opening a socket channel
    */
-  public PgSession(Map<SessionProperty, Object> properties, PgDataSource dataSource,
+  public PgSession(PropertyHolder properties, PgDataSource dataSource,
       NioLoop loop,
       ByteBufferPool bufferPool) throws IOException {
     this.properties = properties;
@@ -262,7 +263,7 @@ public class PgSession extends PgOperationGroup<Object, Object> implements Sessi
    */
   @Override
   public Map<SessionProperty, Object> getProperties() {
-    return properties;
+    return properties.getAll();
   }
 
   /**

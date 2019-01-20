@@ -2,9 +2,7 @@ package org.postgresql.adba.communication.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Map;
 import jdk.incubator.sql2.AdbaSessionProperty;
-import jdk.incubator.sql2.SessionProperty;
 import org.postgresql.adba.PgSessionProperty;
 import org.postgresql.adba.communication.BeFrame;
 import org.postgresql.adba.communication.NetworkConnect;
@@ -17,6 +15,7 @@ import org.postgresql.adba.communication.NetworkWriteContext;
 import org.postgresql.adba.communication.packets.AuthenticationRequest;
 import org.postgresql.adba.submissions.ConnectSubmission;
 import org.postgresql.adba.util.BinaryHelper;
+import org.postgresql.adba.util.PropertyHolder;
 
 /**
  * Connect {@link NetworkRequest}.
@@ -46,7 +45,7 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
   @Override
   public void connect(NetworkConnectContext context) throws IOException {
     // Undertake connecting
-    Map<SessionProperty, Object> properties = context.getProperties();
+    PropertyHolder properties = context.getProperties();
     context.getSocketChannel().connect(new InetSocketAddress((String) properties.get(PgSessionProperty.HOST),
         (Integer) properties.get(PgSessionProperty.PORT)));
   }
@@ -67,7 +66,7 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
   public NetworkRequest write(NetworkWriteContext context) throws IOException {
 
     // Obtain the properties
-    Map<SessionProperty, Object> properties = context.getProperties();
+    PropertyHolder properties = context.getProperties();
 
     // As now connected, send start up
     NetworkOutputStream wire = context.getOutputStream();
@@ -78,8 +77,7 @@ public class NetworkConnectRequest implements NetworkConnect, NetworkRequest, Ne
     wire.write("database");
     wire.write(((String) properties.get(PgSessionProperty.DATABASE)));
     wire.write("application_name");
-    wire.write(
-        (String) properties.getOrDefault(PgSessionProperty.APPLICATION_NAME, PgSessionProperty.APPLICATION_NAME.defaultValue()));
+    wire.write((String) properties.get(PgSessionProperty.APPLICATION_NAME));
     wire.write("client_encoding");
     wire.write("UTF8");
     wire.writeTerminator();

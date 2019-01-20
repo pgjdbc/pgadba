@@ -9,39 +9,26 @@ import java.util.Properties;
 import jdk.incubator.sql2.AdbaSessionProperty;
 import jdk.incubator.sql2.Session;
 import jdk.incubator.sql2.SessionProperty;
-import org.postgresql.adba.exceptions.PropertyException;
+import org.postgresql.adba.util.PropertyHolder;
 
 public class PgSessionBuilder implements Session.Builder {
-  private Map<SessionProperty, Object> properties = new HashMap<>();
-  private PgDataSource dataSource;
+  private final PgDataSource dataSource;
+  private final PropertyHolder properties;
 
   /**
    * Creates a builder for the supplied dataSource.
    *
    * @param dataSource dataSource that the created connections should be a part of.
+   * @param properties properties for this session.
    */
-  public PgSessionBuilder(PgDataSource dataSource) {
+  public PgSessionBuilder(PgDataSource dataSource, PropertyHolder properties) {
     this.dataSource = dataSource;
-    for (PgSessionProperty prop : PgSessionProperty.values()) {
-      properties.put(prop, prop.defaultValue());
-    }
-
-    for (Map.Entry<SessionProperty, Object> prop : dataSource.getProperties().entrySet()) {
-      properties.put(prop.getKey(), prop.getValue());
-    }
+    this.properties = properties;
   }
 
   @Override
   public Session.Builder property(SessionProperty p, Object v) {
-    if (!(p instanceof PgSessionProperty)) {
-      throw new PropertyException("Please make sure that the SessionProperty is of type PGConnectionProperties");
-    }
-
-    if (!(v.getClass().isAssignableFrom(p.range()))) {
-      throw new PropertyException("Please make sure that the SessionProperty is of type PGConnectionProperties");
-    }
-
-    properties.put(p, v);
+    properties.sessionPropertyFromSessionBuilder(p, v);
 
     return this;
   }
@@ -52,9 +39,11 @@ public class PgSessionBuilder implements Session.Builder {
 
     if (props != null) {
       for (Map.Entry<SessionProperty, Object> prop : props.entrySet()) {
-        properties.put(prop.getKey(), prop.getValue());
+        properties.sessionPropertyFromSessionBuilder(prop.getKey(), prop.getValue());
       }
     }
+
+    properties.addAllPgDefaults();
 
     try {
       PgSession connection = new PgSession(properties, this.dataSource, this.dataSource.getNioLoop(),

@@ -2,8 +2,6 @@ package org.postgresql.adba.communication.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Map;
-import jdk.incubator.sql2.SessionProperty;
 import org.postgresql.adba.PgSessionProperty;
 import org.postgresql.adba.communication.BeFrame;
 import org.postgresql.adba.communication.NetworkConnect;
@@ -15,6 +13,7 @@ import org.postgresql.adba.communication.NetworkResponse;
 import org.postgresql.adba.communication.NetworkWriteContext;
 import org.postgresql.adba.submissions.ConnectSubmission;
 import org.postgresql.adba.util.BinaryHelper;
+import org.postgresql.adba.util.PropertyHolder;
 
 public class TlsConnectRequest implements NetworkConnect, NetworkRequest, NetworkResponse {
 
@@ -39,7 +38,7 @@ public class TlsConnectRequest implements NetworkConnect, NetworkRequest, Networ
   @Override
   public void connect(NetworkConnectContext context) throws IOException {
     // Undertake connecting
-    Map<SessionProperty, Object> properties = context.getProperties();
+    PropertyHolder properties = context.getProperties();
     context.getSocketChannel().connect(new InetSocketAddress((String) properties.get(PgSessionProperty.HOST),
         (Integer) properties.get(PgSessionProperty.PORT)));
   }

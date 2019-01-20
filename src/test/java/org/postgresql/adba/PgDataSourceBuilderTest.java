@@ -236,7 +236,7 @@ public class PgDataSourceBuilderTest {
     }
   }
 
-  private class CloneableValue implements Cloneable {
+  public class CloneableValue implements Cloneable {
     private boolean cloneCalled = false;
 
     @Override

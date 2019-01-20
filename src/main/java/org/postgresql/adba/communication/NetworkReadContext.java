@@ -1,6 +1,6 @@
 package org.postgresql.adba.communication;
 
-import jdk.incubator.sql2.SessionProperty;
+import org.postgresql.adba.PgSessionDbProperty;
 
 /**
  * Context for writing to the network.
@@ -24,12 +24,12 @@ public interface NetworkReadContext extends NetworkContext {
   PreparedStatementCache getPreparedStatementCache();
 
   /**
-   * Allows overriding {@link SessionProperty}.
+   * set a {@link PgSessionDbProperty} that came from the server.
    * 
-   * @param property {@link SessionProperty}.
+   * @param property {@link PgSessionDbProperty}.
    * @param value    Value.
    */
-  void setProperty(SessionProperty property, Object value);
+  void setProperty(PgSessionDbProperty property, Object value);
 
   /**
    * Triggers for a {@link NetworkRequest} to be undertaken.

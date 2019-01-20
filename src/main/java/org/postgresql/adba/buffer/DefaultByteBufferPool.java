@@ -1,10 +1,8 @@
 package org.postgresql.adba.buffer;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import jdk.incubator.sql2.SessionProperty;
 
 /**
  * Default {@link ByteBufferPool}.
@@ -25,10 +23,8 @@ public class DefaultByteBufferPool implements ByteBufferPool {
 
   /**
    * Instantiate.
-   * 
-   * @param properties Map of properties to configure this pool.
    */
-  public DefaultByteBufferPool(Map<SessionProperty, Object> properties) {
+  public DefaultByteBufferPool() {
     // TODO consider specifying buffer size from properties
     this.bufferSize = 8192; // largest 2 based size fitting jumbo ethernet packet
   }

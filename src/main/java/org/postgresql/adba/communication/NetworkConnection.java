@@ -10,12 +10,11 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.net.ssl.SSLContext;
-import jdk.incubator.sql2.SessionProperty;
 import org.postgresql.adba.PgSession;
+import org.postgresql.adba.PgSessionDbProperty;
 import org.postgresql.adba.PgSessionProperty;
 import org.postgresql.adba.buffer.ByteBufferPool;
 import org.postgresql.adba.buffer.ByteBufferPoolOutputStream;
@@ -27,6 +26,7 @@ import org.postgresql.adba.communication.packets.ErrorPacket;
 import org.postgresql.adba.execution.NioLoop;
 import org.postgresql.adba.execution.NioService;
 import org.postgresql.adba.execution.NioServiceContext;
+import org.postgresql.adba.util.PropertyHolder;
 import org.postgresql.adba.util.tlschannel.ClientTlsChannel;
 import org.postgresql.adba.util.tlschannel.NeedsReadException;
 import org.postgresql.adba.util.tlschannel.NeedsWriteException;
@@ -34,7 +34,7 @@ import org.postgresql.adba.util.tlschannel.TlsChannel;
 
 public class NetworkConnection implements NioService, NetworkConnectContext, NetworkWriteContext, NetworkReadContext {
 
-  private final Map<SessionProperty, Object> properties;
+  private final PropertyHolder properties;
 
   private final PgSession connection;
 
@@ -83,7 +83,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
    * @param loop       {@link NioLoop}.
    * @param bufferPool {@link ByteBufferPool}.
    */
-  public NetworkConnection(Map<SessionProperty, Object> properties, PgSession connection, NioLoop loop,
+  public NetworkConnection(PropertyHolder properties, PgSession connection, NioLoop loop,
       ByteBufferPool bufferPool) {
     this.properties = properties;
     this.connection = connection;
@@ -113,7 +113,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
       // Register the connection
       socketChannel = SocketChannel.open();
       socketChannel.configureBlocking(false);
-      if ((boolean) properties.getOrDefault(PgSessionProperty.TCP_KEEP_ALIVE, false)) {
+      if ((boolean) properties.get(PgSessionProperty.TCP_KEEP_ALIVE)) {
         socketChannel.setOption(SO_KEEPALIVE, true);
       }
       loop.registerNioService(socketChannel, (context) -> {
@@ -481,7 +481,7 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   }
 
   @Override
-  public Map<SessionProperty, Object> getProperties() {
+  public PropertyHolder getProperties() {
     return properties;
   }
 
@@ -530,8 +530,8 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
   }
 
   @Override
-  public void setProperty(SessionProperty property, Object value) {
-    properties.put(property, value);
+  public void setProperty(PgSessionDbProperty property, Object value) {
+    properties.sessionDbProperty(property, value);
   }
 
 }

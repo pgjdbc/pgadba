@@ -2,9 +2,7 @@ package org.postgresql.adba.communication.network;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import jdk.incubator.sql2.AdbaSessionProperty;
-import jdk.incubator.sql2.SessionProperty;
 import org.postgresql.adba.communication.FrontendTag;
 import org.postgresql.adba.communication.NetworkOutputStream;
 import org.postgresql.adba.communication.NetworkRequest;
@@ -13,6 +11,7 @@ import org.postgresql.adba.communication.NetworkWriteContext;
 import org.postgresql.adba.communication.packets.AuthenticationRequest;
 import org.postgresql.adba.submissions.ConnectSubmission;
 import org.postgresql.adba.util.BinaryHelper;
+import org.postgresql.adba.util.PropertyHolder;
 
 /**
  * {@link NetworkRequest} to provide password authentication.
@@ -38,7 +37,7 @@ public class Md5PasswordRequest implements NetworkRequest {
   public NetworkRequest write(NetworkWriteContext context) throws IOException {
 
     // Obtain the properties
-    Map<SessionProperty, Object> properties = context.getProperties();
+    PropertyHolder properties = context.getProperties();
 
     // Create the payload (TODO determine if can reduce object creation)
     String username = (String) properties.get(AdbaSessionProperty.USER);

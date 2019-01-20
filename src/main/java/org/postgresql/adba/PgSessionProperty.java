@@ -5,8 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import jdk.incubator.sql2.AdbaSessionProperty;
 import jdk.incubator.sql2.SessionProperty;
-import org.postgresql.adba.buffer.ByteBufferPool;
-import org.postgresql.adba.execution.NioLoop;
 
 public enum PgSessionProperty implements SessionProperty {
   /**
@@ -129,68 +127,7 @@ public enum PgSessionProperty implements SessionProperty {
    * In default mode (disabled) hosts are connected in the given order. If enabled hosts are chosen randomly from the
    * set of suitable candidates.
    */
-  LOAD_BALANCE_HOSTS(Boolean.class, false, false),
-
-  /* TODO: settings below here are set by the server and should be moved into it's own class i think */
-  /**
-   * the charset that the server sets.
-   */
-  CLIENT_ENCODING(Charset.class, StandardCharsets.UTF_8, false),
-
-  /**
-   * the charset that the server uses.
-   */
-  SERVER_ENCODING(Charset.class, StandardCharsets.UTF_8, false),
-
-  /**
-   * Style of dates set by the server.
-   */
-  DATESTYLE(String.class, "", false),
-
-  /**
-   * If the server uses integer of floating point dates.
-   */
-  INTEGER_DATETIMES(String.class, "", false),
-
-  /**
-   * The format that intervals is sent in.
-   */
-  INTERVALSTYLE(String.class, "", false),
-
-  /**
-   * If we are connected as super user.
-   */
-  IS_SUPERUSER(String.class, "", false),
-
-  /**
-   * The server version we are connected to.
-   */
-  SERVER_VERSION(String.class, "", false),
-
-  /**
-   * The authorization method.
-   */
-  SESSION_AUTHORIZATION(String.class, "", false),
-
-  /**
-   * If strings are standard conforming.
-   */
-  STANDARD_CONFORMING_STRINGS(String.class, "", false),
-
-  /**
-   * The time zone of the server we connect to.
-   */
-  TIMEZONE(String.class, "", false),
-
-  /**
-   * Allows specifying the {@link NioLoop}.
-   */
-  NIO_LOOP(NioLoop.class, null, false),
-  
-  /**
-   * Allows specifying the {@link ByteBufferPool}.
-   */
-  BYTE_BUFFER_POOL(String.class, "", false);
+  LOAD_BALANCE_HOSTS(Boolean.class, false, false);
 
   private Class range;
   private Object defaultValue;
