@@ -115,7 +115,7 @@ public enum PgSessionProperty implements SessionProperty {
    * Assume that the server is at least the given version, thus enabling to some optimization at connection time instead
    * of trying to be version blind.
    */
-  ASSUME_MIN_SERVER_VERSION(Float.class, 10.0, false),
+  ASSUME_MIN_SERVER_VERSION(Float.class, 10.0F, false),
 
   /**
    * Specify the schema to be set in the search-path. This schema will be used to resolve unqualified object names used

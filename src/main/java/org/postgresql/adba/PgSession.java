@@ -94,6 +94,15 @@ public class PgSession extends PgOperationGroup<Object, Object> implements Sessi
           "only connections in state NEW are allowed to start connecting");
     }
 
+    OperationGroup<Object, Object> group = operationGroup();
+    boolean anyAdded = false;
+    for (Map.Entry<SessionProperty, Object> entry : getProperties().entrySet()) {
+      anyAdded |= entry.getKey().configureOperation(group, entry.getValue());
+    }
+    if (anyAdded) {
+      group.submit();
+    }
+
     return new PgConnectOperation(this, groupSubmission, protocol);
   }
 

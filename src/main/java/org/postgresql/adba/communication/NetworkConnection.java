@@ -138,7 +138,9 @@ public class NetworkConnection implements NioService, NetworkConnectContext, Net
 
     // Ready network request for writing
     requestQueue.add(request);
-    context.writeRequired();
+    if (context != null) {
+      context.writeRequired();
+    }
   }
 
   /**

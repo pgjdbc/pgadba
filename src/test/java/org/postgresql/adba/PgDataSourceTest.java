@@ -4,17 +4,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.postgresql.adba.testutil.CollectorUtils.singleCollector;
 import static org.postgresql.adba.testutil.FutureUtil.get10;
 
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import jdk.incubator.sql2.AdbaSessionProperty;
 import jdk.incubator.sql2.AdbaSessionProperty.TransactionIsolation;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.DataSourceFactory;
+import jdk.incubator.sql2.OperationGroup;
 import jdk.incubator.sql2.Session;
 import jdk.incubator.sql2.Session.Builder;
+import jdk.incubator.sql2.SessionProperty;
 import org.junit.jupiter.api.Test;
+import org.postgresql.adba.communication.packets.parts.PgAdbaType;
 import org.postgresql.adba.testutil.DatabaseHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 
@@ -138,4 +143,54 @@ public class PgDataSourceTest {
     builder.property(AdbaSessionProperty.TRANSACTION_ISOLATION,
         TransactionIsolation.READ_COMMITTED);
   }
+
+  @Test
+  public void userSpecifiedSessionProperty() throws InterruptedException, ExecutionException, TimeoutException {
+    DataSource ds = DataSourceFactory.newFactory("org.postgresql.adba.PgDataSourceFactory")
+        .builder()
+        .url("jdbc:postgresql://" + postgres.getContainerIpAddress() + ":" + postgres.getMappedPort(5432)
+            + "/" + postgres.getDatabaseName())
+        .username(postgres.getUsername())
+        .password(postgres.getPassword())
+        .sessionProperty(SeedSessionProperty.SEED, 1F)
+        .build();
+
+    try (Session session = ds.getSession()) {
+      CompletionStage<Double> idF = session.<Double>rowOperation("select random() as t")
+          .collect(singleCollector(Double.class))
+          .submit()
+          .getCompletionStage();
+
+      assertEquals(0.49624036D, get10(idF), 0.0001);
+    }
+  }
+
+  public enum SeedSessionProperty implements SessionProperty {
+    SEED;
+
+    @Override
+    public Class<?> range() {
+      return Float.class;
+    }
+
+    @Override
+    public Object defaultValue() {
+      return 1F;
+    }
+
+    @Override
+    public boolean isSensitive() {
+      return false;
+    }
+
+    @Override
+    public boolean configureOperation(OperationGroup<?, ?> group, Object value) {
+      group.rowOperation("select setseed($1)")
+          .set("$1", value, PgAdbaType.FLOAT)
+          .submit();
+      return true;
+    }
+
+  }
+
 }

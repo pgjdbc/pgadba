@@ -1,6 +1,5 @@
 package org.postgresql.adba.communication.network;
 
-import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import org.postgresql.adba.PgSessionDbProperty;
@@ -25,7 +24,7 @@ public class AuthenticationResponse implements NetworkResponse {
   }
 
   @Override
-  public NetworkResponse read(NetworkReadContext context) throws IOException {
+  public NetworkResponse read(NetworkReadContext context) {
     // Expecting authentication challenge
     BeFrame frame = context.getBeFrame();
     switch (frame.getTag()) {
