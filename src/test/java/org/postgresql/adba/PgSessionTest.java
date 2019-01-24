@@ -2,6 +2,7 @@ package org.postgresql.adba;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.postgresql.adba.testutil.CollectorUtils.singleCollector;
 import static org.postgresql.adba.testutil.FutureUtil.get10;
@@ -61,6 +62,35 @@ public class PgSessionTest {
 
       assertEquals("1", get10(idF));
     }
+  }
+
+  @Test
+  public void sessionBuilderSetPropertyAfterBuild() {
+    Session.Builder builder = ds.builder();
+    Session session = builder.build().attach();
+
+    assertThrows(IllegalStateException.class, () -> builder.property(PgSessionProperty.TCP_KEEP_ALIVE, true));
+
+    session.close();
+  }
+
+  @Test
+  public void sessionBuilderBuildTwice() {
+    Session.Builder builder = ds.builder();
+    Session session = builder.build().attach();
+
+    assertThrows(IllegalStateException.class, () -> builder.build());
+
+    session.close();
+  }
+
+  @Test
+  public void sessionBuilderBuildAfterDsClose() {
+    DataSource localDs = ConnectUtil.openDb(postgres);
+    Session.Builder builder = localDs.builder();
+    localDs.close();
+
+    assertThrows(IllegalStateException.class, () -> builder.build());
   }
 
   @Test

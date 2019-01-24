@@ -104,4 +104,8 @@ public class PgDataSource implements DataSource {
   public void registerConnection(PgSession connection) {
     connections.add(connection);
   }
+
+  public boolean isClosed() {
+    return closed;
+  }
 }

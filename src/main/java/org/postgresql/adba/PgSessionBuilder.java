@@ -15,6 +15,8 @@ public class PgSessionBuilder implements Session.Builder {
   private final PgDataSource dataSource;
   private final PropertyHolder properties;
 
+  private boolean buildCalled;
+
   /**
    * Creates a builder for the supplied dataSource.
    *
@@ -24,10 +26,15 @@ public class PgSessionBuilder implements Session.Builder {
   public PgSessionBuilder(PgDataSource dataSource, PropertyHolder properties) {
     this.dataSource = dataSource;
     this.properties = properties;
+    buildCalled = false;
   }
 
   @Override
   public Session.Builder property(SessionProperty p, Object v) {
+    if (buildCalled) {
+      throw new IllegalStateException("you are not allowed to set properties after build");
+    }
+
     properties.sessionPropertyFromSessionBuilder(p, v);
 
     return this;
@@ -35,6 +42,16 @@ public class PgSessionBuilder implements Session.Builder {
 
   @Override
   public Session build() {
+    if (buildCalled) {
+      throw new IllegalStateException("you are not allowed to build twice from the same builder");
+    }
+
+    if (dataSource.isClosed()) {
+      throw new IllegalStateException("DataSource has been closed");
+    }
+
+    buildCalled = true;
+
     Map<SessionProperty, Object> props = parseUrl((String) properties.get(AdbaSessionProperty.URL), null);
 
     if (props != null) {
