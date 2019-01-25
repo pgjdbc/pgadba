@@ -201,7 +201,7 @@ public class ResultTest {
           .toCompletableFuture()
           .get(10, TimeUnit.SECONDS);
 
-      assertEquals(Integer.class, result);
+      assertEquals(int.class, result);
     }
   }
 

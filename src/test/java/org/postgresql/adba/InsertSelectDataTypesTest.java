@@ -17,6 +17,8 @@ import static org.postgresql.adba.communication.packets.parts.PgAdbaType.SHORT_A
 import static org.postgresql.adba.communication.packets.parts.PgAdbaType.SMALLINT;
 import static org.postgresql.adba.communication.packets.parts.PgAdbaType.STRING_ARRAY;
 import static org.postgresql.adba.communication.packets.parts.PgAdbaType.UUID_ARRAY;
+import static org.postgresql.adba.testutil.CollectorUtils.adbaTypeCollector;
+import static org.postgresql.adba.testutil.CollectorUtils.javaTypeCollector;
 import static org.postgresql.adba.testutil.CollectorUtils.singleCollector;
 import static org.postgresql.adba.testutil.FutureUtil.get10;
 
@@ -36,6 +38,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 import jdk.incubator.sql2.DataSource;
 import jdk.incubator.sql2.Session;
+import jdk.incubator.sql2.SqlType;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -83,7 +86,7 @@ public class InsertSelectDataTypesTest {
             new Boolean[] {}, new Boolean[] {null}},
         {"bytea", new byte[] { 0, 1, 2, 3, 4, 5}, byte[].class, BLOB, byte[][].class,
             new byte[][] {{0, 1, 2, 3, 4, 5}, {0, 1, 2, 3, 4, 5}}, BYTEA_ARRAY, new byte[][] {}, new byte[][] {null}},
-        {"int2", (short) 21, short.class, SMALLINT, int[].class, new Short[] {21, 22}, SHORT_ARRAY,
+        {"int2", (short) 21, short.class, SMALLINT, short[].class, new Short[] {21, 22}, SHORT_ARRAY,
             new Short[] {}, new Short[] {null}},
         {"integer", 42, int.class, INTEGER, int[].class, new Integer[] {42, 43}, INTEGER_ARRAY,
             new Integer[] {}, new Integer[] {null}},
@@ -122,7 +125,7 @@ public class InsertSelectDataTypesTest {
             {new BigDecimal("15.22"), new BigDecimal("20.002")}, PgAdbaType.NUMERIC_ARRAY,
             new BigDecimal[] {}, new BigDecimal[] {null}},
         {"interval", Duration.of(10, SECONDS), Duration.class,
-            PgAdbaType.INTERVAL, BigDecimal[].class, new Duration[]
+            PgAdbaType.INTERVAL, Duration[].class, new Duration[]
             {Duration.of(10, SECONDS), Duration.of(15, MINUTES)}, PgAdbaType.INTERVAL_ARRAY,
             new Duration[] {}, new Duration[] {null}},
         {"cidr", InetAddress.getByAddress(new byte[] {127, 0, 0, 1}), InetAddress.class,
@@ -211,6 +214,86 @@ public class InsertSelectDataTypesTest {
         T t = get10(idF);
         assertEquals(insertData, t);
       }
+    }
+  }
+
+  @ParameterizedTest
+  @MethodSource("data")
+  public <T> void checkJavaTypeOfReturn(String dataTypeName, T insertData, Class<T> type) throws Exception {
+    try (Session session = ds.getSession()) {
+      String tableName = "insertAndSelect" + table.incrementAndGet();
+      get10(session.rowCountOperation("create table " + tableName + "(t " + dataTypeName + ")")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into " + tableName + "(t) values($1)")
+          .set("$1", insertData).submit().getCompletionStage());
+      CompletionStage<Class<T>> idF = session.<Class<T>>rowOperation("select t from " + tableName)
+          .collect(javaTypeCollector(type))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+
+      assertEquals(type, get10(idF));
+    }
+  }
+
+  @ParameterizedTest
+  @MethodSource("data")
+  public <T> void checkJavaTypeOfReturnArray(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType,
+      Class<T[]> arrayType, T[] testArrayData) throws Exception {
+    try (Session session = ds.getSession()) {
+      String tableName = "insertAndSelect" + table.incrementAndGet();
+      get10(session.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into " + tableName + "(t) values($1)")
+          .set("$1", testArrayData).submit().getCompletionStage());
+      CompletionStage<Class<T[]>> idF = session.<Class<T[]>>rowOperation("select t from " + tableName)
+          .collect(javaTypeCollector(arrayType))
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+
+      Class<T[]> result = get10(idF);
+      assertEquals(arrayType, result);
+    }
+  }
+
+  @ParameterizedTest
+  @MethodSource("data")
+  public <T> void checkSqlTypeOfReturn(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType) throws Exception {
+    try (Session session = ds.getSession()) {
+      String tableName = "insertAndSelect" + table.incrementAndGet();
+      get10(session.rowCountOperation("create table " + tableName + "(t " + dataTypeName + ")")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into " + tableName + "(t) values($1)")
+          .set("$1", insertData).submit().getCompletionStage());
+      CompletionStage<SqlType> idF = session.<SqlType>rowOperation("select t from " + tableName)
+          .collect(adbaTypeCollector())
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+
+      assertEquals(adbaType, get10(idF));
+    }
+  }
+
+  @ParameterizedTest
+  @MethodSource("data")
+  public <T> void checkSqlTypeOfReturnArray(String dataTypeName, T insertData, Class<T> type, PgAdbaType adbaType,
+      Class<T[]> arrayType, T[] testArrayData, PgAdbaType arrayAdbaType) throws Exception {
+    try (Session session = ds.getSession()) {
+      String tableName = "insertAndSelect" + table.incrementAndGet();
+      get10(session.rowCountOperation("create table " + tableName + "(t " + dataTypeName + "[])")
+          .submit().getCompletionStage());
+      get10(session.rowCountOperation("insert into " + tableName + "(t) values($1)")
+          .set("$1", testArrayData, arrayAdbaType).submit().getCompletionStage());
+      CompletionStage<SqlType> idF = session.<SqlType>rowOperation("select t from " + tableName)
+          .collect(adbaTypeCollector())
+          .submit()
+          .getCompletionStage();
+      get10(session.rowCountOperation("drop table " + tableName).submit().getCompletionStage());
+
+      SqlType result = get10(idF);
+      assertEquals(arrayAdbaType, result);
     }
   }
 
