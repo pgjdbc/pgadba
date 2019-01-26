@@ -25,9 +25,11 @@ public class ExecuteResponse extends AbstractPortalResponse {
     switch (frame.getTag()) {
 
       case DATA_ROW:
-        DataRow dataRow = new DataRow(frame.getPayload(), portal.getQuery().getRowDescription().getDescriptions(),
-            portal.nextRowNumber());
-        portal.addDataRow(dataRow);
+        if (!portal.getQuery().isCanceled()) {
+          DataRow dataRow = new DataRow(frame.getPayload(), portal.getQuery().getRowDescription().getDescriptions(),
+              portal.nextRowNumber(), portal.getQuery());
+          portal.addDataRow(dataRow);
+        }
         return this;
 
       case COMMAND_COMPLETE:

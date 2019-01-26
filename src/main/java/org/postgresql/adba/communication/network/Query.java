@@ -36,6 +36,9 @@ public class Query {
    */
   private RowDescription rowDescription = null;
 
+
+  private boolean canceled;
+
   /**
    * Instantiate.
    */
@@ -102,4 +105,11 @@ public class Query {
     this.rowDescription = rowDescription;
   }
 
+  public void cancel() {
+    canceled = true;
+  }
+
+  public boolean isCanceled() {
+    return canceled;
+  }
 }

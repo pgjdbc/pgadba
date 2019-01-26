@@ -3,6 +3,7 @@ package org.postgresql.adba.communication.packets;
 import jdk.incubator.sql2.Result;
 import jdk.incubator.sql2.SqlType;
 import org.postgresql.adba.communication.TableCell;
+import org.postgresql.adba.communication.network.Query;
 import org.postgresql.adba.communication.packets.parts.ColumnDescription;
 import org.postgresql.adba.util.BinaryHelper;
 
@@ -15,15 +16,18 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
   private Map<Integer, TableCell> columns;
   private long rowNumber;
   private int currentPos = 1;
+  private Query query;
 
   /**
    * parses the bytes that describe one data row in a result set.
    * @param bytes bytes to parse
    * @param description the descriptions of the columns
    * @param rowNumber current row number in the result set
+   * @param query the query object, needed to be able to cancel a query
    */
-  public DataRow(byte[] bytes, ColumnDescription[] description, long rowNumber) {
+  public DataRow(byte[] bytes, ColumnDescription[] description, long rowNumber, Query query) {
     this.rowNumber = rowNumber;
+    this.query = query;
 
     short numOfColumns = BinaryHelper.readShort(bytes[0], bytes[1]);
     int pos = 2;
@@ -49,7 +53,7 @@ public class DataRow implements Result.RowColumn, Result.OutColumn {
 
   @Override
   public void cancel() {
-
+    query.cancel();
   }
 
   @Override

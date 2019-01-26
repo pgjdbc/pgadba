@@ -225,4 +225,25 @@ public class ResultTest {
       assertEquals(Integer.valueOf(12), result);
     }
   }
+
+  @Test
+  public void resultCancel() throws InterruptedException, ExecutionException, TimeoutException {
+    try (Session session = ds.getSession()) {
+      Integer result = session.<Integer>rowOperation("select 1 union all select 2 union all select 3")
+          .collect(Collector.of(
+              () -> new Integer[]{0},
+              (a, r) -> {
+                a[0] += r.at(1).get(Integer.class);
+                r.cancel();
+              },
+              (l, r) -> null,
+              a -> a[0]))
+          .submit()
+          .getCompletionStage()
+          .toCompletableFuture()
+          .get(10, TimeUnit.SECONDS);
+
+      assertEquals(Integer.valueOf(1), result);
+    }
+  }
 }
