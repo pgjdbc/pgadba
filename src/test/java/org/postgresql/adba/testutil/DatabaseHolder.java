@@ -1,11 +1,14 @@
 package org.postgresql.adba.testutil;
 
+import static java.util.Collections.singletonMap;
+
 import org.testcontainers.containers.PostgreSQLContainer;
 
 public class DatabaseHolder {
   private static PostgreSQLContainer postgres = new PostgreSQLContainer();
 
   static {
+    postgres.withTmpFs(singletonMap("/var/lib/postgresql/data", "rw"));
     postgres.start();
   }
 
@@ -19,6 +22,7 @@ public class DatabaseHolder {
    */
   public static PostgreSQLContainer getNew() {
     PostgreSQLContainer container = new PostgreSQLContainer();
+    container.withTmpFs(singletonMap("/var/lib/postgresql/data", "rw"));
     container.start();
     return container;
   }
@@ -29,6 +33,7 @@ public class DatabaseHolder {
    */
   public static PostgreSQLContainer getNewWithTls() {
     PostgreSQLContainer container = new PostgreSQLContainer("capitol/postgresql-tls:debian-stretch-postgresql10");
+    container.withTmpFs(singletonMap("/var/lib/postgresql/data", "rw"));
     container.start();
 
     return container;
@@ -40,6 +45,7 @@ public class DatabaseHolder {
    */
   public static PostgreSQLContainer getNew11() {
     PostgreSQLContainer container = new PostgreSQLContainer("capitol/debian-buster-postgresql11-tls:latest");
+    container.withTmpFs(singletonMap("/var/lib/postgresql/data", "rw"));
     container.start();
 
     return container;
