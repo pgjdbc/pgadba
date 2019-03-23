@@ -58,12 +58,6 @@
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>com.ongres.scram</groupId>
-      <artifactId>client</artifactId>
-      <version>1.0.0-beta.2</version>
-    </dependency>
-
     <!-- test dependencies below -->
 
     <dependency>

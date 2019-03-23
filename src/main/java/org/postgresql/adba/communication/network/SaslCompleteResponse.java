@@ -1,9 +1,9 @@
 package org.postgresql.adba.communication.network;
 
-import com.ongres.scram.client.ScramSession.ClientFinalProcessor;
-import com.ongres.scram.common.exception.ScramInvalidServerSignatureException;
-import com.ongres.scram.common.exception.ScramParseException;
-import com.ongres.scram.common.exception.ScramServerErrorException;
+import org.postgresql.adba.util.scram.client.ScramSession.ClientFinalProcessor;
+import org.postgresql.adba.util.scram.common.exception.ScramInvalidServerSignatureException;
+import org.postgresql.adba.util.scram.common.exception.ScramParseException;
+import org.postgresql.adba.util.scram.common.exception.ScramServerErrorException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import jdk.incubator.sql2.SqlException;

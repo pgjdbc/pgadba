@@ -1,8 +1,8 @@
 package org.postgresql.adba.communication.network;
 
-import com.ongres.scram.client.ScramClient;
-import com.ongres.scram.client.ScramSession;
-import com.ongres.scram.common.stringprep.StringPreparations;
+import org.postgresql.adba.util.scram.client.ScramClient;
+import org.postgresql.adba.util.scram.client.ScramSession;
+import org.postgresql.adba.util.scram.common.stringprep.StringPreparations;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.postgresql.adba.communication.FrontendTag;

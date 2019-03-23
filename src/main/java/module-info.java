@@ -2,8 +2,6 @@ import org.postgresql.adba.PgDataSourceFactory;
 
 module org.postgresql.adba {
   requires java.logging;
-  requires client;
-  requires common;
   requires java.security.sasl;
   exports org.postgresql.adba;
   exports org.postgresql.adba.pgdatatypes;

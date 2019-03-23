@@ -1,7 +1,7 @@
 package org.postgresql.adba.communication.network;
 
-import com.ongres.scram.client.ScramSession;
-import com.ongres.scram.common.exception.ScramException;
+import org.postgresql.adba.util.scram.client.ScramSession;
+import org.postgresql.adba.util.scram.common.exception.ScramException;
 import java.io.IOException;
 import jdk.incubator.sql2.SqlException;
 import org.postgresql.adba.communication.BeFrame;

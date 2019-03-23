@@ -1,7 +1,6 @@
 package org.postgresql.adba.communication.network;
 
-import com.ongres.scram.client.ScramSession;
-import com.ongres.scram.client.ScramSession.ServerFirstProcessor;
+import org.postgresql.adba.util.scram.client.ScramSession.ServerFirstProcessor;
 import java.nio.charset.StandardCharsets;
 import jdk.incubator.sql2.AdbaSessionProperty;
 import org.postgresql.adba.communication.FrontendTag;
@@ -16,7 +15,7 @@ public class SaslFinalPasswordRequest implements NetworkRequest {
 
   private ServerFirstProcessor serverFirstProcessor;
   private ConnectSubmission connectSubmission;
-  private ScramSession.ClientFinalProcessor clientFinalProcessor;
+  private org.postgresql.adba.util.scram.client.ScramSession.ClientFinalProcessor clientFinalProcessor;
 
   public SaslFinalPasswordRequest(ServerFirstProcessor serverFirstProcessor,
       ConnectSubmission connectSubmission) {
