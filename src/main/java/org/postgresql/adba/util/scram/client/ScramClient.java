@@ -152,6 +152,7 @@ public class ScramClient {
      * Selects the string preparation algorithm to use by the client.
      *
      * @param stringPreparation The string preparation algorithm
+     * @return a PreBuilder2 object
      * @throws IllegalArgumentException If stringPreparation is null
      */
     public PreBuilder2 stringPreparation(StringPreparation stringPreparation) throws IllegalArgumentException {
@@ -182,6 +183,7 @@ public class ScramClient {
      * standar IANA Registry names for SCRAM mechanisms, or will be ignored.
      *
      * @param serverMechanisms One or more IANA-registered SCRAM mechanism names, as advertised by the server
+     * @return the builder
      * @throws IllegalArgumentException If no server mechanisms are provided
      * @see <a href="https://www.iana.org/assignments/sasl-mechanisms/sasl-mechanisms.xhtml#scram">
      * SASL SCRAM Family Mechanisms</a>
@@ -213,6 +215,7 @@ public class ScramClient {
      *
      * @param serverMechanismsCsv A CSV (Comma-Separated Values) String, containining all the SCRAM mechanisms supported by the
      *     server
+     * @return the builder
      * @throws IllegalArgumentException If selectMechanismBasedOnServerAdvertisedCsv is null
      */
     public Builder selectMechanismBasedOnServerAdvertisedCsv(String serverMechanismsCsv)
@@ -229,6 +232,7 @@ public class ScramClient {
      * {@link Builder#selectMechanismBasedOnServerAdvertisedCsv(String)}.
      *
      * @param scramMechanism The selected scram mechanism
+     * @return the builder
      * @throws IllegalArgumentException If the selected mechanism is null or not compatible with the prior channel binding
      *     selection, or channel binding selection is dependent on the server advertised methods
      */

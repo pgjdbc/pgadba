@@ -147,6 +147,10 @@ public class CryptoUtil {
    *
    * {@code XOR: Apply the exclusive-or operation to combine the octet string on the left of this operator with the octet string
    * on the right of this operator.  The length of the output and each of the two inputs will be the same for this use. }
+   *
+   * @param value1 the first byte array
+   * @param value2 the second byte array
+   * @return the first byte array xor'ed with the second
    */
   public static byte[] xor(byte[] value1, byte[] value2) throws IllegalArgumentException {
     checkNotNull(value1, "value1");

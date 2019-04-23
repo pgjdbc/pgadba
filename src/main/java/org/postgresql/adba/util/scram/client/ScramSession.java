@@ -61,6 +61,9 @@ public class ScramSession {
    * recommended that a {@link ScramClient} is used instead.
    *
    * @param scramMechanism The SCRAM mechanism that will be using this client
+   * @param stringPreparation a string normalizer object
+   * @param user the user name to use
+   * @param nonce the nonce
    */
   public ScramSession(ScramMechanism scramMechanism, StringPreparation stringPreparation, String user, String nonce) {
     this.scramMechanism = checkNotNull(scramMechanism, "scramMechanism");
@@ -257,6 +260,7 @@ public class ScramSession {
      * @param serverFinalMessage The received server-final-message
      * @throws ScramParseException If the message is not a valid server-final-message
      * @throws ScramServerErrorException If the server-final-message contained an error
+     * @throws ScramInvalidServerSignatureException if the server signature can't be verified
      * @throws IllegalArgumentException If the message is null or empty
      */
     public void receiveServerFinalMessage(String serverFinalMessage)
