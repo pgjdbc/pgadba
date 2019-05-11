@@ -73,6 +73,7 @@ public class ProcessorSubmission<T> implements PgSubmission<T> {
   @Override
   public Object finish(Object finishObject) {
     publisher.close();
+    ((CompletableFuture<T>)getCompletionStage()).complete(null);
     return null;
   }
 

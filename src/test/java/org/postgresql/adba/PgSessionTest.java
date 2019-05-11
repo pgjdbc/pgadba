@@ -1,5 +1,6 @@
 package org.postgresql.adba;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -334,6 +335,21 @@ public class PgSessionTest {
           .submit().getCompletionStage());
 
       assertEquals(Integer.valueOf(321), result);
+    }
+  }
+
+  @Test
+  public void rowPublisherOperationCompletesResult() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Session session = ds.getSession()) {
+      CompletableFuture<Integer> result1 = new CompletableFuture<>();
+
+      session.rowPublisherOperation("select 1 as t")
+          .subscribe(new SimpleRowSubscriber(result1), result1).submit()
+          .getCompletionStage().toCompletableFuture().get(10, SECONDS);
+
+      Integer result = result1.get(10, SECONDS);
+      assertEquals(Integer.valueOf(1), result);
     }
   }
 
