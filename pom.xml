@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.postgresql</groupId>
   <artifactId>pgadba</artifactId>
-  <version>0.1.1-ALPHA</version>
+  <version>0.1.2-ALPHA-SNAPSHOT</version>
   <name>pgAdba</name>
   <description>ADBA implementation for PostgreSQL</description>
   <url>https://github.com/pgjdbc/pgAdba</url>
