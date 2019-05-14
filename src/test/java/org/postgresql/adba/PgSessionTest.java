@@ -3,6 +3,7 @@ package org.postgresql.adba;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.postgresql.adba.testutil.CollectorUtils.singleCollector;
@@ -325,16 +326,22 @@ public class PgSessionTest {
     }
   }
 
+  public void emitFailure(String errorMessage) {
+    fail(errorMessage);
+  }
+
   @Test
   public void rowPublisherOperation() throws InterruptedException, ExecutionException, TimeoutException {
     try (Session session = ds.getSession()) {
       CompletableFuture<Integer> result1 = new CompletableFuture<>();
+      SimpleRowSubscriber sub = new SimpleRowSubscriber(this::emitFailure);
       //First do a normal query so that the Session has time to get established
       Integer result = get10(session.<Integer>rowPublisherOperation("select 321 as t")
-          .subscribe(new SimpleRowSubscriber(result1), result1)
+          .subscribe(sub, result1)
           .submit().getCompletionStage());
 
-      assertEquals(Integer.valueOf(321), result);
+      assertEquals(Integer.valueOf(321), sub.getColumnTSum());
+      assertNull(result);
     }
   }
 
@@ -342,14 +349,44 @@ public class PgSessionTest {
   public void rowPublisherOperationCompletesResult() throws InterruptedException, ExecutionException, TimeoutException {
 
     try (Session session = ds.getSession()) {
-      CompletableFuture<Integer> result1 = new CompletableFuture<>();
+      CompletableFuture<Integer> result2 = new CompletableFuture<>();
+      SimpleRowSubscriber sub = new SimpleRowSubscriber(this::emitFailure);
 
       session.rowPublisherOperation("select 1 as t")
-          .subscribe(new SimpleRowSubscriber(result1), result1).submit()
+          .subscribe(sub, result2).submit()
           .getCompletionStage().toCompletableFuture().get(10, SECONDS);
 
-      Integer result = result1.get(10, SECONDS);
-      assertEquals(Integer.valueOf(1), result);
+      Integer result = result2.get(10, SECONDS);
+      assertEquals(Integer.valueOf(1), sub.getColumnTSum());
+      assertNull(result);
+    }
+  }
+
+  @Test
+  public void rowPublisherOperationNullSubscriber() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Session session = ds.getSession()) {
+      CompletableFuture<Integer> result1 = new CompletableFuture<>();
+
+      IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () ->
+          session.rowPublisherOperation("select 1 as t")
+          .subscribe(null, result1).submit()
+          .getCompletionStage().toCompletableFuture().get(10, SECONDS));
+
+      assertEquals("subscriber is not allowed to be null", thrown.getMessage());
+    }
+  }
+
+  @Test
+  public void rowPublisherOperationNullResult() throws InterruptedException, ExecutionException, TimeoutException {
+
+    try (Session session = ds.getSession()) {
+      IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () ->
+          session.rowPublisherOperation("select 1 as t")
+          .subscribe(new SimpleRowSubscriber(this::emitFailure), null).submit()
+          .getCompletionStage().toCompletableFuture().get(10, SECONDS));
+
+      assertEquals("result is not allowed to be null", thrown.getMessage());
     }
   }
 

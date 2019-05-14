@@ -24,6 +24,7 @@ public class ProcessorSubmission<T> implements PgSubmission<T> {
   private SubmissionPublisher<Result.RowColumn> publisher;
   private GroupSubmission groupSubmission;
   private final AtomicBoolean sendConsumed = new AtomicBoolean(false);
+  private CompletionStage<? extends T> result;
 
   /**
    * A submission for a Processor operation.
@@ -36,13 +37,15 @@ public class ProcessorSubmission<T> implements PgSubmission<T> {
    * @param groupSubmission group submission this submission is a part of
    */
   public ProcessorSubmission(Supplier<Boolean> cancel, Consumer<Throwable> errorHandler, String sql,
-      SubmissionPublisher<Result.RowColumn> publisher, ParameterHolder holder, GroupSubmission groupSubmission) {
+      SubmissionPublisher<Result.RowColumn> publisher, ParameterHolder holder, GroupSubmission groupSubmission,
+      CompletionStage<? extends T> result) {
     this.cancel = cancel;
     this.errorHandler = errorHandler;
     this.sql = sql;
     this.publisher = publisher;
     this.holder = holder;
     this.groupSubmission = groupSubmission;
+    this.result = result;
   }
 
   @Override
@@ -74,6 +77,7 @@ public class ProcessorSubmission<T> implements PgSubmission<T> {
   public Object finish(Object finishObject) {
     publisher.close();
     ((CompletableFuture<T>)getCompletionStage()).complete(null);
+    ((CompletableFuture<? extends T>)result).complete(null);
     return null;
   }
 

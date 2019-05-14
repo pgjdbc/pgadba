@@ -1,19 +1,20 @@
 package org.postgresql.adba.testutil;
 
-import jdk.incubator.sql2.Result;
-
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Flow;
+import java.util.function.Consumer;
+import jdk.incubator.sql2.Result;
 
 public class SimpleRowSubscriber implements Flow.Subscriber<Result.RowColumn> {
 
   private Flow.Subscription subscription;
   private Integer columnTSum = 0;
   private int demand = 0;
-  private CompletableFuture<Integer> result;
+  private Consumer<String> fail;
+  private CountDownLatch conditionLatch = new CountDownLatch(1);
 
-  public SimpleRowSubscriber(CompletableFuture<Integer> result) {
-    this.result = result;
+  public SimpleRowSubscriber(Consumer<String> fail) {
+    this.fail = fail;
   }
 
   @Override
@@ -34,13 +35,17 @@ public class SimpleRowSubscriber implements Flow.Subscriber<Result.RowColumn> {
 
   @Override
   public void onError(Throwable throwable) {
-    result.completeExceptionally(throwable);
+    fail.accept(throwable.getMessage());
   }
 
   @Override
   public void onComplete() {
-    result.complete(columnTSum);
+    conditionLatch.countDown();
   }
 
+  public Integer getColumnTSum() throws InterruptedException {
+    conditionLatch.await();
+    return columnTSum;
+  }
 }
 

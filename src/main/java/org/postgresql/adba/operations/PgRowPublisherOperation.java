@@ -61,6 +61,13 @@ public class PgRowPublisherOperation<R> implements ParameterizedRowPublisherOper
   @Override
   public ParameterizedRowPublisherOperation<R> subscribe(Flow.Subscriber<? super Result.RowColumn> subscriber,
       CompletionStage<? extends R> result) {
+    if (result == null) {
+      throw new IllegalArgumentException("result is not allowed to be null");
+    }
+    if (subscriber == null) {
+      throw new IllegalArgumentException("subscriber is not allowed to be null");
+    }
+
     publisher.subscribe(subscriber);
     this.result = result;
     result.thenAccept(r -> {
@@ -97,7 +104,7 @@ public class PgRowPublisherOperation<R> implements ParameterizedRowPublisherOper
 
   @Override
   public Submission<R> submit() {
-    submission = new ProcessorSubmission<>(this::cancel, errorHandler, sql, publisher, holder, groupSubmission);
+    submission = new ProcessorSubmission<>(this::cancel, errorHandler, sql, publisher, holder, groupSubmission, result);
     connection.submit(submission);
     return submission;
   }

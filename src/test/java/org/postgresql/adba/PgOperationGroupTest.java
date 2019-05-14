@@ -119,11 +119,17 @@ public class PgOperationGroupTest {
     }
   }
 
+  public void emitFailure(String errorMessage) {
+    fail(errorMessage);
+  }
+
   @Test
   public void groupOperationSumOfRowPublisherOperations() throws InterruptedException, ExecutionException, TimeoutException {
 
     try (Session session = ds.getSession()) {
       OperationGroup<Integer, Integer> operationGroup = session.operationGroup();
+      SimpleRowSubscriber sub1 = new SimpleRowSubscriber(this::emitFailure);
+      SimpleRowSubscriber sub2 = new SimpleRowSubscriber(this::emitFailure);
       CompletableFuture<Integer> result1 = new CompletableFuture<>();
       CompletableFuture<Integer> result2 = new CompletableFuture<>();
 
@@ -131,15 +137,19 @@ public class PgOperationGroupTest {
           .collect(CollectorUtils.summingCollector())
           .submit();
       operationGroup.rowPublisherOperation("select 1 as t")
-          .subscribe(new SimpleRowSubscriber(result1), result1).submit()
+          .subscribe(sub1, result1).submit()
           .getCompletionStage().toCompletableFuture().get(10, SECONDS);
       operationGroup.rowPublisherOperation("select 2 as t")
-          .subscribe(new SimpleRowSubscriber(result2), result2).submit()
+          .subscribe(sub2, result2).submit()
           .getCompletionStage().toCompletableFuture().get(10, SECONDS);
       operationGroup.close();
 
-      Integer result = sub.getCompletionStage().toCompletableFuture().get(10, SECONDS);
-      assertEquals(Integer.valueOf(3), result);
+      Integer result = ((CompletableFuture<Integer>)sub.getCompletionStage()).get(10, SECONDS);
+
+      assertEquals(Integer.valueOf(1), sub1.getColumnTSum());
+      assertEquals(Integer.valueOf(2), sub2.getColumnTSum());
+
+      assertEquals(Integer.valueOf(0), result);
     }
   }
 
